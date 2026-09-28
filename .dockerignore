@@ -1,0 +1,12 @@
+**/node_modules
+**/dist
+**/.astro
+**/.git
+**/tmp
+.env
+api
+login
+cotizacion
+docs
+design
+*.log

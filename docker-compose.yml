@@ -1,0 +1,171 @@
+# EDISYS · compose local (y base del EC2). Proyecto «edisys», contenedores edisys_*.
+# Puertos del host (alternos, para no chocar con otros proyectos):
+#   4700 edge (entrada única) · 4710 api · 4730 login · 4754 postgres · 4790 S3 (Garage) · 4791 admin de Garage
+# Límites de memoria según §1.2 de docs/PASO_A_PASO_INTERFACES.md.
+name: edisys
+
+x-logs: &logs
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "3" }
+
+x-api-env: &api-env
+  DATABASE_URL: postgres://edisys:${POSTGRES_PASSWORD:-edisys}@postgres:5432/edisys?sslmode=disable
+  JWT_SECRET: ${JWT_SECRET:-desarrollo-local-cambia-este-secreto-de-32-bytes}
+  COOKIE_SECURE: ${COOKIE_SECURE:-false}
+  URL_PUBLICA: ${URL_PUBLICA:-http://localhost:4700}
+  APP_VERSION: ${APP_VERSION:-local}
+  S3_ENDPOINT: s3:3900
+  S3_REGION: garage
+  S3_ACCESS_KEY: ${S3_ACCESS_KEY:-GK0e615b1c2d3e4f5a6b7c8d9e}
+  S3_SECRET_KEY: ${S3_SECRET_KEY:-7d1f0c9b8a7e6d5c4b3a29181716151413121110a9b8c7d6e5f4a3b2c1d0e9f8}
+  S3_BUCKET: ${S3_BUCKET:-edisys-privado}
+  S3_SSL: "false"
+  GARAGE_ADMIN_URL: http://s3:3903
+  GARAGE_ADMIN_TOKEN: ${GARAGE_ADMIN_TOKEN:-garage-admin-local}
+  # WhatsApp: «simulado» por defecto (no sale nada). Solo con WHATSAPP_MODO=evolution se envía de verdad.
+  WHATSAPP_MODO: ${WHATSAPP_MODO:-simulado}
+  EVOLUTION_URL: ${EVOLUTION_URL:-}
+  EVOLUTION_INSTANCIA: ${EVOLUTION_INSTANCIA:-}
+  EVOLUTION_APIKEY: ${EVOLUTION_APIKEY:-}
+  WHATSAPP_WEBHOOK_TOKEN: ${WHATSAPP_WEBHOOK_TOKEN:-}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: edisys_postgres
+    <<: *logs
+    environment:
+      POSTGRES_DB: edisys
+      POSTGRES_USER: edisys
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-edisys}
+      TZ: UTC
+    command: >
+      postgres -c shared_buffers=192MB -c work_mem=8MB -c max_connections=40
+               -c effective_cache_size=1GB -c timezone=UTC
+    ports: ["4754:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    mem_limit: 768m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U edisys -d edisys"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+      start_interval: 5s
+
+  # S3 compatible: Garage de un nodo (lo mismo que pide la guía para el EC2). MinIO ya no publica
+  # imágenes libres; por eso se usa Garage también en local. El API habla S3 puro (minio-go).
+  # El layout, la clave S3 y el cubo privado los crea `edisys preparar` por el API de administración.
+  s3:
+    image: dxflrs/garage:v2.1.0
+    container_name: edisys_s3
+    <<: *logs
+    environment:
+      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET:-4f2a9c1e7b3d5a8f0c6e2b9d4a7f1c3e5b8d0a2f6c9e1b4d7a3f5c8e0b2d6a9f}
+      GARAGE_ADMIN_TOKEN: ${GARAGE_ADMIN_TOKEN:-garage-admin-local}
+    volumes:
+      - ./garage/garage.toml:/etc/garage.toml:ro
+      - s3meta:/var/lib/garage/meta
+      - s3data:/var/lib/garage/data
+    ports: ["4790:3900", "4791:3903"]
+    mem_limit: 256m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/garage", "status"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+      start_interval: 5s
+
+  # Corre migraciones y la semilla (solo si la base está vacía; SEMBRAR=siempre para forzar) y termina.
+  migrate:
+    build:
+      context: ./api
+    image: edisys/api:local
+    container_name: edisys_migrate
+    <<: *logs
+    command: ["preparar"]
+    environment:
+      <<: *api-env
+      SEMBRAR: ${SEMBRAR:-si_vacia}
+      SEMBRAR_PENDIENTES: ${SEMBRAR_PENDIENTES:-0}
+    depends_on:
+      postgres: { condition: service_healthy }
+      s3: { condition: service_healthy }
+    mem_limit: 128m
+    restart: "no"
+
+  api:
+    image: edisys/api:local
+    container_name: edisys_api
+    <<: *logs
+    command: ["serve"]
+    environment:
+      <<: *api-env
+      GOMEMLIMIT: 200MiB
+    ports: ["4710:8080"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      postgres: { condition: service_healthy }
+      s3: { condition: service_healthy }
+    mem_limit: 256m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/edisys", "salud"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+      start_interval: 5s
+
+  login:
+    build:
+      context: ./login
+    image: edisys/login:local
+    container_name: edisys_login
+    <<: *logs
+    environment:
+      EDISYS_API_INTERNO: http://api:8080
+      NODE_OPTIONS: --max-old-space-size=128
+      ORIGIN: ${URL_PUBLICA:-http://localhost:4700}
+    ports: ["4730:3000"]
+    depends_on:
+      api: { condition: service_healthy }
+    mem_limit: 192m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/login/salud').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+      start_interval: 5s
+
+  edge:
+    build:
+      context: .
+      dockerfile: edge/Dockerfile
+    image: edisys/edge:local
+    container_name: edisys_edge
+    <<: *logs
+    ports: ["4700:80"]
+    depends_on:
+      api: { condition: service_healthy }
+      login: { condition: service_started }
+    mem_limit: 64m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/api/health"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+      start_interval: 5s
+
+volumes:
+  pgdata:
+  s3meta:
+  s3data:
