@@ -1,0 +1,15 @@
+{
+  "name": "@edisys/tokens",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tokens de diseño de EDISYS: variables CSS y preset de Tailwind compartidos por app, login y landing.",
+  "type": "module",
+  "main": "tailwind-preset.js",
+  "exports": {
+    ".": "./tailwind-preset.js",
+    "./tailwind-preset": "./tailwind-preset.js",
+    "./tailwind-preset.js": "./tailwind-preset.js",
+    "./tokens.css": "./tokens.css"
+  },
+  "files": ["tokens.css", "tailwind-preset.js"]
+}
