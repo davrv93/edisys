@@ -1,0 +1,32 @@
+/*
+ * Tokens de EDISYS (copia local de packages/tokens/tokens.css, según design/DISENO.md
+ * y §2.1 de docs/PASO_A_PASO_INTERFACES.md). Si cambian allí, se cambian aquí.
+ * Solo modo claro en el MVP: el oscuro queda preparado pero no se activa.
+ */
+:root {
+  color-scheme: light;
+  --color-acento: #155e75;          /* cyan-800 */
+  --color-acento-hover: #164e63;    /* cyan-900 */
+  --color-acento-suave: #ecfeff;    /* cyan-50 */
+  --color-acento-borde: #cffafe;    /* cyan-100 */
+  --color-acento-oscuro: #67e8f9;   /* cyan-300 */
+  --color-tinta: #0f172a;           /* slate-900 */
+  --color-superficie-oscura: #1e293b; /* slate-800 */
+  --color-superficie-oscura-2: #334155; /* slate-700 */
+  --color-texto-suave: #475569;     /* slate-600 */
+  --color-texto-apoyo: #64748b;     /* slate-500 */
+  --color-texto-oscuro-apoyo: #94a3b8; /* slate-400, apoyo sobre fondo oscuro */
+  --color-texto-oscuro: #cbd5e1;    /* slate-300, lectura sobre fondo oscuro */
+  --color-borde: #e2e8f0;           /* slate-200 */
+  --color-borde-fuerte: #cbd5e1;    /* slate-300 */
+  --color-fondo: #f8fafc;           /* slate-50 */
+  --color-superficie: #ffffff;
+  --color-alerta: #b91c1c;          /* red-700 */
+  --color-alerta-suave: #fef2f2;    /* red-50 */
+  --color-alerta-borde: #fecaca;    /* red-200 */
+  --color-aviso: #b45309;           /* amber-700 */
+  --color-aviso-suave: #fffbeb;     /* amber-50 */
+  --color-aviso-borde: #fde68a;     /* amber-200 */
+  --color-ingreso: var(--color-acento);
+  --color-egreso: #334155;          /* slate-700 */
+}

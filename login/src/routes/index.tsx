@@ -1,0 +1,439 @@
+import { $, component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
+import {
+  routeLoader$,
+  useLocation,
+  type DocumentHead,
+  type RequestHandler,
+} from "@builder.io/qwik-city";
+import { Logo } from "~/components/logo/logo";
+import {
+  DESTINO_POR_DEFECTO,
+  ERROR_SIN_CONEXION,
+  RUTA_LOGIN_API,
+  destinoDesdeUrl,
+  destinoSeguro,
+  errorDesdeRespuesta,
+  validar,
+  type ErrorLogin,
+} from "~/lib/login";
+
+const CLAVE_RECORDAR = "edisys.login.correo";
+
+interface ResultadoServidor {
+  correo?: string;
+  error?: ErrorLogin;
+}
+
+/* ------------------------------------------------------------------ *
+ * Respaldo sin JavaScript (§01: «funciona sin JavaScript para el envío»).
+ * Con JS, el navegador llama al API directamente y este handler no corre.
+ * Sin JS, el <form method="post"> llega aquí: se reenvía al API por la red
+ * interna y se copian sus Set-Cookie (HttpOnly) a la respuesta.
+ * ------------------------------------------------------------------ */
+export const onPost: RequestHandler = async ({ request, headers, redirect, sharedMap, url, clientConn }) => {
+  const form = await request.formData();
+  const correo = String(form.get("correo") ?? "").trim();
+  const clave = String(form.get("clave") ?? "");
+  const nextForm = String(form.get("next") ?? "");
+  const destino = nextForm ? destinoSeguro(nextForm) : destinoDesdeUrl(url);
+
+  const invalido = validar(correo, clave);
+  if (invalido) {
+    sharedMap.set("login", { correo, error: invalido } satisfies ResultadoServidor);
+    return;
+  }
+
+  const api = process.env.EDISYS_API_INTERNO ?? "http://api:8080";
+  let res: Response;
+  try {
+    res = await fetch(`${api}${RUTA_LOGIN_API}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "X-EDISYS": "1",
+        ...(clientConn.ip ? { "X-Forwarded-For": clientConn.ip } : {}),
+      },
+      body: JSON.stringify({ correo, clave }),
+    });
+  } catch {
+    sharedMap.set("login", { correo, error: ERROR_SIN_CONEXION } satisfies ResultadoServidor);
+    return;
+  }
+
+  if (res.ok) {
+    for (const c of res.headers.getSetCookie()) headers.append("Set-Cookie", c);
+    throw redirect(303, destino);
+  }
+  let cuerpo: unknown = null;
+  try {
+    cuerpo = await res.json();
+  } catch {
+    /* cuerpo vacío o no JSON */
+  }
+  sharedMap.set("login", {
+    correo,
+    error: errorDesdeRespuesta(res.status, cuerpo, res.headers),
+  } satisfies ResultadoServidor);
+};
+
+export const useResultadoServidor = routeLoader$<ResultadoServidor>(
+  ({ sharedMap }) => (sharedMap.get("login") as ResultadoServidor | undefined) ?? {},
+);
+
+/* ------------------------------------------------------------------ */
+
+const IconoOjo = component$((props: { abierto: boolean }) => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+    <circle cx="12" cy="12" r="3" />
+    {!props.abierto && <path d="M3 3l18 18" />}
+  </svg>
+));
+
+const Spinner = () => (
+  <svg class="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.3" stroke-width="3" />
+    <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+  </svg>
+);
+
+const TARJETAS = [
+  { titulo: "Balance", valor: "Por nodos" },
+  { titulo: "Medidores", valor: "Con foto" },
+  { titulo: "Junta", valor: "Aprueba en línea" },
+];
+
+const LEMA = "Cada sol del edificio, con su sustento.";
+
+export default component$(() => {
+  const loc = useLocation();
+  const servidor = useResultadoServidor();
+  const destino = destinoDesdeUrl(loc.url);
+
+  const correo = useSignal(servidor.value.correo ?? "");
+  const clave = useSignal("");
+  const verClave = useSignal(false);
+  const recordar = useSignal(true);
+  const enviando = useSignal(false);
+  const error = useSignal<ErrorLogin | null>(servidor.value.error ?? null);
+  const nota = useSignal<string | null>(null);
+  const bloqueadoHasta = useSignal(0);
+  const restanteMin = useSignal(0);
+  const correoRef = useSignal<HTMLInputElement>();
+  const claveRef = useSignal<HTMLInputElement>();
+
+  // Correo recordado en este dispositivo (nunca la clave).
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(() => {
+    try {
+      const guardado = localStorage.getItem(CLAVE_RECORDAR);
+      if (guardado && !correo.value) {
+        correo.value = guardado;
+        claveRef.value?.focus();
+      }
+    } catch {
+      /* almacenamiento bloqueado: no pasa nada */
+    }
+  });
+
+  // Cuenta regresiva del bloqueo por intentos (429).
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(({ track, cleanup }) => {
+    const hasta = track(() => bloqueadoHasta.value);
+    if (!hasta) return;
+    const tic = () => {
+      const ms = hasta - Date.now();
+      restanteMin.value = ms > 0 ? Math.ceil(ms / 60000) : 0;
+      if (ms <= 0) {
+        bloqueadoHasta.value = 0;
+        if (error.value?.esperaMin) error.value = null;
+      }
+    };
+    tic();
+    const id = setInterval(tic, 5000);
+    cleanup(() => clearInterval(id));
+  });
+
+  const enviar = $(async () => {
+    if (enviando.value || bloqueadoHasta.value > Date.now()) return;
+    nota.value = null;
+    const invalido = validar(correo.value, clave.value);
+    if (invalido) {
+      error.value = invalido;
+      (invalido.campos?.correo ? correoRef.value : claveRef.value)?.focus();
+      return;
+    }
+    enviando.value = true;
+    error.value = null;
+    try {
+      const res = await fetch(RUTA_LOGIN_API, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json", Accept: "application/json", "X-EDISYS": "1" },
+        body: JSON.stringify({ correo: correo.value.trim(), clave: clave.value }),
+      });
+      if (res.ok) {
+        try {
+          if (recordar.value) localStorage.setItem(CLAVE_RECORDAR, correo.value.trim());
+          else localStorage.removeItem(CLAVE_RECORDAR);
+        } catch {
+          /* sin almacenamiento */
+        }
+        // La cookie HttpOnly ya la puso el API; el botón sigue en «cargando» hasta salir.
+        window.location.assign(destino || DESTINO_POR_DEFECTO);
+        return;
+      }
+      let cuerpo: unknown = null;
+      try {
+        cuerpo = await res.json();
+      } catch {
+        /* sin cuerpo JSON */
+      }
+      const e = errorDesdeRespuesta(res.status, cuerpo, res.headers);
+      error.value = e;
+      if (e.esperaMin) bloqueadoHasta.value = Date.now() + e.esperaMin * 60000;
+      if (e.campos?.correo) correoRef.value?.focus();
+      else if (e.campos?.clave || res.status === 401) claveRef.value?.select();
+    } catch {
+      error.value = ERROR_SIN_CONEXION;
+    }
+    enviando.value = false;
+  });
+
+  const avisarOlvido = $(() => {
+    error.value = null;
+    nota.value =
+      "Pide a la administración de tu edificio que te reenvíe la invitación; con ese enlace fijas una clave nueva.";
+  });
+  const avisarWhatsApp = $(() => {
+    error.value = null;
+    nota.value =
+      "El ingreso con código por WhatsApp llega en la siguiente etapa. Por ahora entra con tu correo y contraseña.";
+  });
+
+  const errCorreo = error.value?.campos?.correo;
+  const errClave = error.value?.campos?.clave;
+  const bloqueado = bloqueadoHasta.value > 0 && restanteMin.value > 0;
+  const deshabilitado = enviando.value || bloqueado;
+
+  const campo =
+    "h-12 w-full rounded-lg border bg-superficie px-4 text-base text-tinta placeholder:text-texto-apoyo " +
+    "focus:outline-none focus:ring-1 disabled:bg-fondo disabled:text-texto-apoyo";
+  const campoOk = "border-borde-fuerte focus:border-acento focus:ring-acento";
+  const campoMal = "border-alerta focus:border-alerta focus:ring-alerta";
+
+  return (
+    <div class="flex min-h-screen flex-col bg-fondo lg:flex-row">
+      {/* Panel de marca: escritorio */}
+      <aside class="hidden w-[640px] shrink-0 flex-col justify-between bg-tinta p-16 text-borde lg:flex">
+        <a href="/" class="self-start rounded-lg" aria-label="EDISYS, ir a la página principal">
+          <Logo tam={40} texto="text-3xl" />
+        </a>
+        <div class="flex flex-col gap-6">
+          <h1 class="font-titulo text-5xl font-medium leading-[1.15] text-white">{LEMA}</h1>
+          <p class="text-lg leading-relaxed text-texto-oscuro">
+            Recibos, balance, reservas y mantenimiento en un solo lugar para la administración, la junta y cada
+            propietario.
+          </p>
+          <ul class="mt-4 grid grid-cols-3 gap-3">
+            {TARJETAS.map((t) => (
+              <li key={t.titulo} class="flex flex-col gap-1 rounded-xl border border-superficie-oscura-2 p-4">
+                <span class="text-xs text-texto-oscuro-apoyo">{t.titulo}</span>
+                <span class="text-sm font-semibold text-white">{t.valor}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <p class="text-xs text-texto-oscuro-apoyo">Datos personales protegidos según la Ley 29733.</p>
+      </aside>
+
+      {/* Cabecera: móvil */}
+      <header class="flex flex-col gap-6 bg-tinta px-6 pb-8 pt-12 lg:hidden">
+        <a href="/" class="self-start rounded-lg" aria-label="EDISYS, ir a la página principal">
+          <Logo tam={36} texto="text-2xl" />
+        </a>
+        <h1 class="font-titulo text-3xl font-medium leading-tight text-white">{LEMA}</h1>
+      </header>
+
+      <main class="flex flex-1 justify-center lg:items-center">
+        <form
+          method="post"
+          action={loc.url.pathname + loc.url.search}
+          noValidate
+          preventdefault:submit
+          onSubmit$={enviar}
+          aria-busy={enviando.value}
+          class="flex w-full max-w-[400px] flex-col gap-5 px-6 py-8 lg:gap-6 lg:px-0 lg:py-12"
+        >
+          <input type="hidden" name="next" value={destino} />
+
+          <div class="hidden flex-col gap-2 lg:flex">
+            <h2 class="font-titulo text-4xl font-semibold">Ingresar</h2>
+            <p class="text-base text-texto-suave">Administración, junta, propietarios y personal del edificio.</p>
+          </div>
+          <h2 class="sr-only lg:hidden">Ingresar</h2>
+
+          {error.value && (
+            <div
+              role="alert"
+              class="rounded-lg border border-alerta-borde bg-alerta-suave p-4 text-sm leading-normal text-alerta"
+            >
+              <p class="font-semibold">
+                {bloqueado
+                  ? `Demasiados intentos. Podrás volver a intentar en ${restanteMin.value} ${restanteMin.value === 1 ? "minuto" : "minutos"}.`
+                  : error.value.mensaje}
+              </p>
+              {error.value.idPeticion && (
+                <p class="mt-1 text-alerta">
+                  Código para soporte: <span class="font-mono tabular-nums">{error.value.idPeticion}</span>
+                </p>
+              )}
+            </div>
+          )}
+          {nota.value && (
+            <div
+              role="status"
+              class="rounded-lg border border-acento-borde bg-acento-suave p-4 text-sm leading-normal text-acento-hover"
+            >
+              {nota.value}
+            </div>
+          )}
+
+          <fieldset disabled={enviando.value} class="flex flex-col gap-5 lg:gap-6">
+            <div class="flex flex-col gap-2">
+              <label for="correo" class="text-sm font-semibold">
+                Correo o DNI
+              </label>
+              <input
+                ref={correoRef}
+                id="correo"
+                name="correo"
+                type="text"
+                inputMode="email"
+                autoComplete="username"
+                autoCapitalize="none"
+                spellcheck={false}
+                autoFocus
+                required
+                bind:value={correo}
+                aria-invalid={errCorreo ? "true" : undefined}
+                aria-describedby={errCorreo ? "correo-error" : undefined}
+                class={[campo, errCorreo ? campoMal : campoOk]}
+              />
+              {errCorreo && (
+                <p id="correo-error" class="text-sm text-alerta">
+                  {errCorreo}
+                </p>
+              )}
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <label for="clave" class="text-sm font-semibold">
+                  Contraseña
+                </label>
+                <button
+                  type="button"
+                  onClick$={avisarOlvido}
+                  class="hidden text-sm text-acento underline-offset-2 hover:text-acento-hover hover:underline lg:inline"
+                >
+                  ¿La olvidaste?
+                </button>
+              </div>
+              <div class="relative">
+                <input
+                  ref={claveRef}
+                  id="clave"
+                  name="clave"
+                  type={verClave.value ? "text" : "password"}
+                  autoComplete="current-password"
+                  required
+                  bind:value={clave}
+                  aria-invalid={errClave ? "true" : undefined}
+                  aria-describedby={errClave ? "clave-error" : undefined}
+                  class={[campo, "pr-14", errClave ? campoMal : campoOk]}
+                />
+                <button
+                  type="button"
+                  onClick$={() => (verClave.value = !verClave.value)}
+                  aria-pressed={verClave.value}
+                  aria-controls="clave"
+                  aria-label={verClave.value ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  class="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-lg text-texto-suave hover:text-tinta focus-visible:outline focus-visible:outline-2 focus-visible:outline-acento"
+                >
+                  <IconoOjo abierto={!verClave.value} />
+                </button>
+              </div>
+              {errClave && (
+                <p id="clave-error" class="text-sm text-alerta">
+                  {errClave}
+                </p>
+              )}
+            </div>
+
+            <div class="flex items-center justify-between">
+              <label class="flex min-h-11 items-center gap-2 text-sm text-texto-suave lg:gap-3">
+                <input
+                  type="checkbox"
+                  name="recordar"
+                  bind:checked={recordar}
+                  class="h-5 w-5 rounded border-borde-fuerte accent-[var(--color-acento)]"
+                />
+                <span class="lg:hidden">Recordarme</span>
+                <span class="hidden lg:inline">Recordar este dispositivo</span>
+              </label>
+              <button
+                type="button"
+                onClick$={avisarOlvido}
+                class="min-h-11 text-sm text-acento underline-offset-2 hover:text-acento-hover hover:underline lg:hidden"
+              >
+                ¿Olvidaste tu clave?
+              </button>
+            </div>
+          </fieldset>
+
+          <button
+            type="submit"
+            disabled={deshabilitado}
+            class="flex h-13 items-center justify-center gap-2 rounded-lg bg-acento text-base font-semibold text-white hover:bg-acento-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento disabled:cursor-not-allowed disabled:opacity-70 lg:h-12"
+          >
+            {enviando.value && <Spinner />}
+            {enviando.value ? "Ingresando…" : "Ingresar"}
+          </button>
+
+          <div class="hidden items-center gap-3 text-xs text-texto-apoyo lg:flex" aria-hidden="true">
+            <div class="h-px flex-1 bg-borde" />o<div class="h-px flex-1 bg-borde" />
+          </div>
+
+          <button
+            type="button"
+            onClick$={avisarWhatsApp}
+            disabled={enviando.value}
+            class="h-13 rounded-lg border border-borde-fuerte bg-superficie text-base font-semibold text-tinta hover:bg-fondo focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento lg:h-12"
+          >
+            Recibir código por WhatsApp
+          </button>
+
+          <p class="text-center text-sm text-texto-apoyo">
+            ¿Eres propietario y no tienes cuenta? <a href="/#contacto">Pide tu acceso a la administración</a>
+          </p>
+
+          <div class="mt-auto rounded-xl border border-acento-borde bg-acento-suave p-4 text-sm leading-normal text-acento-hover lg:hidden">
+            Instala EDISYS en tu celular: menú del navegador, «Agregar a pantalla de inicio».
+          </div>
+        </form>
+      </main>
+    </div>
+  );
+});
+
+export const head: DocumentHead = {
+  title: "Ingresar · EDISYS",
+  meta: [
+    {
+      name: "description",
+      content: "Ingresa a EDISYS: recibos, balance, reservas y mantenimiento de tu edificio.",
+    },
+  ],
+};
