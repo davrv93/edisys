@@ -1,0 +1,52 @@
+import Icono from './Icono.jsx';
+import { Esqueleto } from './EstadosPantalla.jsx';
+
+const TONOS = {
+  neutro: { caja: 'bg-superficie border-borde', titulo: 'text-texto-apoyo', valor: 'text-tinta', nota: 'text-texto-apoyo' },
+  acento: { caja: 'bg-acento-suave border-acento-borde', titulo: 'text-acento-hover', valor: 'text-acento', nota: 'text-acento-hover' },
+  alerta: { caja: 'bg-alerta-suave border-alerta-borde', titulo: 'text-alerta-texto', valor: 'text-alerta', nota: 'text-alerta-texto' },
+  aviso: { caja: 'bg-aviso-suave border-aviso-borde', titulo: 'text-aviso-texto', valor: 'text-aviso', nota: 'text-aviso-texto' },
+};
+
+/**
+ * KPI: título, valor grande (Fraunces, tabular), nota, variación con TEXTO (no solo color), barra opcional y enlace.
+ * variacion: { texto: '+12 % vs. agosto', buena: true|false }
+ */
+export default function TarjetaKPI({ titulo, valor, nota, tono = 'neutro', variacion, icono, to, barra, cargando, tamValor = 'text-2xl', verDetalle }) {
+  const t = TONOS[tono] || TONOS.neutro;
+  const cuerpo = (
+    <>
+      <span className={`flex items-center gap-2 text-sm ${t.titulo}`}>
+        {icono && <Icono nombre={icono} tam={16} />}
+        {titulo}
+      </span>
+      {cargando ? (
+        <Esqueleto className="h-8 w-3/4" />
+      ) : (
+        <span className={`font-titulo font-semibold tabular-nums leading-tight ${tamValor} ${t.valor}`}>{valor}</span>
+      )}
+      {barra != null && (
+        <div className="h-1.5 rounded-full bg-borde" role="progressbar" aria-valuenow={Math.round(barra)} aria-valuemin={0} aria-valuemax={100}>
+          <div className="h-1.5 rounded-full bg-acento" style={{ width: `${Math.min(100, Math.max(0, barra))}%` }} />
+        </div>
+      )}
+      {nota && <span className={`text-xs ${t.nota}`}>{nota}</span>}
+      {variacion && (
+        <span className={`inline-flex items-center gap-1 text-xs font-semibold ${variacion.buena ? 'text-acento' : 'text-alerta'}`}>
+          <Icono nombre={variacion.texto?.startsWith('-') ? 'abajo' : 'arriba'} tam={12} />
+          {variacion.texto} · {variacion.buena ? 'bien' : 'a vigilar'}
+        </span>
+      )}
+      {to && verDetalle && <span className="text-xs font-semibold text-acento">{verDetalle} →</span>}
+    </>
+  );
+  const clases = `flex min-w-0 flex-col gap-2 rounded-xl border p-4 sm:p-5 ${t.caja}`;
+  if (to) {
+    return (
+      <a href={to} className={`${clases} transition-shadow hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-acento`}>
+        {cuerpo}
+      </a>
+    );
+  }
+  return <div className={clases}>{cuerpo}</div>;
+}

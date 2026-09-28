@@ -1,0 +1,21 @@
+@import '../../packages/tokens/tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-fondo font-sans text-tinta antialiased;
+    font-variant-numeric: tabular-nums;
+  }
+  a {
+    @apply text-acento hover:text-acento-hover;
+  }
+  :focus-visible {
+    outline-color: var(--color-acento);
+  }
+}

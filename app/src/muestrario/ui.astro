@@ -1,0 +1,17 @@
+---
+// Solo en desarrollo (inyectada por astro.config.mjs): muestrario de los componentes compartidos.
+import '../index.css';
+import Muestrario from './Muestrario.jsx';
+---
+<!doctype html>
+<html lang="es-PE">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Muestrario · EDISYS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <Muestrario client:only="react" />
+  </body>
+</html>

@@ -16,7 +16,7 @@ describe('menú por rol (§2.5)', () => {
     expect(m.lateral.map((i) => i.id)).not.toContain('roles');
   });
   it('operario: Lecturas · Reportar', () => {
-    expect(menuPara('operario', con('operario')).movil.map((i) => i.id)).toEqual(['lecturas', 'reportar']);
+    expect(menuPara('operario', con('operario')).movil.map((i) => i.id)).toEqual(['medidores', 'reportar']);
   });
   it('quita lo que no permite el rol', () => {
     const m = menuPara('administrador', (p) => p !== 'roles.administrar');
@@ -26,7 +26,7 @@ describe('menú por rol (§2.5)', () => {
     expect(destinoPorRol('administrador')).toBe('inicio');
     expect(destinoPorRol('junta')).toBe('inicio');
     expect(destinoPorRol('propietario')).toBe('portal');
-    expect(destinoPorRol('operario')).toBe('lecturas');
+    expect(destinoPorRol('operario')).toBe('medidores');
     expect(destinoPorRol('tecnico')).toBe('mantenimiento');
   });
 });

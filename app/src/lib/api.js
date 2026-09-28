@@ -3,7 +3,7 @@
 // en el build de producción esa rama desaparece y se llama al API real).
 
 export const BASE = '/api/v1';
-export const MOCK = import.meta.env?.VITE_MOCK === '1';
+export const MOCK = import.meta.env.VITE_MOCK === '1';
 
 export class ApiError extends Error {
   constructor(status, cuerpo = {}) {
@@ -43,7 +43,7 @@ export function construirQuery(query) {
 
 export function irAlLogin() {
   const siguiente = window.location.pathname + window.location.search;
-  window.location.assign(`/login?next=${encodeURIComponent(siguiente)}`);
+  window.location.assign(`/login/?next=${encodeURIComponent(siguiente)}`);
 }
 
 let refrescando = null;

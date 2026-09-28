@@ -3,5 +3,5 @@ import preset from '../packages/tokens/tailwind-preset.js';
 /** @type {import('tailwindcss').Config} */
 export default {
   presets: [preset],
-  content: ['./index.html', './src/**/*.{js,jsx}'],
+  content: ['./src/**/*.{astro,js,jsx}'],
 };

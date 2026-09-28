@@ -1,0 +1,96 @@
+// Navegación entre las páginas Astro (una por pantalla). No hay router de cliente:
+// cambiar de pantalla es cargar otra página estática; los detalles van en la query (?id=…).
+import { useCallback, useEffect, useState } from 'react';
+
+export const BASE_APP = '/app';
+
+/** Página → ruta pública (cada una se sirve como /app/<ruta>/index.html). */
+export const PAGINAS = {
+  inicio: '/',
+  balance: '/balance/',
+  recibos: '/recibos/',
+  unidades: '/unidades/',
+  reservas: '/reservas/',
+  medidores: '/medidores/',
+  mantenimiento: '/mantenimiento/',
+  portal: '/portal/',
+  roles: '/roles/',
+  whatsapp: '/whatsapp/',
+  chatbot: '/chatbot/',
+  analitica: '/analitica/',
+};
+
+function qs(query) {
+  if (!query) return '';
+  const sp = query instanceof URLSearchParams ? query : new URLSearchParams();
+  if (!(query instanceof URLSearchParams)) {
+    for (const [k, v] of Object.entries(query)) if (v !== undefined && v !== null && v !== '') sp.set(k, String(v));
+  }
+  const s = sp.toString();
+  return s ? `?${s}` : '';
+}
+
+/** ruta('recibos', { id: 9005 }) → «/app/recibos/?id=9005». */
+export function ruta(pagina, query) {
+  return BASE_APP + (PAGINAS[pagina] ?? `/${pagina}/`) + qs(query);
+}
+
+/** Qué página es la actual, a partir de la URL. */
+export function paginaActual(pathname = typeof window !== 'undefined' ? window.location.pathname : '/app/') {
+  const resto = pathname.replace(/^\/app/, '').replace(/\/+$/, '/') || '/';
+  const hallada = Object.entries(PAGINAS).find(([, r]) => r === resto || r === resto + '/');
+  return hallada ? hallada[0] : 'inicio';
+}
+
+export function navegar(url, { reemplazar = false } = {}) {
+  if (reemplazar) window.location.replace(url);
+  else window.location.assign(url);
+}
+
+const EVENTO = 'edisys:query';
+
+/**
+ * Parámetros de la query de la página actual, con setter que usa history (sin recargar).
+ * setQuery({ id: 5 }) fusiona; setQuery(sp => …) recibe una copia; { reemplazar: true } no deja historial.
+ */
+export function useQuery() {
+  const leer = () => new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+  const [sp, setSp] = useState(leer);
+  useEffect(() => {
+    const sync = () => setSp(leer());
+    window.addEventListener('popstate', sync);
+    window.addEventListener(EVENTO, sync);
+    return () => {
+      window.removeEventListener('popstate', sync);
+      window.removeEventListener(EVENTO, sync);
+    };
+  }, []);
+  const setQuery = useCallback((cambio, { reemplazar = false } = {}) => {
+    const actual = new URLSearchParams(window.location.search);
+    let nueva;
+    if (typeof cambio === 'function') nueva = cambio(new URLSearchParams(actual));
+    else if (cambio instanceof URLSearchParams) nueva = cambio;
+    else {
+      nueva = new URLSearchParams(actual);
+      for (const [k, v] of Object.entries(cambio)) {
+        if (v === undefined || v === null || v === '') nueva.delete(k);
+        else nueva.set(k, String(v));
+      }
+    }
+    const s = nueva.toString();
+    const url = window.location.pathname + (s ? `?${s}` : '');
+    if (reemplazar) window.history.replaceState(null, '', url);
+    else window.history.pushState(null, '', url);
+    window.dispatchEvent(new Event(EVENTO));
+  }, []);
+  return [sp, setQuery];
+}
+
+/** Enlace a otra pantalla (recarga la página Astro correspondiente). */
+export function Enlace({ pagina, query, href, children, ...resto }) {
+  return (
+    <a href={href || ruta(pagina, query)} {...resto}>
+      {children}
+    </a>
+  );
+}
