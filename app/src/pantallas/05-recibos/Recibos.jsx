@@ -19,7 +19,7 @@ export default function Recibos() {
   const s = useSesion();
   const esAdmin = s.tiene('pagos.registrar');
   const propio = !s.tiene('recibos.emitir') && s.tiene('portal.ver');
-  const [periodo, setPeriodo] = usePeriodo();
+  const [periodo] = usePeriodo();
   const [q, setQuery] = useQuery();
   const { dialog, dialogEl } = useDialog();
   const { toast } = useToast();
@@ -159,7 +159,7 @@ export default function Recibos() {
   };
 
   const vistaLista = (
-    <section className={`flex min-w-0 flex-col gap-3 lg:w-[520px] lg:shrink-0 ${idSel ? 'hidden lg:flex' : 'flex'}`}>
+    <section className={`flex min-w-0 flex-col gap-3 lg:w-[440px] lg:shrink-0 xl:w-[480px] ${idSel ? 'hidden lg:flex' : 'flex'}`}>
       {!propio && (
         <div className="flex flex-wrap items-center gap-2">
           {chip('', 'Todos', conteos?.todos)}
@@ -310,10 +310,10 @@ export function DetalleRecibo({ r, edificio, acciones }) {
             {r.participacion_pct != null && `Participación ${formatearPct(r.participacion_pct, 2)} · `}Emitido {formatearFecha(r.emitido)} · Vence {formatearFecha(r.vence)}
           </span>
         </div>
-        <Insignia estado={enRevision && r.estado !== 'pagado' ? 'pendiente_validacion' : r.estado} texto={textoEstado} tam="md" />
+        <Insignia estado={enRevision && r.estado !== 'pagado' ? 'pendiente_validacion' : r.estado} texto={textoEstado} tam="md" className="self-start whitespace-normal" />
       </div>
 
-      <div className="flex flex-col gap-6 md:flex-row md:items-start">
+      <div className="flex flex-col gap-6 2xl:flex-row 2xl:items-start">
         <table className="w-full flex-1 text-sm">
           <caption className="sr-only">Desglose del recibo</caption>
           <tbody>
@@ -328,7 +328,7 @@ export function DetalleRecibo({ r, edificio, acciones }) {
             ))}
             <tr>
               <td className="pt-4 text-lg font-semibold">Total</td>
-              <td className="pt-4 text-right font-titulo text-3xl font-semibold tabular-nums">{formatearSoles(r.total_cts)}</td>
+              <td className="pt-4 whitespace-nowrap text-right font-titulo text-3xl font-semibold tabular-nums">{formatearSoles(r.total_cts)}</td>
             </tr>
             {r.saldo_cts > 0 && r.saldo_cts !== r.total_cts && (
               <tr>
@@ -339,7 +339,7 @@ export function DetalleRecibo({ r, edificio, acciones }) {
           </tbody>
         </table>
         {foto && (
-          <figure className="flex w-full flex-col gap-2 md:w-[220px] md:shrink-0">
+          <figure className="flex w-full flex-col gap-2 sm:max-w-[260px] 2xl:w-[220px] 2xl:shrink-0">
             <div className="flex h-40 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl bg-superficie-oscura text-xs text-texto-claro">
               {foto.url ? (
                 <img src={foto.url} alt={`Foto del medidor ${foto.medidor || ''}`} className="h-full w-full object-cover" />

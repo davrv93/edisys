@@ -14,6 +14,7 @@ describe('imagen', () => {
     expect(validarArchivo({ type: 'application/zip', size: 1 })).toMatch(/tipo/);
     expect(validarArchivo({ type: 'video/mp4', size: 40 * mb }, { tipos: ['video/'] })).toBeNull();
     expect(validarArchivo(null)).toMatch(/Elige/);
+    expect(validarArchivo({ type: '', name: 'Padron.XLSX', size: 1 }, { tipos: [], extensiones: ['.xlsx'] })).toBeNull();
   });
   it('sin EXIF devuelve null sin romperse', () => {
     expect(leerFechaExif(new Uint8Array([0xff, 0xd8, 0xff, 0xd9, 0, 0]).buffer)).toBeNull();

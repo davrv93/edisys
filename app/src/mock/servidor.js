@@ -288,7 +288,7 @@ en('PATCH', '/edificios/:eid/reservas/:rid', ({ params, body }) => {
 en('GET', '/edificios/:eid/lecturas', () => {
   if (!db.lecturas) inicializarLecturas();
   const leidas = db.lecturas.filter((l) => l.estado !== 'pendiente').length;
-  return { periodo: PERIODO, tipo: 'agua', corte: '2026-09-30', tarifa_cts: 1400, recibo_general_cts: 500000, avance: { leidas, total: db.lecturas.length }, medidores: db.lecturas };
+  return { periodo: PERIODO, tipo: 'agua', corte: '2026-09-30', tarifa_cts: 1400, recibo_general_cts: 500000, total_unidades_cts: 480000, avance: { leidas, total: db.lecturas.length }, medidores: db.lecturas };
 });
 en('POST', '/edificios/:eid/medidores/:mid/lecturas', ({ params, form }) => {
   if (!db.lecturas) inicializarLecturas();
@@ -458,3 +458,15 @@ en('GET', '/analitica/resumen', ({ query }) => {
   return { ...ANALITICA, cobranza_mensual: ANALITICA.cobranza_mensual.filter((x) => dentro(x.periodo)), morosidad_mensual: ANALITICA.morosidad_mensual.filter((x) => dentro(x.periodo)) };
 });
 en('POST', '/edificios/:eid/egresos', ({ form }) => ({ id: Date.now(), sin_sustento: !leerForm(form, 'documento') }));
+en('GET', '/edificios/:eid/unidades/:uid', ({ params }) => {
+  const u = UNIDADES.find((x) => String(x.id) === params.uid);
+  if (!u) throw error(404, 'NO_ENCONTRADO', 'No encontramos esta unidad.');
+  return {
+    id: u.id, codigo: u.codigo, tipo: u.tipo, piso: u.piso, participacion_pct: u.participacion_pct,
+    personas: [{ nombre: u.propietario, rol: 'propietario', dni: u.propietario_dni.slice(0, 4) + '****', celular: u.celular, correo: u.correo, desde: '2019-03-01', hasta: null }, ...(u.inquilino ? [{ nombre: u.inquilino, rol: 'inquilino', desde: '2026-01-01', hasta: null }] : [])],
+    historial: u.codigo === '201' ? [{ nombre: 'Propietario anterior Demo', rol: 'propietario', desde: '2012-05-01', hasta: '2019-02-28' }] : [],
+    medidores: [{ serie: `A-${u.codigo}`, tipo: 'agua', lectura_inicial: 1200 }],
+    deuda_inicial: u.moroso ? [{ periodo: '2026-08', monto_cts: 0 }] : [],
+  };
+});
+en('POST', '/edificios/:eid/periodos/:p/recibo-general', () => ({ id: Date.now() }));

@@ -90,10 +90,12 @@ export async function comprimirImagen(archivo, { max = 1600, objetivo = 300 * 10
 }
 
 /** Tope de tamaño por tipo (§2.2 SubirArchivo). */
-export function validarArchivo(archivo, { tipos = ['application/pdf', 'image/'], maxMb = 10, maxMbVideo = 50 } = {}) {
+export function validarArchivo(archivo, { tipos = ['application/pdf', 'image/'], extensiones = [], maxMb = 10, maxMbVideo = 50 } = {}) {
   if (!archivo) return 'Elige un archivo.';
   const tipo = archivo.type || '';
-  const ok = tipos.some((t) => (t.endsWith('/') ? tipo.startsWith(t) : tipo === t));
+  const nombre = String(archivo.name || '').toLowerCase();
+  // Algunos navegadores no informan el tipo de un .xlsx: entonces decide la extensión.
+  const ok = tipos.some((t) => (t.endsWith('/') ? tipo.startsWith(t) : tipo === t)) || extensiones.some((e) => nombre.endsWith(e));
   if (!ok) return 'Ese tipo de archivo no se acepta aquí.';
   const tope = tipo.startsWith('video/') ? maxMbVideo : maxMb;
   if (archivo.size > tope * 1024 * 1024) return `El archivo pesa más de ${tope} MB.`;

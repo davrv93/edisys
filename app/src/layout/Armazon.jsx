@@ -9,14 +9,15 @@ const ArmazonCtx = createContext({ setModoTarea: () => {} });
 /**
  * Pantallas de «una tarea» en el celular (reservar, reportar, leer medidores):
  * ocultan la cabecera y la barra inferior del armazón y ponen las suyas, como en el lienzo.
+ * Con modo 'cabecera' solo se oculta la cabecera (el portal trae la suya y conserva las pestañas).
  */
-export function useModoTarea(activo = true) {
+export function useModoTarea(activo = true, modo = 'tarea') {
   const { setModoTarea } = useContext(ArmazonCtx);
   useEffect(() => {
     if (!activo) return undefined;
-    setModoTarea(true);
+    setModoTarea(modo);
     return () => setModoTarea(false);
-  }, [activo, setModoTarea]);
+  }, [activo, modo, setModoTarea]);
 }
 
 /** ¿El ítem del menú corresponde a la página actual? (con query opcional, p. ej. ?reportar=1) */
@@ -104,12 +105,12 @@ export default function Armazon({ pagina, children }) {
             </header>
           )}
 
-          <main id="contenido" className={`flex min-w-0 flex-1 flex-col ${modoTarea ? '' : 'pb-20 lg:pb-0'}`}>
+          <main id="contenido" className={`flex min-w-0 flex-1 flex-col ${modoTarea === 'tarea' ? '' : 'pb-20 lg:pb-0'}`}>
             {children}
           </main>
 
           {/* Móvil: barra inferior según el rol */}
-          {!modoTarea && (
+          {modoTarea !== 'tarea' && (
             <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-borde bg-superficie pb-[env(safe-area-inset-bottom)] lg:hidden" aria-label="Navegación">
               <div className="grid h-16" style={{ gridTemplateColumns: `repeat(${menu.movil.length + (menu.mas.length ? 1 : 0)}, minmax(0, 1fr))` }}>
                 {menu.movil.map((it) => {

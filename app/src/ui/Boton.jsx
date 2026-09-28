@@ -35,7 +35,7 @@ const Boton = forwardRef(function Boton(
   ref,
 ) {
   const clases = [
-    'inline-flex items-center justify-center gap-2 rounded-lg font-semibold whitespace-nowrap transition-colors select-none',
+    'inline-flex max-w-full items-center justify-center gap-2 rounded-lg font-semibold whitespace-nowrap transition-colors select-none',
     'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento',
     'disabled:opacity-50 disabled:cursor-not-allowed aria-disabled:opacity-50',
     VARIANTES[variante] || VARIANTES.primario,
@@ -46,7 +46,7 @@ const Boton = forwardRef(function Boton(
   const contenido = (
     <>
       {cargando ? <Spinner /> : icono ? <Icono nombre={icono} tam={18} /> : null}
-      {children}
+      {children != null && children !== false && <span className="min-w-0 truncate">{children}</span>}
       {iconoDer && !cargando ? <Icono nombre={iconoDer} tam={18} /> : null}
     </>
   );

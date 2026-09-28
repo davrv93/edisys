@@ -6,13 +6,13 @@ import { validarArchivo } from '../lib/imagen.js';
  * PDF, imagen o video para vouchers e informes. Tope 10 MB (PDF/imagen) y 50 MB (video).
  * Valida el tipo ANTES de subir. onArchivo(file | null).
  */
-export default function SubirArchivo({ etiqueta = 'Adjuntar archivo', ayuda = 'PDF o imagen, hasta 10 MB', aceptar = 'application/pdf,image/*', tipos = ['application/pdf', 'image/'], archivo, onArchivo, error: errorExterno }) {
+export default function SubirArchivo({ etiqueta = 'Adjuntar archivo', ayuda = 'PDF o imagen, hasta 10 MB', aceptar = 'application/pdf,image/*', tipos = ['application/pdf', 'image/'], extensiones = [], archivo, onArchivo, error: errorExterno }) {
   const id = useId();
   const ref = useRef(null);
   const [error, setError] = useState(null);
   const elegir = (f) => {
     if (!f) return;
-    const e = validarArchivo(f, { tipos });
+    const e = validarArchivo(f, { tipos, extensiones });
     if (e) {
       setError(e);
       onArchivo?.(null);

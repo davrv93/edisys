@@ -26,7 +26,8 @@ const TODOS = [
 /** Permisos por defecto si /yo no los trae (semilla de la guía). */
 export const PERMISOS_POR_ROL = {
   superadmin: TODOS,
-  administrador: TODOS.filter((p) => p !== 'trabajos.aprobar' && p !== 'portal.ver'),
+  // El administrador aprueba lo que está bajo el umbral; por encima decide la junta (lo valida el API).
+  administrador: TODOS.filter((p) => p !== 'portal.ver'),
   junta: ['dashboard.ver', 'balance.ver', 'balance.ver_documentos', 'recibos.ver', 'unidades.ver', 'reservas.ver', 'lecturas.ver', 'incidencias.ver', 'trabajos.aprobar', 'analitica.ver'],
   propietario: ['portal.ver', 'balance.ver', 'recibos.ver', 'reservas.crear', 'incidencias.reportar'],
   inquilino: ['portal.ver', 'reservas.crear', 'incidencias.reportar'],

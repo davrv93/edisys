@@ -12,7 +12,7 @@ const TONOS = {
  * KPI: título, valor grande (Fraunces, tabular), nota, variación con TEXTO (no solo color), barra opcional y enlace.
  * variacion: { texto: '+12 % vs. agosto', buena: true|false }
  */
-export default function TarjetaKPI({ titulo, valor, nota, tono = 'neutro', variacion, icono, to, barra, cargando, tamValor = 'text-2xl', verDetalle }) {
+export default function TarjetaKPI({ titulo, valor, nota, tono = 'neutro', variacion, icono, to, barra, cargando, tamValor = 'text-xl sm:text-2xl xl:text-xl 2xl:text-2xl', verDetalle }) {
   const t = TONOS[tono] || TONOS.neutro;
   const cuerpo = (
     <>
@@ -23,7 +23,7 @@ export default function TarjetaKPI({ titulo, valor, nota, tono = 'neutro', varia
       {cargando ? (
         <Esqueleto className="h-8 w-3/4" />
       ) : (
-        <span className={`font-titulo font-semibold tabular-nums leading-tight ${tamValor} ${t.valor}`}>{valor}</span>
+        <span className={`whitespace-nowrap font-titulo font-semibold tabular-nums leading-tight ${tamValor} ${t.valor}`}>{valor}</span>
       )}
       {barra != null && (
         <div className="h-1.5 rounded-full bg-borde" role="progressbar" aria-valuenow={Math.round(barra)} aria-valuemin={0} aria-valuemax={100}>
