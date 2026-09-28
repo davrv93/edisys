@@ -1,0 +1,11 @@
+---
+interface Props { tam?: number; clase?: string }
+const { tam = 32, clase = "text-2xl" } = Astro.props;
+---
+<span class="flex items-center gap-3">
+  <svg width={tam} height={tam} viewBox="0 0 32 32" aria-hidden="true">
+    <rect width="32" height="32" rx="8" class="fill-acento"></rect>
+    <path d="M8 24h16M10.5 19h11M13 14h6M16 9v0.01" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" fill="none"></path>
+  </svg>
+  <span class:list={["font-titulo font-semibold tracking-[0.02em]", clase]}>EDISYS</span>
+</span>

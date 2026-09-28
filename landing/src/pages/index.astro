@@ -1,0 +1,554 @@
+---
+import Logo from "../components/Logo.astro";
+import "../styles/global.css";
+
+const titulo = "EDISYS · Administración de edificios con transparencia";
+const descripcion =
+  "Recibos por departamento, balance por nodos, reservas, medidores con foto, mantenimiento aprobado por la junta, WhatsApp con chatbot y analítica. Software de administración de edificios en Perú.";
+const canonica = new URL(Astro.url.pathname, Astro.site).href;
+const imagenOg = new URL("/og.png", Astro.site).href;
+
+const roles = [
+  { titulo: "Administración", texto: "Emite recibos, concilia con el banco y publica el balance." },
+  { titulo: "Junta", texto: "Aprueba presupuestos y fondos desde el celular, con sustento." },
+  { titulo: "Propietarios", texto: "Ven su cuenta en cuatro cifras, reservan y reportan." },
+  { titulo: "Personal", texto: "Lee medidores y reporta incidencias con una foto." },
+];
+
+const modulos = [
+  {
+    etiqueta: "COBRANZA",
+    titulo: "Recibos por departamento",
+    texto: "Cuota, consumos, reservas, multas y saldo anterior. Recibo interno o comprobante SUNAT según el edificio.",
+  },
+  {
+    etiqueta: "BALANCE",
+    titulo: "De lo macro a lo micro",
+    texto: "Edificio, rubro, concepto y documento de sustento, cada nivel desplegable y cuadrado con el banco.",
+  },
+  {
+    etiqueta: "MOROSIDAD",
+    titulo: "Deuda visible, mes por mes",
+    texto: "Antigüedad por unidad, pagos parciales y bloqueo configurable de reservas.",
+  },
+  {
+    etiqueta: "RESERVAS",
+    titulo: "Áreas comunes sin doble reserva",
+    texto: "Parrillas, sala común y terraza. Pago inmediato o cargo al recibo.",
+  },
+  {
+    etiqueta: "MEDIDORES",
+    titulo: "Agua y energía con foto",
+    texto: "El operario fotografía, la lectura calcula el consumo y la diferencia común se reparte sola.",
+  },
+  {
+    etiqueta: "MANTENIMIENTO",
+    titulo: "Reportar, validar, aprobar",
+    texto: "Informe y costos publicados, aprobación de la junta y estado visible para quien reportó.",
+  },
+  {
+    etiqueta: "WHATSAPP",
+    titulo: "Chatbot que atiende por ti",
+    texto: "El propietario consulta su saldo, pide su recibo o reporta una incidencia por WhatsApp. Los avisos de cobro y de reservas salen solos.",
+    nuevo: true,
+  },
+  {
+    etiqueta: "ANALÍTICA",
+    titulo: "Tendencias que se leen solas",
+    texto: "Cobranza, morosidad, consumo de agua y gasto por rubro mes a mes, con alertas cuando algo se sale de lo normal.",
+    nuevo: true,
+  },
+  {
+    etiqueta: "ROLES",
+    titulo: "Cada quien ve lo suyo",
+    texto: "Administración, junta, propietario, inquilino, operario y técnico, con permisos por edificio.",
+  },
+];
+
+const pasos = [
+  {
+    titulo: "Cargamos tu padrón",
+    texto: "Unidades, propietarios y participaciones desde tu Excel. Revisas y confirmas antes de emitir nada.",
+  },
+  {
+    titulo: "Registras con sustento",
+    texto: "Cobros, gastos y lecturas de medidor con su voucher o su foto. El reparto de áreas comunes sale solo.",
+  },
+  {
+    titulo: "Publicas el balance",
+    texto: "Cada propietario ve su recibo y el balance del edificio desde el celular, y la junta aprueba en línea.",
+  },
+];
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "EDISYS",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  description: descripcion,
+  inLanguage: "es-PE",
+  url: Astro.site?.href,
+};
+---
+
+<!doctype html>
+<html lang="es-PE">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{titulo}</title>
+    <meta name="description" content={descripcion} />
+    <link rel="canonical" href={canonica} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#155E75" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_PE" />
+    <meta property="og:site_name" content="EDISYS" />
+    <meta property="og:title" content={titulo} />
+    <meta property="og:description" content={descripcion} />
+    <meta property="og:url" content={canonica} />
+    <meta property="og:image" content={imagenOg} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&display=swap"
+    />
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  </head>
+  <body class="flex min-h-screen flex-col">
+    <a href="#contenido" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-superficie focus:p-3">
+      Saltar al contenido
+    </a>
+
+    <header class="sticky top-0 z-40 border-b border-borde bg-superficie">
+      <div class="mx-auto flex h-16 max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-8 lg:h-20 lg:px-20">
+        <a href="/" class="rounded-lg text-tinta no-underline hover:text-tinta" aria-label="EDISYS, inicio">
+          <Logo tam={32} clase="text-2xl" />
+        </a>
+        <nav aria-label="Secciones" class="hidden gap-8 text-base md:flex">
+          <a href="#modulos" class="text-egreso no-underline hover:text-acento">Módulos</a>
+          <a href="#reparto" class="text-egreso no-underline hover:text-acento">Medidores</a>
+          <a href="#transparencia" class="text-egreso no-underline hover:text-acento">Transparencia</a>
+          <a href="#planes" class="text-egreso no-underline hover:text-acento">Planes</a>
+        </nav>
+        <div class="flex gap-3">
+          <a href="/login/" class="boton-secundario">Ingresar</a>
+          <a href="#contacto" class="boton-primario hidden sm:inline-flex">Solicitar demo</a>
+        </div>
+      </div>
+    </header>
+
+    <main id="contenido" class="mx-auto w-full max-w-[1440px]">
+      <!-- Portada -->
+      <section class="grid items-center gap-12 px-4 pb-16 pt-12 sm:px-8 lg:grid-cols-2 lg:gap-16 lg:px-20 lg:pb-20 lg:pt-24">
+        <div class="flex flex-col gap-6">
+          <span class="self-start rounded-full bg-acento-suave px-3 py-1 text-sm font-semibold text-acento-hover">
+            Property + facility para edificios en Perú
+          </span>
+          <h1 class="font-titulo text-4xl font-semibold leading-[1.08] sm:text-5xl xl:text-6xl">
+            Administra el edificio. Rinde cuentas sin Excel.
+          </h1>
+          <p class="text-lg leading-relaxed text-egreso sm:text-xl">
+            Recibos por departamento, balance que baja de lo macro a cada comprobante, reservas pagadas en línea,
+            lecturas de medidor con foto y mantenimiento aprobado por la junta.
+          </p>
+          <div class="flex flex-wrap gap-3">
+            <a href="#contacto" class="boton-primario h-13 px-6">Solicitar demo</a>
+            <a href="#modulos" class="boton-secundario h-13 px-6">Ver módulos</a>
+          </div>
+        </div>
+
+        <figure
+          class="flex flex-col gap-4 rounded-xl border border-borde bg-superficie p-5 shadow-[0_20px_40px_-24px_rgba(15,23,42,0.25)] sm:p-6"
+          aria-label="Ejemplo de la vista del propietario con cifras de demostración"
+        >
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="font-semibold">Edificio Demo · Setiembre 2026</span>
+            <span class="text-xs text-texto-apoyo">Vista del propietario</span>
+          </div>
+          <dl class="grid grid-cols-2 gap-3">
+            <div class="flex flex-col gap-1 rounded-lg bg-fondo p-4">
+              <dt class="text-xs text-texto-apoyo">Ingresos</dt>
+              <dd class="whitespace-nowrap font-titulo text-xl font-semibold min-[400px]:text-2xl sm:text-3xl">S/ 19.460</dd>
+            </div>
+            <div class="flex flex-col gap-1 rounded-lg bg-fondo p-4">
+              <dt class="text-xs text-texto-apoyo">Egresos</dt>
+              <dd class="whitespace-nowrap font-titulo text-xl font-semibold min-[400px]:text-2xl sm:text-3xl">S/ 18.950</dd>
+            </div>
+            <div class="flex flex-col gap-1 rounded-lg bg-acento-suave p-4">
+              <dt class="text-xs text-acento-hover">Saldo del mes</dt>
+              <dd class="whitespace-nowrap font-titulo text-xl font-semibold text-acento min-[400px]:text-2xl sm:text-3xl">S/ 510</dd>
+            </div>
+            <div class="flex flex-col gap-1 rounded-lg bg-alerta-suave p-4">
+              <dt class="text-xs text-alerta-texto">Morosidad</dt>
+              <dd class="whitespace-nowrap font-titulo text-xl font-semibold text-alerta min-[400px]:text-2xl sm:text-3xl">13,1 %</dd>
+            </div>
+          </dl>
+          <figcaption class="text-xs text-texto-apoyo">Cifras de demostración.</figcaption>
+        </figure>
+      </section>
+
+      <!-- Para quién -->
+      <section
+        aria-label="Para quién es EDISYS"
+        class="grid gap-8 border-y border-borde bg-superficie px-4 py-12 sm:grid-cols-2 sm:px-8 lg:grid-cols-4 lg:px-20"
+      >
+        {
+          roles.map((r) => (
+            <div class="flex flex-col gap-2">
+              <h2 class="font-titulo text-2xl font-semibold">{r.titulo}</h2>
+              <p class="text-base leading-normal text-texto-suave">{r.texto}</p>
+            </div>
+          ))
+        }
+      </section>
+
+      <!-- Módulos -->
+      <section id="modulos" class="flex flex-col gap-10 px-4 py-16 sm:px-8 lg:px-20 lg:py-24">
+        <h2 class="max-w-[720px] font-titulo text-3xl font-semibold leading-[1.1] sm:text-4xl lg:text-5xl">
+          Todo lo que hoy vive en Excel y en capturas de WhatsApp.
+        </h2>
+        <ul class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {
+            modulos.map((m) => (
+              <li class="flex flex-col gap-3 rounded-xl border border-borde bg-superficie p-7">
+                <span class="flex items-center gap-2">
+                  <span class="etiqueta-seccion text-acento">{m.etiqueta}</span>
+                  {m.nuevo && (
+                    <span class="rounded-full border border-acento-borde bg-acento-suave px-2 py-0.5 text-xs font-semibold text-acento-hover">
+                      Nuevo
+                    </span>
+                  )}
+                </span>
+                <h3 class="text-xl font-semibold">{m.titulo}</h3>
+                <p class="text-base leading-normal text-texto-suave">{m.texto}</p>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
+      <!-- Reparto automático -->
+      <section
+        id="reparto"
+        class="grid items-center gap-12 bg-tinta px-4 py-16 text-borde sm:px-8 lg:grid-cols-2 lg:gap-16 lg:p-20"
+      >
+        <div class="flex flex-col gap-5">
+          <span class="etiqueta-seccion text-acento-oscuro">REPARTO AUTOMÁTICO</span>
+          <h2 class="font-titulo text-3xl font-semibold leading-[1.1] text-white sm:text-4xl lg:text-5xl">
+            La diferencia del recibo general ya no se discute.
+          </h2>
+          <p class="text-lg leading-relaxed text-texto-claro">
+            Lo que marcan los medidores se cobra a cada departamento. Lo que queda (riego, limpieza, áreas comunes) se
+            reparte por participación.
+          </p>
+        </div>
+        <dl class="flex flex-col gap-3" aria-label="Ejemplo de reparto con cifras de demostración">
+          <div class="flex items-center justify-between gap-4 rounded-xl border border-superficie-oscura-2 px-5 py-4 sm:px-6 sm:py-5">
+            <dt class="text-base sm:text-lg">Recibo general del edificio</dt>
+            <dd class="shrink-0 font-titulo text-2xl font-semibold text-white sm:text-3xl">S/ 5.000</dd>
+          </div>
+          <div class="flex items-center justify-between gap-4 rounded-xl border border-superficie-oscura-2 px-5 py-4 sm:px-6 sm:py-5">
+            <dt class="text-base sm:text-lg">Suma de medidores de departamentos</dt>
+            <dd class="shrink-0 font-titulo text-2xl font-semibold text-white sm:text-3xl">S/ 4.800</dd>
+          </div>
+          <div class="flex items-center justify-between gap-4 rounded-xl bg-acento px-5 py-4 sm:px-6 sm:py-5">
+            <dt class="text-base text-white sm:text-lg">Áreas comunes, repartido por participación</dt>
+            <dd class="shrink-0 font-titulo text-2xl font-semibold text-white sm:text-3xl">S/ 200</dd>
+          </div>
+        </dl>
+      </section>
+
+      <!-- Transparencia -->
+      <section id="transparencia" class="grid gap-8 px-4 py-16 sm:px-8 lg:grid-cols-3 lg:gap-12 lg:px-20 lg:py-24">
+        <h2 class="font-titulo text-3xl font-semibold leading-[1.15] sm:text-4xl">
+          Transparencia que el propietario entiende sin ayuda.
+        </h2>
+        <div class="flex flex-col gap-2">
+          <h3 class="text-xl font-semibold">Cuatro cifras primero</h3>
+          <p class="text-base leading-relaxed text-texto-suave">
+            Ingresos, egresos, saldo y morosidad. El detalle está a un toque, nunca encima.
+          </p>
+        </div>
+        <div class="flex flex-col gap-2">
+          <h3 class="text-xl font-semibold">Todo con sustento</h3>
+          <p class="text-base leading-relaxed text-texto-suave">
+            Cada egreso enlaza su comprobante, voucher o foto. Cada aprobación de la junta queda registrada.
+          </p>
+        </div>
+      </section>
+
+      <!-- Cómo funciona -->
+      <section id="como-funciona" class="flex flex-col gap-10 border-t border-borde bg-superficie px-4 py-16 sm:px-8 lg:px-20 lg:py-24">
+        <div class="flex flex-col gap-3">
+          <span class="etiqueta-seccion text-acento">CÓMO FUNCIONA</span>
+          <h2 class="font-titulo text-3xl font-semibold leading-[1.1] sm:text-4xl">En tres pasos, sin instalar nada.</h2>
+        </div>
+        <ol class="grid gap-6 md:grid-cols-3">
+          {
+            pasos.map((p, i) => (
+              <li class="flex flex-col gap-3">
+                <span
+                  class="flex h-11 w-11 items-center justify-center rounded-full bg-acento font-titulo text-xl font-semibold text-white"
+                  aria-hidden="true"
+                >
+                  {i + 1}
+                </span>
+                <h3 class="text-xl font-semibold">
+                  <span class="sr-only">Paso {i + 1}: </span>
+                  {p.titulo}
+                </h3>
+                <p class="text-base leading-relaxed text-texto-suave">{p.texto}</p>
+              </li>
+            ))
+          }
+        </ol>
+      </section>
+
+      <!-- Planes -->
+      <section
+        id="planes"
+        class="mx-4 my-16 flex flex-col gap-8 rounded-xl border border-acento-borde bg-acento-suave p-6 sm:mx-8 sm:p-10 lg:mx-20 lg:mb-20 lg:flex-row lg:items-center lg:justify-between lg:gap-12 lg:p-14"
+      >
+        <div class="flex flex-col gap-3">
+          <h2 class="font-titulo text-3xl font-semibold text-acento-hover sm:text-4xl">Empieza con tu edificio piloto.</h2>
+          <p class="text-lg text-acento-hover">
+            Cargamos tu padrón desde Excel. Precio de referencia: desde S/ 100 al mes por edificio, según el número de
+            unidades y los módulos.
+          </p>
+        </div>
+        <a href="#contacto" class="boton-primario h-13 shrink-0 self-start px-7 lg:self-auto">Solicitar demo</a>
+      </section>
+
+      <!-- Contacto -->
+      <section id="contacto" class="grid gap-10 px-4 pb-16 sm:px-8 lg:grid-cols-[1fr_1.4fr] lg:gap-16 lg:px-20 lg:pb-24">
+        <div class="flex flex-col gap-4">
+          <span class="etiqueta-seccion text-acento">CONTACTO</span>
+          <h2 class="font-titulo text-3xl font-semibold leading-[1.1] sm:text-4xl">Pide una demo con tu propio edificio.</h2>
+          <p class="text-lg leading-relaxed text-texto-suave">
+            Cuéntanos cuántos edificios administras y te mostramos EDISYS con datos parecidos a los tuyos. Te escribimos en
+            menos de 24 horas.
+          </p>
+          <p id="privacidad" class="text-sm leading-normal text-texto-apoyo">
+            Usamos estos datos solo para responder tu solicitud, según la Ley 29733 de Protección de Datos Personales. No
+            los compartimos con terceros.
+          </p>
+        </div>
+
+        <form
+          id="form-contacto"
+          class="relative flex flex-col gap-5 rounded-xl border border-borde bg-superficie p-5 sm:p-8"
+          novalidate
+        >
+          <div id="contacto-aviso" role="status" aria-live="polite" tabindex="-1" class="hidden"></div>
+
+          <div class="grid gap-5 sm:grid-cols-2">
+            <div class="flex flex-col gap-2">
+              <label for="c-nombre" class="text-sm font-semibold">Nombre</label>
+              <input id="c-nombre" name="nombre" class="campo" autocomplete="name" required aria-describedby="e-nombre" />
+              <p id="e-nombre" class="hidden text-sm text-alerta"></p>
+            </div>
+            <div class="flex flex-col gap-2">
+              <label for="c-empresa" class="text-sm font-semibold">Administradora o edificio</label>
+              <input id="c-empresa" name="empresa" class="campo" autocomplete="organization" aria-describedby="e-empresa" />
+              <p id="e-empresa" class="hidden text-sm text-alerta"></p>
+            </div>
+            <div class="flex flex-col gap-2">
+              <label for="c-correo" class="text-sm font-semibold">Correo</label>
+              <input
+                id="c-correo"
+                name="correo"
+                type="email"
+                class="campo"
+                autocomplete="email"
+                required
+                aria-describedby="e-correo"
+              />
+              <p id="e-correo" class="hidden text-sm text-alerta"></p>
+            </div>
+            <div class="flex flex-col gap-2">
+              <label for="c-celular" class="text-sm font-semibold">Celular</label>
+              <input
+                id="c-celular"
+                name="celular"
+                type="tel"
+                inputmode="tel"
+                class="campo"
+                autocomplete="tel"
+                aria-describedby="e-celular"
+              />
+              <p id="e-celular" class="hidden text-sm text-alerta"></p>
+            </div>
+            <div class="flex flex-col gap-2 sm:col-span-2">
+              <label for="c-edificios" class="text-sm font-semibold">¿Cuántos edificios administras?</label>
+              <select id="c-edificios" name="edificios_aprox" class="campo" aria-describedby="e-edificios_aprox">
+                <option value="1">1</option>
+                <option value="5">De 2 a 5</option>
+                <option value="20">De 6 a 20</option>
+                <option value="21">Más de 20</option>
+              </select>
+              <p id="e-edificios_aprox" class="hidden text-sm text-alerta"></p>
+            </div>
+            <div class="flex flex-col gap-2 sm:col-span-2">
+              <label for="c-mensaje" class="text-sm font-semibold">Mensaje <span class="font-normal text-texto-apoyo">(opcional)</span></label>
+              <textarea
+                id="c-mensaje"
+                name="mensaje"
+                rows="4"
+                class="campo h-auto py-3"
+                aria-describedby="e-mensaje"></textarea>
+              <p id="e-mensaje" class="hidden text-sm text-alerta"></p>
+            </div>
+          </div>
+
+          <!-- Campo trampa: las personas no lo ven; si llega lleno, el API lo descarta. -->
+          <div class="absolute -left-[9999px] h-px w-px overflow-hidden" aria-hidden="true">
+            <label for="c-sitio">No llenes este campo</label>
+            <input id="c-sitio" name="sitio_web" tabindex="-1" autocomplete="off" />
+          </div>
+
+          <button
+            type="submit"
+            class="boton-primario h-13 gap-2 disabled:cursor-not-allowed disabled:opacity-70"
+            id="c-enviar"
+          >
+            <svg id="c-spinner" class="hidden h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.3" stroke-width="3"></circle>
+              <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
+            </svg>
+            <span id="c-texto">Solicitar demo</span>
+          </button>
+          <noscript>
+            <p class="text-sm text-texto-suave">Para enviar el formulario necesitas activar JavaScript en tu navegador.</p>
+          </noscript>
+        </form>
+      </section>
+    </main>
+
+    <footer class="mt-auto border-t border-borde bg-superficie">
+      <div
+        class="mx-auto flex max-w-[1440px] flex-col gap-3 px-4 py-8 text-sm text-texto-apoyo sm:flex-row sm:justify-between sm:px-8 lg:px-20"
+      >
+        <span>EDISYS · Administración de edificios</span>
+        <nav aria-label="Pie de página" class="flex flex-wrap gap-x-2 gap-y-1">
+          <a href="#privacidad" class="text-texto-apoyo hover:text-acento">Privacidad (Ley 29733)</a>
+          <span aria-hidden="true">·</span>
+          <a href="#contacto" class="text-texto-apoyo hover:text-acento">Contacto</a>
+          <span aria-hidden="true">·</span>
+          <a href="/login/" class="text-texto-apoyo hover:text-acento">Ingresar</a>
+        </nav>
+      </div>
+    </footer>
+
+    <script>
+      // Isla mínima del formulario de contacto: POST /api/v1/publico/contacto (§02).
+      const form = document.getElementById("form-contacto") as HTMLFormElement;
+      const aviso = document.getElementById("contacto-aviso") as HTMLDivElement;
+      const boton = document.getElementById("c-enviar") as HTMLButtonElement;
+      const spinner = document.getElementById("c-spinner") as unknown as SVGElement;
+      const textoBoton = document.getElementById("c-texto") as HTMLSpanElement;
+      const CAMPOS = ["nombre", "empresa", "correo", "celular", "edificios_aprox", "mensaje"];
+
+      const CLASES = {
+        ok: "rounded-lg border border-acento-borde bg-acento-suave p-4 text-sm leading-normal text-acento-hover",
+        error: "rounded-lg border border-alerta-borde bg-alerta-suave p-4 text-sm leading-normal text-alerta",
+      };
+
+      function mostrarAviso(tipo: "ok" | "error", texto: string) {
+        aviso.className = CLASES[tipo];
+        aviso.setAttribute("role", tipo === "error" ? "alert" : "status");
+        aviso.textContent = texto;
+        aviso.focus?.();
+      }
+
+      function limpiarErrores() {
+        aviso.className = "hidden";
+        aviso.textContent = "";
+        for (const c of CAMPOS) {
+          const e = document.getElementById(`e-${c}`);
+          const i = form.elements.namedItem(c) as HTMLInputElement | null;
+          if (e) {
+            e.textContent = "";
+            e.classList.add("hidden");
+          }
+          i?.removeAttribute("aria-invalid");
+        }
+      }
+
+      function marcarCampos(campos: Record<string, string>) {
+        let primero: HTMLElement | null = null;
+        for (const [c, msg] of Object.entries(campos)) {
+          const e = document.getElementById(`e-${c}`);
+          const i = form.elements.namedItem(c) as HTMLInputElement | null;
+          if (!e || !i) continue;
+          e.textContent = msg;
+          e.classList.remove("hidden");
+          i.setAttribute("aria-invalid", "true");
+          primero ??= i;
+        }
+        primero?.focus();
+      }
+
+      function cargando(si: boolean) {
+        boton.disabled = si;
+        spinner.classList.toggle("hidden", !si);
+        textoBoton.textContent = si ? "Enviando…" : "Solicitar demo";
+      }
+
+      form.addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        if (boton.disabled) return;
+        limpiarErrores();
+
+        const datos = Object.fromEntries(new FormData(form)) as Record<string, string>;
+        const locales: Record<string, string> = {};
+        if (!datos.nombre?.trim()) locales.nombre = "Escribe tu nombre.";
+        if (!/^\S+@\S+\.\S+$/.test(datos.correo?.trim() ?? "")) locales.correo = "Escribe un correo válido.";
+        if (Object.keys(locales).length) {
+          mostrarAviso("error", "Revisa los campos marcados.");
+          marcarCampos(locales);
+          return;
+        }
+
+        cargando(true);
+        try {
+          const res = await fetch("/api/v1/publico/contacto", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json", "X-EDISYS": "1" },
+            body: JSON.stringify({
+              ...datos,
+              edificios_aprox: Number(datos.edificios_aprox) || 1,
+            }),
+          });
+          if (res.ok) {
+            form.reset();
+            mostrarAviso("ok", "¡Gracias! Te escribimos en menos de 24 horas.");
+          } else {
+            let cuerpo: any = null;
+            try {
+              cuerpo = await res.json();
+            } catch {
+              /* sin JSON */
+            }
+            if (res.status === 422 && cuerpo?.error?.campos) {
+              mostrarAviso("error", cuerpo.error.mensaje ?? "Revisa los campos marcados.");
+              marcarCampos(cuerpo.error.campos);
+            } else if (res.status === 429) {
+              mostrarAviso("error", "Ya recibimos varios mensajes desde tu conexión. Intenta otra vez en una hora.");
+            } else {
+              mostrarAviso("error", "No pudimos enviar tu mensaje. Intenta otra vez en un momento.");
+            }
+          }
+        } catch {
+          mostrarAviso("error", "Revisa tu conexión e intenta otra vez.");
+        }
+        cargando(false);
+      });
+    </script>
+  </body>
+</html>
