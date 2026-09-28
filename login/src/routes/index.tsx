@@ -232,20 +232,20 @@ export default component$(() => {
         </a>
         <div class="flex flex-col gap-6">
           <h1 class="font-titulo text-5xl font-medium leading-[1.15] text-white">{LEMA}</h1>
-          <p class="text-lg leading-relaxed text-texto-oscuro">
+          <p class="text-lg leading-relaxed text-texto-claro">
             Recibos, balance, reservas y mantenimiento en un solo lugar para la administración, la junta y cada
             propietario.
           </p>
           <ul class="mt-4 grid grid-cols-3 gap-3">
             {TARJETAS.map((t) => (
               <li key={t.titulo} class="flex flex-col gap-1 rounded-xl border border-superficie-oscura-2 p-4">
-                <span class="text-xs text-texto-oscuro-apoyo">{t.titulo}</span>
+                <span class="text-xs text-texto-tenue">{t.titulo}</span>
                 <span class="text-sm font-semibold text-white">{t.valor}</span>
               </li>
             ))}
           </ul>
         </div>
-        <p class="text-xs text-texto-oscuro-apoyo">Datos personales protegidos según la Ley 29733.</p>
+        <p class="text-xs text-texto-tenue">Datos personales protegidos según la Ley 29733.</p>
       </aside>
 
       {/* Cabecera: móvil */}

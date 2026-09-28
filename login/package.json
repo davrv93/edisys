@@ -13,7 +13,9 @@
     "build.types": "tsc --incremental --noEmit",
     "dev": "vite --mode ssr",
     "serve": "node server/entry.node-server",
-    "qwik": "qwik"
+    "qwik": "qwik",
+    "prebuild": "node scripts/sync-tokens.mjs",
+    "predev": "node scripts/sync-tokens.mjs"
   },
   "devDependencies": {
     "@builder.io/qwik": "^1.20.1",
