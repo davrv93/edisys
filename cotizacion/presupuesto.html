@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Presupuesto técnico EDISYS N.º 2026-003</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+@page { size: A4; margin: 14mm 12mm; }
+:root { --tinta:#14262c; --banda:#17343c; --acento:#0e7c7b; --papel:#f6f4ee; --linea:#d9d3c3; --suave:#5a6a6e; --ambar:#b7791f; }
+* { box-sizing: border-box; }
+body { margin:0; font: 10.2pt/1.5 'IBM Plex Sans', sans-serif; color: var(--tinta); background: var(--papel); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.hoja { border: 1.5px solid var(--tinta); background: var(--papel); }
+header { background: var(--banda); color: #f6f4ee; padding: 18px 26px; display:flex; justify-content:space-between; align-items:center; }
+.marca { display:flex; align-items:center; gap:14px; }
+.logo { width:46px; height:46px; border-radius:10px; background:#0e7c7b; display:grid; place-items:center; }
+.marca b { font: 700 19pt/1 'Fraunces', serif; letter-spacing:.04em; }
+.marca small { display:block; font-size:7.5pt; letter-spacing:.28em; color:#bcd3d3; margin-top:4px; }
+.titulo { text-align:right; }
+.titulo h1 { margin:0; white-space:nowrap; font: 500 17pt/1 'Fraunces', serif; letter-spacing:.12em; }
+.titulo span { font-size:8.5pt; color:#c9d8d8; letter-spacing:.06em; }
+main { padding: 18px 26px 22px; }
+p.intro { color: var(--suave); margin: 0 0 14px; font-size:10.5pt; }
+table { width:100%; border-collapse: collapse; }
+.ficha td { border:1px solid var(--linea); padding:8px 12px; vertical-align:top; }
+.ficha td:first-child { width:30%; background:#ece8dc; font: 600 8.5pt 'Fraunces', serif; letter-spacing:.08em; text-transform:uppercase; }
+.kpis { display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; margin:16px 0 6px; }
+.kpi { border:1.5px solid var(--tinta); padding:12px 14px; background:#fbfaf6; }
+.kpi .et { font-size:7.5pt; letter-spacing:.2em; color:var(--suave); text-transform:uppercase; }
+.kpi .v { font: 700 19pt/1.2 'Fraunces', serif; margin:4px 0 2px; }
+.kpi .d { font-size:8.3pt; color:var(--suave); }
+h2 { font: 600 13pt/1.2 'Fraunces', serif; margin: 20px 0 8px; break-after: avoid; }
+h2::after { content:''; display:block; width:52px; height:2px; background:var(--acento); margin-top:6px; }
+.t th { background: var(--banda); color:#eef3f2; font: 600 7.8pt 'Fraunces', serif; letter-spacing:.14em; text-transform:uppercase; text-align:left; padding:7px 10px; }
+.t td { border-bottom:1px solid var(--linea); padding:7px 10px; vertical-align:top; }
+.t td:first-child { font-weight:600; width:24%; }
+.t .n { text-align:right; white-space:nowrap; }
+.t tr.total td { background: var(--banda); color:#fff; font: 700 11pt 'Fraunces', serif; border:0; }
+.chip { display:inline-block; font-size:7.3pt; font-weight:600; padding:1px 7px; border-radius:99px; margin:1px 2px 1px 0; }
+.esc { background:#e1eeee; color:#0b5c5b; } .mov { background:#f5e7cf; color:#7a4e0f; }
+.nota { border:1.5px solid var(--ambar); background:#fbf1de; padding:11px 14px; margin-top:12px; font-size:9.6pt; }
+ul.e { list-style:none; padding:0; margin:0; } ul.e li { padding:3px 0 3px 18px; position:relative; } ul.e li::before { content:'◆'; color:var(--acento); position:absolute; left:0; font-size:7pt; top:6px; }
+.salto { break-before: page; }
+.pie { display:flex; justify-content:space-between; border-top:1px solid var(--linea); margin-top:18px; padding-top:10px; font-size:8.5pt; color:var(--suave); }
+.pie b { font: 500 10.5pt 'Fraunces', serif; color:var(--tinta); display:block; }
+tr, .kpi, .nota { break-inside: avoid; }
+</style>
+</head>
+<body>
+<div class="hoja">
+<header>
+  <div class="marca">
+    <div class="logo"><svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#f6f4ee" stroke-width="2"><path d="M5 25V9l9-5 9 5v16"/><path d="M10 25v-6h8v6"/><path d="M10 12h2M16 12h2M10 16h2M16 16h2"/></svg></div>
+    <div><b>EDISYS</b><small>ADMINISTRACIÓN · EDIFICIOS · FACILITY</small></div>
+  </div>
+  <div class="titulo"><h1>PRESUPUESTO TÉCNICO</h1><span>N.º 2026-003 · 28 de septiembre de 2026</span></div>
+</header>
+<main>
+<p class="intro">Plataforma web y móvil para administradoras de edificios: cuotas y recibos, facturación, balance transparente para propietarios, reservas de áreas comunes, lectura de medidores con foto, flujo de mantenimiento con aprobación de la junta y siete roles de acceso. Stack dockerizado, desplegado en AWS. Importes en soles peruanos (PEN).</p>
+
+<table class="ficha">
+<tr><td>Proyecto</td><td>EDISYS — Sistema de administración de edificios (property + facility management)</td></tr>
+<tr><td>Stack</td><td>Backend en <b>Go</b> · login en <b>Qwik</b> · páginas públicas en <b>Astro</b> · aplicación en <b>React + Tailwind</b> (PWA instalable) · PostgreSQL · almacenamiento S3 compatible · Docker Compose</td></tr>
+<tr><td>Infraestructura objetivo</td><td>AWS EC2 <b>t3.medium (2 vCPU / 4 GB RAM)</b> + disco gp3 de <b>80 GB</b>, región us-east-2 (Ohio)</td></tr>
+<tr><td>Fecha</td><td>28 de septiembre de 2026</td></tr>
+<tr><td>Moneda</td><td>Soles peruanos — PEN (AWS se factura en USD; ver §6)</td></tr>
+</table>
+
+<div class="kpis">
+  <div class="kpi"><div class="et">Demo</div><div class="v">S/ 240.00</div><div class="d">8 horas × S/ 30. Demo navegable de los módulos clave.</div></div>
+  <div class="kpi"><div class="et">Implementación</div><div class="v">S/ 4,000.00</div><div class="d">133.33 h × S/ 30. MVP completo en producción.</div></div>
+  <div class="kpi"><div class="et">AWS mensual</div><div class="v">S/ 186.04</div><div class="d">US$ 49.61 al mes, con 20 % de margen de gestión incluido.</div></div>
+</div>
+
+<h2>1. Alcance funcional incluido</h2>
+<table class="t">
+<tr><th>Módulo</th><th>Funcionalidades</th><th>Plataforma</th></tr>
+<tr><td>Acceso y portal público</td><td>Login rápido en Qwik con sesión segura; página pública del producto y del edificio en Astro (presentación, normas de convivencia, contacto).</td><td><span class="chip esc">Escritorio</span><span class="chip mov">Móvil</span></td></tr>
+<tr><td>Registro maestro</td><td>Edificios, unidades (departamentos, estacionamientos, depósitos), propietarios e inquilinos con historial, % de participación. <b>Importación desde Excel</b> con validación (la participación suma 100 %) y deuda inicial mes por mes.</td><td><span class="chip esc">Escritorio</span></td></tr>
+<tr><td>Cuotas y recibos</td><td>Presupuesto mensual por rubros; reparto configurable por edificio (participación, partes iguales, consumo o mixto); recibo mensual por unidad con cuota, extraordinarias, reservas, consumos, multas y saldo anterior; envío por correo.</td><td><span class="chip esc">Escritorio</span><span class="chip mov">Móvil</span></td></tr>
+<tr><td>Facturación</td><td><b>Recibo interno de mantenimiento</b> por departamento con correlativo, PDF y envío por correo; registro de pagos con voucher y código de operación; morosidad por antigüedad. Boleta y factura electrónica SUNAT: ampliación opcional (§8).</td><td><span class="chip esc">Escritorio</span></td></tr>
+<tr><td>Balance por nodos</td><td>Reporte de lo macro a lo micro: edificio → ingresos/egresos → rubro → concepto → documento de sustento. Vista ejecutiva de 4 indicadores para el propietario, en escritorio y celular.</td><td><span class="chip esc">Escritorio</span><span class="chip mov">Móvil</span></td></tr>
+<tr><td>Reservas</td><td>Áreas y recursos configurables (Parrilla 1, 2…); calendario sin doble reserva; el propietario reserva desde su cuenta; morosos bloqueados; cobro inmediato con voucher/Yape o cargo al recibo; el ingreso entra solo al balance.</td><td><span class="chip esc">Escritorio</span><span class="chip mov">Móvil</span></td></tr>
+<tr><td>Medidores</td><td>El operario toma <b>foto obligatoria</b> de cada medidor (agua o energía); consumo por diferencia de lecturas; reparto automático: recibo general menos consumo de departamentos = área común repartida por participación. La foto aparece en el recibo.</td><td><span class="chip mov">Móvil</span></td></tr>
+<tr><td>Mantenimiento</td><td>Flujo cerrado: reportar con foto → validar → informe y costos publicados → aprobación de la junta en la app → estado de la actividad. Lo no aprobado queda registrado como pendiente con su criticidad.</td><td><span class="chip esc">Escritorio</span><span class="chip mov">Móvil</span></td></tr>
+<tr><td>Dashboard</td><td>Panel del administrador: ingresos, egresos, saldo, morosidad, pendientes por criticidad y reservas del mes.</td><td><span class="chip esc">Escritorio</span><span class="chip mov">Móvil</span></td></tr>
+</table>
+
+<h2>2. Roles contemplados</h2>
+<table class="t">
+<tr><th>Rol</th><th>Acceso</th></tr>
+<tr><td>Administrador</td><td>Todo: configuración, finanzas, facturación, reservas, medidores, mantenimiento y reportes.</td></tr>
+<tr><td>Junta de propietarios</td><td>Supervisión económica y reportes; aprueba o rechaza trabajos, cuotas extraordinarias y uso de fondos.</td></tr>
+<tr><td>Propietario</td><td>Su estado de cuenta, recibos, balance ejecutivo, reservas y reporte de incidencias. No administra.</td></tr>
+<tr><td>Inquilino</td><td>Lo que el propietario le habilite: reservas, reportes y normas.</td></tr>
+<tr><td>Operario / conserje</td><td>Lectura de medidores con foto y reporte de incidencias desde el celular.</td></tr>
+<tr><td>Técnico / proveedor</td><td>Sus trabajos asignados: avances, evidencias y cierre.</td></tr>
+<tr><td>Supervisor</td><td>Validación de reportes, asignación de trabajos y seguimiento de estados.</td></tr>
+</table>
+
+<h2>3. Requerimientos técnicos considerados</h2>
+<table class="t">
+<tr><th>Requerimiento</th><th>Consideración en la propuesta</th></tr>
+<tr><td>Backend en Go</td><td>API REST en un binario compilado, de bajo consumo de memoria y arranque inmediato; autenticación con token y permisos por rol en cada ruta; auditoría de acciones sensibles (pagos, aprobaciones, anulaciones).</td></tr>
+<tr><td>Frontend por capas</td><td><b>Qwik</b> para el login (carga casi instantánea, también en celulares básicos); <b>Astro</b> para las páginas públicas (HTML estático, rápido y bien indexado); <b>React + Tailwind</b> para la aplicación, instalable como PWA en Android, iPhone y escritorio.</td></tr>
+<tr><td>Responsivo multiplataforma</td><td>Cada módulo se diseña según quién lo usa: los operativos (medidores, reportes, reservas del propietario) <b>móvil primero</b>; los de gestión (balance, facturación, unidades) para escritorio y adaptados al celular. Una sola base de código, sin apps nativas separadas.</td></tr>
+<tr><td>PostgreSQL</td><td>Base relacional en la misma EC2 (sin costo RDS). Reglas de negocio críticas en la base: una reserva no se duplica, cada lectura exige foto, cada egreso tiene sustento.</td></tr>
+<tr><td>Almacenamiento S3 compatible</td><td>Fotos de medidores, vouchers, informes y videos en el disco de 80 GB, con enlaces firmados que caducan: los archivos no quedan públicos.</td></tr>
+<tr><td>Docker</td><td>Todo el stack en Docker Compose con límites de memoria por contenedor para operar holgado en 4 GB: despliegue reproducible y migrable a cualquier proveedor.</td></tr>
+<tr><td>Backups propios</td><td>Dump diario de PostgreSQL y de los archivos, con rotación, copia externa y restauración probada, sin el costo recurrente de los snapshots de AWS.</td></tr>
+<tr><td>Dominio con SSL</td><td>HTTPS con certificado Let's Encrypt automático y renovable (S/ 0 en certificado).</td></tr>
+<tr><td>Datos personales</td><td>DNI, correos y fotos protegidos por rol y con enlaces privados, en línea con la Ley 29733 de Protección de Datos Personales.</td></tr>
+</table>
+
+<h2>4. Demo — 8 horas</h2>
+<table class="t">
+<tr><th>Concepto</th><th>Detalle</th><th class="n">Horas</th><th class="n">Subtotal</th></tr>
+<tr><td>Demo navegable</td><td>Login en Qwik, dashboard del administrador, balance por nodos y lectura de medidores desde el celular (caso: recibo S/ 5,000, departamentos S/ 4,800, S/ 200 comunes repartidos), con datos de ejemplo y roles de administrador, propietario y operario. Publicada en un entorno temporal para revisarla desde cualquier dispositivo.</td><td class="n">8</td><td class="n">S/ 240.00</td></tr>
+</table>
+
+<h2 class="salto">5. Desglose económico de la implementación</h2>
+<p class="intro" style="margin-bottom:8px">Tarifa única: S/ 30 por hora, la misma de la demo. Total: 133.33 h.</p>
+<table class="t">
+<tr><th>Concepto</th><th>Detalle</th><th class="n">Horas</th><th class="n">Subtotal</th></tr>
+<tr><td>Arquitectura y Docker</td><td>Compose de todos los servicios, límites de memoria, proxy, compresión y caché.</td><td class="n">10</td><td class="n">S/ 300.00</td></tr>
+<tr><td>Backend Go, roles y permisos</td><td>API, autenticación, 7 roles con permisos por ruta y auditoría.</td><td class="n">13</td><td class="n">S/ 390.00</td></tr>
+<tr><td>Login Qwik y páginas Astro</td><td>Acceso seguro y páginas públicas del producto y del edificio.</td><td class="n">7</td><td class="n">S/ 210.00</td></tr>
+<tr><td>Base PostgreSQL</td><td>Esquema de edificios, unidades, cuotas, recibos, reservas, medidores y mantenimiento.</td><td class="n">10</td><td class="n">S/ 300.00</td></tr>
+<tr><td>Registro maestro e importación Excel</td><td>Unidades, personas, participación, validaciones y deuda inicial.</td><td class="n">11</td><td class="n">S/ 330.00</td></tr>
+<tr><td>Cuotas, reparto y recibos</td><td>Motor de reparto configurable, recibos por unidad, pagos y morosidad.</td><td class="n">16</td><td class="n">S/ 480.00</td></tr>
+<tr><td>Facturación</td><td>Recibo interno por departamento: correlativo, PDF, pagos con voucher y envío por correo.</td><td class="n">11</td><td class="n">S/ 330.00</td></tr>
+<tr><td>Balance por nodos</td><td>Reporte macro → micro desplegable y vista ejecutiva de 4 indicadores.</td><td class="n">12</td><td class="n">S/ 360.00</td></tr>
+<tr><td>Reservas</td><td>Calendario sin doble reserva, bloqueo a morosos, cobro con voucher o al recibo.</td><td class="n">10</td><td class="n">S/ 300.00</td></tr>
+<tr><td>Medidores móviles</td><td>Lectura con foto, cálculo de consumo y reparto del área común.</td><td class="n">8</td><td class="n">S/ 240.00</td></tr>
+<tr><td>Flujo de mantenimiento</td><td>Reporte, validación, costos, aprobación de la junta y estados.</td><td class="n">11</td><td class="n">S/ 330.00</td></tr>
+<tr><td>Almacenamiento y backups</td><td>Archivos S3 con enlaces firmados; respaldo diario con restauración probada.</td><td class="n">5</td><td class="n">S/ 150.00</td></tr>
+<tr><td>EC2, dominio, SSL y despliegue</td><td>Provisión t3.medium + 80 GB, DNS, HTTPS y puesta en marcha.</td><td class="n">4</td><td class="n">S/ 120.00</td></tr>
+<tr><td>Pruebas y puntos de control</td><td>Verificación integral en escritorio y celular (incluido Safari) y 2 puntos de control con una ronda de cambios cada uno.</td><td class="n">5.33</td><td class="n">S/ 160.00</td></tr>
+<tr class="total"><td colspan="2">TOTAL IMPLEMENTACIÓN</td><td class="n">133.33</td><td class="n">S/ 4,000.00</td></tr>
+</table>
+
+<h2 class="salto">6. Costo mensual de AWS</h2>
+<p class="intro" style="margin-bottom:8px">Precios de lista on-demand en us-east-2 (Ohio), Linux. AWS factura en dólares; el monto en soles usa un tipo de cambio referencial de S/ 3.75 por US$ y se ajusta al del día de facturación.</p>
+<table class="t">
+<tr><th>Recurso</th><th>Detalle</th><th class="n">US$ / mes</th></tr>
+<tr><td>EC2 t3.medium</td><td>2 vCPU, 4 GB RAM · US$ 0.0416 por hora × 730 h · modo de CPU estándar, sin cargos extra por ráfagas</td><td class="n">30.37</td></tr>
+<tr><td>Disco EBS gp3</td><td>80 GB × US$ 0.08 por GB</td><td class="n">6.40</td></tr>
+<tr><td>IP pública IPv4</td><td>US$ 0.005 por hora × 730 h</td><td class="n">3.65</td></tr>
+<tr><td>Copia externa de respaldos</td><td>~40 GB en S3 Standard × US$ 0.023 por GB (reemplaza a los snapshots)</td><td class="n">0.92</td></tr>
+<tr><td>Transferencia de datos</td><td>Los primeros 100 GB de salida al mes son gratuitos</td><td class="n">0.00</td></tr>
+<tr><td colspan="2"><b>Costo AWS</b></td><td class="n"><b>41.34</b></td></tr>
+<tr><td colspan="2">Margen de gestión (20 %): monitoreo, actualizaciones de seguridad y administración de la cuenta</td><td class="n">8.27</td></tr>
+<tr class="total"><td colspan="2">PAGO MENSUAL AWS</td><td class="n">US$ 49.61 · S/ 186.04</td></tr>
+</table>
+
+<h2>7. Entregables</h2>
+<ul class="e">
+<li>Demo navegable de 8 horas con login, dashboard, balance por nodos y medidores.</li>
+<li>Aplicación web responsiva e instalable (PWA) con los módulos del §1 y los 7 roles del §2.</li>
+<li>Login en Qwik, páginas públicas en Astro y aplicación en React + Tailwind.</li>
+<li>Backend en Go con API documentada y auditoría de acciones.</li>
+<li>Recibos internos por departamento y balance por nodos de lo macro a lo micro.</li>
+<li>Reservas, medidores con foto y flujo de mantenimiento con aprobación de la junta.</li>
+<li>Base PostgreSQL y almacenamiento de archivos con enlaces privados.</li>
+<li>Stack completo dockerizado y sistema de backups con restauración verificada.</li>
+<li>Despliegue en EC2 con dominio, SSL y servicio activo.</li>
+<li>Diseño de interfaces y guía de implementación paso a paso.</li>
+<li>Manual breve de operación y capacitación en los puntos de control.</li>
+</ul>
+
+<h2>8. Condiciones y exclusiones</h2>
+<ul class="e">
+<li>El monto corresponde a implementación, configuración y puesta en marcha. No incluye el pago mensual de AWS (§6), la renovación de dominio, correo transaccional/SMS ni pauta publicitaria.</li>
+<li><b>Ampliaciones opcionales</b>, a S/ 30 por hora: boleta y factura electrónica SUNAT (unas 20 h, S/ 600; requiere proveedor OSE/PSE y certificado digital a cargo del cliente), conciliación con el extracto bancario, PDF del balance y del informe a la junta, recuperación de clave por correo, matriz de permisos editable, video en los reportes de mantenimiento y lectura de medidores sin señal.</li>
+<li>No incluye pasarela de pago con tarjeta (se integra en una fase posterior; la demo y el MVP aceptan voucher y Yape), envío por WhatsApp, apps nativas en tiendas ni carga masiva de datos más allá de la importación Excel del edificio piloto.</li>
+<li>Fuera del alcance del MVP, cotizables por hora: plan anual de mantenimiento con semáforo, control de personal, service desk con SLA, inventario de activos y CAPEX/OPEX.</li>
+<li>Los precios de AWS son los de lista vigentes a la fecha y pueden variar según AWS y el tipo de cambio.</li>
+<li>Cambios fuera de los 2 puntos de control acordados se cotizan por hora a la misma tarifa.</li>
+</ul>
+
+<h2>9. Forma de pago sugerida</h2>
+<table class="t">
+<tr><th>Hito</th><th class="n">Porcentaje</th><th class="n">Monto</th></tr>
+<tr><td style="width:55%">Demo</td><td class="n">100 %</td><td class="n">S/ 240.00</td></tr>
+<tr><td>Inicio de la implementación</td><td class="n">50 %</td><td class="n">S/ 2,000.00</td></tr>
+<tr><td>Entrega y puesta en marcha</td><td class="n">50 %</td><td class="n">S/ 2,000.00</td></tr>
+<tr><td>AWS (desde la puesta en marcha)</td><td class="n">mensual</td><td class="n">S/ 186.04</td></tr>
+</table>
+
+<div class="pie">
+  <div><b>David Roncal — Desarrollo web</b>Coordinación por WhatsApp</div>
+  <div style="text-align:right">Validez referencial del presupuesto: 7 días calendario desde la emisión.<br>Importes expresados en soles peruanos (PEN).</div>
+</div>
+</main>
+</div>
+</body>
+</html>
