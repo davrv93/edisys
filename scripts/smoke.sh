@@ -34,6 +34,7 @@ st=$(curl -s -o /tmp/edisys_smoke_pdf -w '%{http_code}' -b "$JAR" "$BASE/api/v1/
 st=$(pedir GET '/api/v1/edificios/1/correo/mensajes'); revisar "bandeja de correo" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"modo"'
 st=$(curl -s -o /dev/null -w '%{http_code}' "${MAILPIT:-http://localhost:4726}/api/v1/info"); [ "$st" = 200 ] && ok "Mailpit (4726)" || mal "Mailpit" "$st"
 st=$(pedir GET '/api/v1/edificios/1/conciliacion?periodo=2026-09'); revisar "conciliación bancaria" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"saldo_sistema_cts"'
+st=$(pedir GET '/api/v1/edificios/1/facturacion/config'); revisar "facturación electrónica (sin secretos)" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"tiene_certificado"'
 st=$(pedir GET '/api/v1/analitica/resumen?desde=2026-04&hasta=2026-09'); revisar "analítica" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"cobranza_mensual"'
 st=$(pedir POST /api/v1/chatbot/mensaje '{"telefono":"51900000201","texto":"¿cuánto debo?"}'); revisar "chatbot «cuánto debo» (201)" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"intencion":"saldo"'
 st=$(pedir POST /api/v1/whatsapp/enviar '{"telefono":"51900000201","plantilla":"libre","variables":{"texto":"Prueba de humo"}}'); revisar "whatsapp simulado" 201 "$st" "$(cat /tmp/edisys_smoke_body)" '"estado":"simulado"'

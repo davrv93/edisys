@@ -60,6 +60,21 @@ para un SMTP real; la clave nunca se registra ni se devuelve.
 - `POST /edificios/{eid}/balance/{AAAA-MM}/enviar-correo {destinatarios: todos|junta|propietarios}`: la junta recibe balance e informe; los propietarios, el balance.
 - `GET /edificios/{eid}/correo/mensajes`: la bandeja.
 
+## SUNAT (boleta y factura electrónica)
+
+Sin credenciales reales. Configuración por edificio en `GET/PUT /edificios/{eid}/facturacion/config` (RUC, razón social,
+series `B001`/`F001`, modo `off | simulado | beta | produccion`, afectación al IGV por tipo de línea) y el certificado `.pfx`
+en `POST …/facturacion/certificado` (se guarda en el cubo privado; ni el archivo ni las claves vuelven por el API).
+
+- **simulado** (la semilla lo deja así): firma con el `.pfx` cargado o con un certificado de prueba de EDISYS y devuelve un CDR
+  aceptado sin salir a la red. **beta**: SOAP `sendBill` al entorno de pruebas de SUNAT, solo con usuario, clave y certificado.
+  **produccion**: deshabilitado en esta entrega.
+- Boleta a persona (DNI o sin documento), factura a empresa (RUC válido). XML UBL 2.1 firmado (XMLDSig RSA-SHA256, firma
+  envuelta); correlativo por serie sin huecos (se reserva en la misma transacción de la emisión).
+- `POST /recibos/{rid}/comprobante`, `GET /comprobantes/{cid}/xml|pdf|cdr` (PDF con QR), `POST /comprobantes/{cid}/anular`
+  (factura de hasta 7 días → comunicación de baja; boleta o factura antigua → nota de crédito `BC01`/`FC01`).
+- `scripts/validar-ubl.sh` valida los XML contra los XSD oficiales de UBL 2.1 y verifica la firma con `xmlsec1`.
+
 ## API
 
 Todo bajo `/api/v1`, JSON en snake_case, dinero en céntimos, errores `{ "error": { "codigo", "mensaje", "campos"? } }`.

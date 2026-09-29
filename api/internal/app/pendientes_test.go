@@ -11,8 +11,10 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"os/exec"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -22,6 +24,7 @@ import (
 	"edisys/api/internal/app"
 	P "edisys/api/internal/plataforma"
 	"edisys/api/internal/reparto"
+	"edisys/api/internal/sunat"
 )
 
 // padronConDeuda: el padrón demo más la hoja «Deuda» con las filas dadas (codigo, periodo, monto en soles).
@@ -593,5 +596,149 @@ func TestSubirExtractoConMapeo(t *testing.T) {
 	// Un archivo que no es extracto: 422.
 	if st, _ := e.multipartPedir("POST", "/api/v1/edificios/1/conciliacion/extractos", tok, map[string]string{"banco": "BCP", "periodo": "2026-09"}, "archivo", "x.csv", []byte("hola")); st != 422 {
 		t.Errorf("archivo inválido: %d", st)
+	}
+}
+
+// ---------- Bloque 5 · SUNAT (simulado) ----------
+
+func (e *entorno) reciboDe(unidad, periodo string) int64 {
+	e.t.Helper()
+	var id int64
+	if err := e.pool.QueryRow(context.Background(), `SELECT r.id FROM recibo r JOIN unidad u ON u.id=r.unidad_id JOIN periodo p ON p.id=r.periodo_id
+		WHERE u.codigo=$1 AND p.periodo=$2 AND r.origen='periodo'`, unidad, periodo).Scan(&id); err != nil {
+		e.t.Fatal(err)
+	}
+	return id
+}
+
+func TestSunatBoletaFacturaYAnulacion(t *testing.T) {
+	e := nuevo(t)
+	tok := e.login("admin@demo.pe")
+	// La configuración no devuelve secretos; producción está deshabilitada.
+	_, cfg := e.pedir("GET", "/api/v1/edificios/1/facturacion/config", tok, nil)
+	if cfg["modo"] != "simulado" || cfg["ose_clave"] != nil || cfg["certificado_clave"] != nil || cfg["produccion_habilitada"] != false {
+		t.Errorf("config: %v", cfg)
+	}
+	if st, d := e.pedir("PUT", "/api/v1/edificios/1/facturacion/config", tok, map[string]any{"ruc": "20600000005", "razon_social": "X", "modo": "produccion"}); st != 422 || codigo(d) != "PRODUCCION_DESHABILITADA" {
+		t.Errorf("producción: %d %v", st, d)
+	}
+	// Boleta al 201 (DNI).
+	r201 := e.reciboDe("201", "2026-09")
+	st, b := e.pedir("POST", fmt.Sprintf("/api/v1/edificios/1/recibos/%d/comprobante", r201), tok, nil)
+	if st != 201 || b["numero_completo"] != "B001-1" || b["tipo"] != "03" || b["estado"] != "aceptado" || num(b["total_cts"]) != 99000 || b["cliente_tipo_doc"] != "1" || b["cdr_codigo"] != "0" {
+		t.Fatalf("boleta: %d %v", st, b)
+	}
+	if st, d := e.pedir("POST", fmt.Sprintf("/api/v1/edificios/1/recibos/%d/comprobante", r201), tok, nil); st != 409 || codigo(d) != "YA_TIENE_COMPROBANTE" {
+		t.Errorf("segundo comprobante: %d %v", st, d)
+	}
+	// El XML guardado verifica su firma; la reserva (gravada) lleva IGV.
+	var doc string
+	_ = e.pool.QueryRow(context.Background(), `SELECT xml FROM comprobante WHERE id=$1`, num(b["id"])).Scan(&doc)
+	cert, err := app.CertDelXML(doc)
+	if err != nil || sunat.Verificar(doc, cert) != nil {
+		t.Errorf("la firma del XML guardado no verifica: %v", err)
+	}
+	if num(b["igv_cts"]) != 1220 || !strings.Contains(doc, "<cbc:ID>B001-1</cbc:ID>") {
+		t.Errorf("IGV de la reserva: %v", b["igv_cts"])
+	}
+	// La propietaria baja su XML y su PDF (con QR); otro propietario no.
+	tokM := e.login("propietario201@demo.pe")
+	if st, tipo, x := e.bajar(fmt.Sprintf("/api/v1/edificios/1/comprobantes/%d/xml", num(b["id"])), tokM); st != 200 || !strings.Contains(tipo, "xml") || !bytes.Contains(x, []byte("<Invoice")) {
+		t.Errorf("XML: %d %s", st, tipo)
+	}
+	st, _, p := e.bajar(fmt.Sprintf("/api/v1/edificios/1/comprobantes/%d/pdf", num(b["id"])), tokM)
+	if txt := textoPDF(t, p); st != 200 || !strings.Contains(txt, "B001-1") || !strings.Contains(txt, "SIMULADO") || !strings.Contains(txt, "S/ 990,00") {
+		t.Errorf("PDF: %d\n%s", st, txt)
+	}
+	// Factura a empresa (RUC).
+	_, _ = e.pool.Exec(context.Background(), `UPDATE persona SET dni_ruc='20123456786', nombre='Inversiones Castillo SAC' WHERE nombre='Jorge Castillo Ramos'`)
+	st, f := e.pedir("POST", fmt.Sprintf("/api/v1/edificios/1/recibos/%d/comprobante", e.reciboDe("202", "2026-09")), tok, nil)
+	if st != 201 || f["numero_completo"] != "F001-1" || f["tipo"] != "01" || f["cliente_tipo_doc"] != "6" {
+		t.Fatalf("factura: %d %v", st, f)
+	}
+	// 20 emisiones a la vez: correlativo sin saltos (B001-2 … B001-21).
+	var rids []int64
+	for _, c := range []string{"101", "102", "103", "104", "203", "204", "301", "302", "303", "304", "401", "402", "403", "404", "501", "502", "503", "504", "601", "602"} {
+		rids = append(rids, e.reciboDe(c, "2026-09"))
+	}
+	var wg sync.WaitGroup
+	numeros := make(chan int64, len(rids))
+	for _, rid := range rids {
+		wg.Add(1)
+		go func(rid int64) {
+			defer wg.Done()
+			st, d := e.pedir("POST", fmt.Sprintf("/api/v1/edificios/1/recibos/%d/comprobante", rid), tok, nil)
+			if st == 201 {
+				numeros <- num(d["numero"])
+			} else {
+				t.Errorf("emisión concurrente: %d %v", st, d)
+			}
+		}(rid)
+	}
+	wg.Wait()
+	close(numeros)
+	vistos := map[int64]bool{}
+	for n := range numeros {
+		vistos[n] = true
+	}
+	for n := int64(2); n <= 21; n++ {
+		if !vistos[n] {
+			t.Errorf("falta el B001-%d (vistos %v)", n, vistos)
+		}
+	}
+	// Anulación: la boleta va por nota de crédito; la factura de hoy, por comunicación de baja.
+	st, nc := e.pedir("POST", fmt.Sprintf("/api/v1/edificios/1/comprobantes/%d/anular", num(b["id"])), tok, map[string]string{"motivo": "Se emitió al propietario equivocado"})
+	if st != 200 || nc["via"] != "nota_credito" || nc["numero_completo"] != "BC01-1" || nc["tipo"] != "07" || num(nc["total_cts"]) != 99000 {
+		t.Errorf("nota de crédito: %d %v", st, nc)
+	}
+	st, ba := e.pedir("POST", fmt.Sprintf("/api/v1/edificios/1/comprobantes/%d/anular", num(f["id"])), tok, map[string]string{"motivo": "Error en el RUC"})
+	if st != 200 || ba["via"] != "baja" || ba["estado"] != "anulado" || !strings.HasPrefix(fmt.Sprint(ba["baja_id"]), "RA-") {
+		t.Errorf("baja: %d %v", st, ba)
+	}
+	// Anulada la boleta, el recibo puede volver a emitirse.
+	if st, d := e.pedir("POST", fmt.Sprintf("/api/v1/edificios/1/recibos/%d/comprobante", r201), tok, nil); st != 201 || d["numero_completo"] != "B001-22" {
+		t.Errorf("reemisión: %d %v", st, d)
+	}
+	// Apagado: 409.
+	_, _ = e.pedir("PUT", "/api/v1/edificios/1/facturacion/config", tok, map[string]any{"modo": "off"})
+	if st, d := e.pedir("POST", fmt.Sprintf("/api/v1/edificios/1/recibos/%d/comprobante", e.reciboDe("603", "2026-09")), tok, nil); st != 409 || codigo(d) != "FACTURACION_APAGADA" {
+		t.Errorf("apagado: %d %v", st, d)
+	}
+	// Beta sin credenciales: 422.
+	_, _ = e.pedir("PUT", "/api/v1/edificios/1/facturacion/config", tok, map[string]any{"ruc": "20600000005", "razon_social": "Junta", "modo": "beta"})
+	if st, d := e.pedir("POST", fmt.Sprintf("/api/v1/edificios/1/recibos/%d/comprobante", e.reciboDe("603", "2026-09")), tok, nil); st != 422 || codigo(d) != "SIN_CREDENCIALES_BETA" {
+		t.Errorf("beta sin credenciales: %d %v", st, d)
+	}
+}
+
+// El certificado .pfx se sube, se guarda en el cubo privado y nunca vuelve por el API (necesita openssl).
+func TestSunatCertificadoPFX(t *testing.T) {
+	if _, err := exec.LookPath("openssl"); err != nil {
+		t.Skip("sin openssl")
+	}
+	dir := t.TempDir()
+	cmd := exec.Command("sh", "-c", `openssl req -x509 -newkey rsa:2048 -nodes -keyout k.pem -out c.pem -days 30 -subj "/CN=Prueba EDISYS" 2>/dev/null &&
+		openssl pkcs12 -export -legacy -inkey k.pem -in c.pem -out c.pfx -passout pass:clave123 2>/dev/null || openssl pkcs12 -export -inkey k.pem -in c.pem -out c.pfx -passout pass:clave123`)
+	cmd.Dir = dir
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Skipf("openssl: %v %s", err, out)
+	}
+	pfx, _ := os.ReadFile(dir + "/c.pfx")
+	e := nuevo(t)
+	tok := e.login("admin@demo.pe")
+	if st, _ := e.multipartPedir("POST", "/api/v1/edificios/1/facturacion/certificado", tok, map[string]string{"clave": "otra"}, "certificado", "c.pfx", pfx); st != 422 {
+		t.Errorf("clave equivocada: %d", st)
+	}
+	st, d := e.multipartPedir("POST", "/api/v1/edificios/1/facturacion/certificado", tok, map[string]string{"clave": "clave123"}, "certificado", "c.pfx", pfx)
+	if st != 201 || d["titular"] != "Prueba EDISYS" {
+		t.Fatalf("subir pfx: %d %v", st, d)
+	}
+	_, cfg := e.pedir("GET", "/api/v1/edificios/1/facturacion/config", tok, nil)
+	if cfg["tiene_certificado"] != true || cfg["certificado_clave"] != nil {
+		t.Errorf("config con certificado: %v", cfg)
+	}
+	st, b := e.pedir("POST", fmt.Sprintf("/api/v1/edificios/1/recibos/%d/comprobante", e.reciboDe("201", "2026-09")), tok, nil)
+	if st != 201 || b["firmado_prueba"] != false {
+		t.Errorf("firmado con el pfx: %d %v", st, b)
 	}
 }

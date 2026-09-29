@@ -238,6 +238,19 @@ func (s *Server) rutasEdificio(r chi.Router) {
 	r.Post("/recibos/{rid}/pagos", s.registrarPago) // pagos.registrar o pagos.informar (se valida dentro)
 	r.With(q("recibos.emitir")).Post("/recibos/{rid}/anular", s.anularRecibo)
 	r.With(q("recibos.emitir")).Post("/recibos/{rid}/enviar-correo", s.enviarRecibosCorreo) // {rid} = periodo AAAA-MM
+	r.With(q("recibos.ver")).Get("/recibos/{rid}/comprobante", s.comprobantesDeRecibo)
+	r.With(q("comprobantes.emitir")).Post("/recibos/{rid}/comprobante", s.emitirComprobante)
+
+	// SUNAT · facturación electrónica
+	r.With(q("facturacion.configurar")).Get("/facturacion/config", s.verConfigFacturacion)
+	r.With(q("facturacion.configurar")).Put("/facturacion/config", s.guardarConfigFacturacion)
+	r.With(q("facturacion.configurar")).Post("/facturacion/certificado", s.subirCertificado)
+	r.With(q("comprobantes.emitir")).Get("/comprobantes", s.listarComprobantes)
+	r.With(q("recibos.ver")).Get("/comprobantes/{cid}", s.verComprobante)
+	r.With(q("recibos.ver")).Get("/comprobantes/{cid}/xml", s.xmlComprobante)
+	r.With(q("recibos.ver")).Get("/comprobantes/{cid}/cdr", s.xmlComprobante)
+	r.With(q("recibos.ver")).Get("/comprobantes/{cid}/pdf", s.pdfComprobante)
+	r.With(q("comprobantes.emitir")).Post("/comprobantes/{cid}/anular", s.anularComprobante)
 	r.With(q("pagos.validar")).Get("/pagos", s.listarPagos)
 	r.With(q("pagos.validar")).Patch("/pagos/{pid}", s.validarPago)
 	r.With(q("morosidad.ver")).Get("/morosidad", s.morosidad)
