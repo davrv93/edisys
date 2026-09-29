@@ -9,6 +9,17 @@ import { usePeriodo } from '../../layout/usePeriodo.js';
 import Encabezado, { Contenido } from '../../layout/Encabezado.jsx';
 import { Boton, FranjaKPI, NodoDesplegable, SelectorPeriodo, ErrorCarga, Vacio, Esqueleto, Modal, Icono, Campo, SubirArchivo, useToast, BotonIcono } from '../../ui/index.js';
 
+/** Escritorio o no, por JS: el Modal usa un portal y escapa del `lg:hidden` (duplicaría el visor lateral). */
+function useEscritorio() {
+  const [ancho, setAncho] = useState(() => (typeof window === 'undefined' ? 1280 : window.innerWidth));
+  useEffect(() => {
+    const f = () => setAncho(window.innerWidth);
+    window.addEventListener('resize', f);
+    return () => window.removeEventListener(f);
+  }, []);
+  return ancho >= 1024;
+}
+
 /** Ancestros de un nodo con id legible: «egr.administracion.conserjeria» → [egr, egr.administracion, …]. */
 export function ancestros(id) {
   const partes = String(id).split('.');
@@ -28,6 +39,7 @@ export default function Balance() {
   const [cargando, setCargando] = useState({});
   const [errores, setErrores] = useState({});
   const [doc, setDoc] = useState(null); // { nodo, datos, error }
+  const esEscritorio = useEscritorio();
   const [egresoAbierto, setEgresoAbierto] = useState(false);
 
   const raiz = resumen.datos?.raiz;
@@ -267,12 +279,12 @@ export default function Balance() {
         )}
       </Contenido>
 
-      {/* En móvil y tableta el visor sale como hoja, sin salir de la pantalla */}
-      <div className="lg:hidden">
-        <Modal abierto={!!doc} onCerrar={() => setDoc(null)} titulo="Documento de sustento">
-          {doc && <VisorDocumento doc={doc} sinCabecera />}
+      {/* En móvil y tableta el visor sale como hoja, sin salir de la pantalla (en escritorio vive en el lateral) */}
+      {doc && !esEscritorio && (
+        <Modal abierto onCerrar={() => setDoc(null)} titulo="Documento de sustento">
+          <VisorDocumento doc={doc} sinCabecera />
         </Modal>
-      </div>
+      )}
 
       <RegistrarEgreso
         abierto={egresoAbierto}
@@ -328,10 +340,12 @@ function VisorDocumento({ doc, onCerrar, sinCabecera = false }) {
         <Esqueleto className="h-60 w-full" />
       ) : (
         <>
-          <div className="flex h-60 items-center justify-center overflow-hidden rounded-control border border-borde bg-fondo text-sm text-texto-apoyo">
+          <div className="flex h-72 items-center justify-center overflow-hidden rounded-control border border-borde bg-fondo text-sm text-texto-apoyo sm:h-80">
             {d.url_firmada ? (
               esImagen ? (
-                <img src={d.url_firmada} alt={d.nombre} className="h-full w-full object-contain" />
+                <a href={d.url_firmada} target="_blank" rel="noopener" title="Abrir en tamaño completo" className="h-full w-full cursor-zoom-in">
+                  <img src={d.url_firmada} alt={d.nombre} className="h-full w-full object-contain" loading="lazy" />
+                </a>
               ) : (
                 <iframe src={d.url_firmada} title={d.nombre} className="h-full w-full" />
               )
@@ -344,7 +358,7 @@ function VisorDocumento({ doc, onCerrar, sinCabecera = false }) {
           </div>
           <dl className="grid grid-cols-[110px_1fr] gap-x-3 gap-y-2 text-sm">
             <dt className="text-texto-apoyo">Documento</dt>
-            <dd className="font-semibold">{d.nombre}</dd>
+            <dd className="break-all font-semibold">{d.nombre}</dd>
             {d.emisor && (
               <>
                 <dt className="text-texto-apoyo">Emisor</dt>
