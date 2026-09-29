@@ -6,7 +6,7 @@ import { BotonIcono, Icono, Isotipo, Logo, Modal, SelectorEdificio, Tooltip } fr
 
 const ArmazonCtx = createContext({ setModoTarea: () => {} });
 const CLAVE_MENU = 'edisys.menu'; // 'abierto' | 'iconos' (elección del usuario en escritorio)
-const CLAVE_GRUPOS = 'edisys.grupos'; // ids de grupos plegados
+const CLAVE_GRUPOS = 'edisys.grupos'; // clave vieja (lista de cerrados): se limpia, ahora manda la página
 
 function leerPreferencia() {
   try {
@@ -58,25 +58,8 @@ export default function Armazon({ pagina, children }) {
   const [modoTarea, setModoTarea] = useState(false);
   const [cajon, setCajon] = useState(false);
   const [pref, setPref] = useState(leerPreferencia);
-  const [cerrados, setCerrados] = useState(() => {
-    try {
-      const v = JSON.parse(window.localStorage.getItem(CLAVE_GRUPOS));
-      return Array.isArray(v) ? v : [];
-    } catch {
-      return [];
-    }
-  });
-  const alternarGrupo = useCallback((id) => {
-    setCerrados((c) => {
-      const n = c.includes(id) ? c.filter((x) => x !== id) : [...c, id];
-      try {
-        window.localStorage.setItem(CLAVE_GRUPOS, JSON.stringify(n));
-      } catch {
-        /* sin almacenamiento */
-      }
-      return n;
-    });
-  }, []);
+  // Acordeón: solo el grupo de la página actual, el resto cerrado.
+  const [manual, setManual] = useState(null); // grupo fijado a mano; false = todo cerrado
   const menu = menuPara(s.rol, s.tiene);
   const grupos = gruposPara(menu.lateral);
   const query = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
@@ -87,6 +70,23 @@ export default function Armazon({ pagina, children }) {
   };
   const idLateral = activoId(menu.lateral);
   const idMovil = activoId([...menu.movil, ...menu.mas]);
+  // Acordeón: abierto solo el grupo de la página actual. Al navegar se olvida el fijado manual.
+  const grupoActivo = grupos.find((g) => g.items.some((i) => i.id === idLateral))?.id || grupos[0]?.id || null;
+  const abiertoId = manual === false ? null : manual || grupoActivo;
+  const alternarGrupo = (id) => {
+    setManual(abiertoId === id ? false : id);
+  };
+  useEffect(() => {
+    setManual(null);
+  }, [idLateral]);
+  // Limpieza de la preferencia anterior (lista de cerrados): ahora manda la página.
+  useEffect(() => {
+    try {
+      window.localStorage.removeItem(CLAVE_GRUPOS);
+    } catch {
+      /* sin almacenamiento */
+    }
+  }, []);
 
   const alternarLateral = useCallback(() => {
     let ahoraAbierto;
@@ -159,7 +159,7 @@ export default function Armazon({ pagina, children }) {
             {/* Abierto: grupos plegables con los accesos comunes juntos */}
             <div className={`${L.abierto} flex-col gap-4`}>
               {grupos.map((g) => {
-                const plegado = cerrados.includes(g.id);
+                const plegado = abiertoId !== g.id;
                 return (
                   <section key={g.id} aria-label={g.etiqueta} className="flex flex-col gap-0.5">
                     <button
