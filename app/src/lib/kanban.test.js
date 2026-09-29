@@ -110,3 +110,20 @@ describe('filtrado del tablero', () => {
     expect(n.transiciones).toEqual(['aprobado', 'rechazado']);
   });
 });
+
+import { alternarCriticidad, criticidadesDe } from './kanban.js';
+describe('criticidad con multiselección (v2)', () => {
+  it('lee y limpia listas de la URL, en orden fijo', () => {
+    expect(filtrosDesdeURL('?criticidad=media,critica,urgente')).toEqual({ criticidad: 'critica,media' });
+    expect(criticidadesDe({ criticidad: 'critica,baja' })).toEqual(['critica', 'baja']);
+  });
+  it('alterna una criticidad', () => {
+    expect(alternarCriticidad({}, 'media')).toBe('media');
+    expect(alternarCriticidad({ criticidad: 'media' }, 'critica')).toBe('critica,media');
+    expect(alternarCriticidad({ criticidad: 'media' }, 'media')).toBe(null);
+  });
+  it('filtra por varias criticidades', () => {
+    const l = [{ criticidad: 'critica' }, { criticidad: 'media' }, { criticidad: 'baja' }];
+    expect(filtrarIncidencias(l, { criticidad: 'critica,baja' }).map((i) => i.criticidad)).toEqual(['critica', 'baja']);
+  });
+});

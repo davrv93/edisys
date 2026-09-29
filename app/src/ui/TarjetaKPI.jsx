@@ -1,5 +1,6 @@
 import Icono from './Icono.jsx';
 import { Esqueleto } from './EstadosPantalla.jsx';
+import { Variacion } from './FranjaKPI.jsx';
 
 const TONOS = {
   neutro: { caja: 'bg-superficie border-borde', titulo: 'text-texto-apoyo', valor: 'text-tinta', nota: 'text-texto-apoyo' },
@@ -12,11 +13,11 @@ const TONOS = {
  * KPI: título, valor grande (Fraunces, tabular), nota, variación con TEXTO (no solo color), barra opcional y enlace.
  * variacion: { texto: '+12 % vs. agosto', buena: true|false }
  */
-export default function TarjetaKPI({ titulo, valor, nota, tono = 'neutro', variacion, icono, to, barra, cargando, tamValor = 'text-xl sm:text-2xl xl:text-xl 2xl:text-2xl', verDetalle }) {
+export default function TarjetaKPI({ titulo, valor, nota, tono = 'neutro', variacion, icono, to, barra, cargando, tamValor = 'text-xl lg:text-kpi', verDetalle }) {
   const t = TONOS[tono] || TONOS.neutro;
   const cuerpo = (
     <>
-      <span className={`flex items-center gap-2 text-sm ${t.titulo}`}>
+      <span className={`flex items-center gap-2 text-xs ${t.titulo}`}>
         {icono && <Icono nombre={icono} tam={16} />}
         {titulo}
       </span>
@@ -31,19 +32,14 @@ export default function TarjetaKPI({ titulo, valor, nota, tono = 'neutro', varia
         </div>
       )}
       {nota && <span className={`text-xs ${t.nota}`}>{nota}</span>}
-      {variacion && (
-        <span className={`inline-flex items-center gap-1 text-xs font-semibold ${variacion.buena ? 'text-acento' : 'text-alerta'}`}>
-          <Icono nombre={variacion.texto?.startsWith('-') ? 'abajo' : 'arriba'} tam={12} />
-          {variacion.texto} · {variacion.buena ? 'bien' : 'a vigilar'}
-        </span>
-      )}
+      <Variacion variacion={variacion} />
       {to && verDetalle && <span className="text-xs font-semibold text-acento">{verDetalle} →</span>}
     </>
   );
-  const clases = `flex min-w-0 flex-col gap-2 rounded-tarjeta border p-4 sm:p-5 ${t.caja}`;
+  const clases = `flex min-w-0 flex-col gap-1 rounded-tarjeta border p-tarjeta ${t.caja}`;
   if (to) {
     return (
-      <a href={to} className={`${clases} transition-shadow hover:shadow-flotante focus-visible:outline focus-visible:outline-2 focus-visible:outline-acento`}>
+      <a href={to} className={`${clases} text-tinta transition-colors duration-rapida hover:border-acento hover:text-tinta`}>
         {cuerpo}
       </a>
     );

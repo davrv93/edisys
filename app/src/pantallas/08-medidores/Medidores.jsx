@@ -37,7 +37,7 @@ function Ronda() {
   const actual = medidores.find((m) => String(m.medidor_id) === idSel);
 
   const cabecera = (
-    <header className="flex flex-col gap-3 bg-tinta p-4 text-white lg:rounded-tarjeta">
+    <header className="sticky top-0 z-20 flex flex-col gap-2.5 bg-tinta px-4 pb-3 pt-3 text-white lg:static lg:rounded-tarjeta">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
           {actual && (
@@ -54,8 +54,8 @@ function Ronda() {
           {avance.leidas} de {avance.total}
         </span>
       </div>
-      <div className="h-1.5 rounded-full bg-superficie-oscura-2" role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label="Avance de la ronda">
-        <div className="h-1.5 rounded-full bg-acento-oscuro transition-[width] duration-media" style={{ width: `${pct}%` }} />
+      <div className="h-1 overflow-hidden rounded-chip bg-superficie-oscura-2" role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label={`Avance de la ronda: ${avance.leidas} de ${avance.total}`}>
+        <div className="h-1 rounded-chip bg-acento-oscuro transition-[width] duration-lenta" style={{ width: `${pct}%` }} />
       </div>
     </header>
   );
@@ -104,7 +104,7 @@ function Ronda() {
         </div>
       </Guarda>
       {terminado && (
-        <div className="flex flex-col items-center gap-2 rounded-tarjeta border border-acento-borde bg-acento-suave p-6 text-center text-acento-hover">
+        <div className="flex flex-col items-center gap-2 rounded-tarjeta border border-acento-borde bg-acento-suave p-5 text-center text-acento-hover animate-escala-entrar">
           <Icono nombre="check" tam={32} />
           <span className="font-titulo text-2xl font-semibold">¡Listo! {avance.leidas} de {avance.total} leídas</span>
           <span className="text-base">La ronda de este periodo está completa.</span>
@@ -113,7 +113,7 @@ function Ronda() {
       <ul className="flex flex-col gap-2" aria-label="Unidades en el orden de la ronda">
         {medidores.map((m) => (
           <li key={m.medidor_id}>
-            <button type="button" onClick={() => setQuery({ medidor: m.medidor_id })} className="flex min-h-[64px] w-full items-center justify-between gap-3 rounded-tarjeta border border-borde bg-superficie px-4 py-3 text-left hover:border-acento">
+            <button type="button" onClick={() => setQuery({ medidor: m.medidor_id })} className="flex min-h-[56px] w-full items-center justify-between gap-3 rounded-tarjeta border border-borde bg-superficie px-4 py-2.5 text-left transition-colors duration-rapida hover:border-acento active:scale-98">
               <span className="flex flex-col">
                 <span className="text-base font-semibold">{m.unidad}</span>
                 <span className="text-sm text-texto-apoyo">
@@ -121,7 +121,7 @@ function Ronda() {
                   {m.consumo != null ? ` · ${formatearNumero(m.consumo, 3)} m³` : ''}
                 </span>
               </span>
-              <Insignia estado={m.estado === 'alerta' ? m.alerta || 'alerta_lectura' : m.estado} />
+              <Insignia estado={m.estado === 'alerta' ? m.alerta || 'alerta_lectura' : m.estado === 'pendiente' ? 'pendiente_lectura' : m.estado} />
             </button>
           </li>
         ))}
@@ -137,6 +137,8 @@ function Captura({ eid, periodo, datos, medidor: m, medidores, cabecera, onGuard
   const [foto, setFoto] = useState(null);
   const [texto, setTexto] = useState(m.lectura_actual != null ? String(m.lectura_actual).replace('.', ',') : '');
   const [observacion, setObservacion] = useState('');
+  const [motivo, setMotivo] = useState('');
+  const [revisado, setRevisado] = useState(false);
   const [progreso, setProgreso] = useState(null);
   const [fallo, setFallo] = useState(null);
   const valor = parsearLectura(texto);
@@ -144,25 +146,19 @@ function Captura({ eid, periodo, datos, medidor: m, medidores, cabecera, onGuard
   const alerta = alertaConsumo(consumo, m.media_3m);
   const tarifa = datos.tarifa_cts;
   const sig = siguientePendiente(medidores, m.medidor_id);
-  const puedeGuardar = !!foto && valor != null && progreso == null;
+  // Las alertas se resuelven EN LÍNEA (v2), sin diálogo: el negativo pide motivo; el pico, confirmar que se revisó la foto.
+  const alertaResuelta = alerta === 'NEGATIVO' ? motivo.trim().length > 0 : alerta === 'PICO' ? revisado : true;
+  const puedeGuardar = !!foto && valor != null && progreso == null && alertaResuelta;
 
   const guardar = async () => {
     if (!puedeGuardar) return;
-    let motivo = '';
-    if (alerta === 'NEGATIVO') {
-      const r = await dialog.prompt({ title: 'La lectura es menor que la anterior', text: `Consumo de ${formatearNumero(consumo, 3)} m³. Si cambiaron el medidor o dio la vuelta, explícalo.`, label: 'Motivo', required: true, okText: 'Guardar con motivo' });
-      if (r === null) return;
-      motivo = r;
-    } else if (alerta === 'PICO') {
-      const ok = await dialog.confirm({ title: '¿Confirmas este consumo?', text: `${formatearNumero(consumo, 3)} m³ es más del doble de lo habitual (${formatearNumero(m.media_3m, 1)} m³). Puede ser una fuga. Revisa la foto antes de guardar.`, okText: 'Sí, está bien' });
-      if (!ok) return;
-    }
+    const conMotivo = alerta === 'NEGATIVO' ? motivo.trim() : '';
     const form = new FormData();
     form.set('periodo', periodo);
     form.set('valor', String(valor));
     form.set('foto', foto.archivo);
     if (foto.tomadaEn) form.set('tomada_en', foto.tomadaEn);
-    if (motivo) form.set('motivo', motivo);
+    if (conMotivo) form.set('motivo', conMotivo);
     if (observacion) form.set('observacion', observacion);
     setFallo(null);
     setProgreso(0);
@@ -226,14 +222,33 @@ function Captura({ eid, periodo, datos, medidor: m, medidores, cabecera, onGuard
             </p>
           )}
           {consumo != null && (
-            <div className={`flex items-center justify-between rounded-control border p-3 text-sm ${alerta ? 'border-aviso-borde bg-aviso-suave text-aviso-texto' : 'border-borde bg-superficie'}`} role={alerta ? 'status' : undefined}>
-              <span>
-                Consumo <b className="tabular-nums">{formatearNumero(consumo, consumo % 1 ? 3 : 0)} m³</b>
-                {tarifa ? ` × ${formatearSoles(tarifa)}` : ''}
-                {alerta === 'PICO' && ' · pico: posible fuga'}
-                {alerta === 'NEGATIVO' && ' · negativo: pide motivo'}
-              </span>
-              {tarifa && consumo >= 0 ? <b className="tabular-nums">{formatearSoles(cargoAgua(consumo, tarifa))}</b> : null}
+            <div className={`flex flex-col gap-2 rounded-control border p-3 text-sm transition-colors duration-media ${alerta === 'NEGATIVO' ? 'border-alerta-borde bg-alerta-suave text-alerta-texto' : alerta ? 'border-aviso-borde bg-aviso-suave text-aviso-texto' : 'border-borde bg-superficie'}`} role={alerta ? 'status' : undefined}>
+              <div className="flex items-center justify-between gap-2">
+                <span className="flex items-center gap-1.5">
+                  {alerta && <Icono nombre={alerta === 'PICO' ? 'pico' : 'negativo'} tam={16} />}
+                  <span>
+                    Consumo <b className="tabular-nums">{formatearNumero(consumo, consumo % 1 ? 3 : 0)} m³</b>
+                    {tarifa ? ` × ${formatearSoles(tarifa)}` : ''}
+                  </span>
+                </span>
+                {tarifa && consumo >= 0 ? <b className="tabular-nums">{formatearSoles(cargoAgua(consumo, tarifa))}</b> : null}
+              </div>
+              {alerta === 'PICO' && (
+                <label className="flex min-h-[44px] items-start gap-3 animate-desplegar">
+                  <input type="checkbox" checked={revisado} onChange={(e) => setRevisado(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--color-acento)]" />
+                  <span>
+                    <b>Pico: más del doble de lo habitual</b> ({formatearNumero(m.media_3m, 1)} m³). Puede ser una fuga. Revisé la foto y el consumo es correcto.
+                  </span>
+                </label>
+              )}
+              {alerta === 'NEGATIVO' && (
+                <div className="flex flex-col gap-1.5 animate-desplegar">
+                  <label htmlFor="motivo-negativo" className="font-semibold">
+                    La lectura es menor que la anterior: explica el motivo
+                  </label>
+                  <textarea id="motivo-negativo" value={motivo} onChange={(e) => setMotivo(e.target.value)} rows={2} placeholder="Ej. cambiaron el medidor, dio la vuelta…" className="w-full rounded-control border border-alerta-borde bg-superficie px-3 py-2 text-base text-tinta focus:border-acento focus:outline-none focus:ring-2 focus:ring-acento" />
+                </div>
+              )}
             </div>
           )}
           {observacion && (
@@ -262,6 +277,7 @@ function Captura({ eid, periodo, datos, medidor: m, medidores, cabecera, onGuard
           </Boton>
         </div>
         {!foto && <p className="mt-2 text-center text-xs text-texto-apoyo">Sin foto no se puede guardar.</p>}
+        {foto && !alertaResuelta && <p className="mt-2 text-center text-xs text-aviso-texto">{alerta === 'NEGATIVO' ? 'Escribe el motivo para guardar.' : 'Confirma que revisaste el pico para guardar.'}</p>}
       </footer>
     </div>
   );

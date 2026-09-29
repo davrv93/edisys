@@ -1,9 +1,11 @@
 import { useEffect, useId, useState } from 'react';
 import { ctsATexto, parsearSoles } from '../lib/dinero.js';
+import SelectorFecha from './SelectorFecha.jsx';
+import Icono from './Icono.jsx';
 
 const BASE_INPUT =
   'w-full rounded-control border bg-superficie px-3 text-base sm:text-sm text-tinta placeholder:text-texto-tenue ' +
-  'focus:outline-none focus:ring-2 focus:ring-acento focus:border-acento disabled:bg-superficie-2 disabled:text-texto-apoyo';
+  'transition-colors duration-rapida focus:outline-none focus:ring-2 focus:ring-acento focus:border-acento disabled:bg-superficie-2 disabled:text-texto-apoyo';
 
 /**
  * Campo con etiqueta, ayuda y error.
@@ -46,6 +48,9 @@ export default function Campo({
     control = (
       <textarea className={`${BASE_INPUT} ${borde} py-2 min-h-[88px] text-base ${inputClassName}`} value={valor ?? ''} onChange={(e) => onCambio?.(e.target.value)} {...comunes} />
     );
+  } else if (tipo === 'fecha') {
+    // v2: selector propio en español (dd/mm/aaaa, lunes primero). Entrega «AAAA-MM-DD» como antes.
+    control = <SelectorFecha className={`${BASE_INPUT} ${borde} ${alto} ${inputClassName}`} valor={valor} onCambio={onCambio} {...comunes} />;
   } else if (tipo === 'dinero') {
     control = <CampoDinero className={`${BASE_INPUT} ${borde} ${alto} ${inputClassName}`} valor={valor} onCambio={onCambio} {...comunes} />;
   } else {
@@ -78,7 +83,7 @@ export default function Campo({
       )}
       {error && (
         <p id={idError} className="text-sm text-alerta flex items-center gap-1" role="alert">
-          <span aria-hidden="true">⚠</span> {error}
+          <Icono nombre="alerta" tam={14} /> {error}
         </p>
       )}
     </div>

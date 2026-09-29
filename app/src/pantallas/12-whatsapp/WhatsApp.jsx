@@ -8,7 +8,7 @@ import { useEid, useSesion, Guarda } from '../../layout/Sesion.jsx';
 import { usePeriodo } from '../../layout/usePeriodo.js';
 import Encabezado, { Contenido, Seccion } from '../../layout/Encabezado.jsx';
 import { nombreUnidad } from '../../lib/unidad.js';
-import { Boton, Campo, ErrorCarga, Esqueleto, Icono, Insignia, SelectorPeriodo, Vacio, useDialog, useToast } from '../../ui/index.js';
+import { Boton, Campo, Chip, ErrorCarga, Esqueleto, Icono, Insignia, SelectorPeriodo, Vacio, infoEstado, useDialog, useToast } from '../../ui/index.js';
 
 // Estados del CHECK de whatsapp_mensaje (api/migrations/0007_whatsapp.sql).
 const ESTADOS = ['', 'pendiente', 'simulado', 'enviado', 'error', 'recibido'];
@@ -40,33 +40,33 @@ export default function WhatsApp() {
       <Encabezado
         titulo="WhatsApp"
         acciones={
-          <Boton variante="secundario" icono="robot" href={ruta('chatbot')}>
+          <Boton variante="secundario" icono="chatbot" href={ruta('chatbot')}>
             Simulador del chatbot
           </Boton>
         }
       >
-        <div role="tablist" className="flex gap-1 overflow-x-auto px-4 lg:px-8">
+        {config.datos && simulado && (
+          <div className="flex items-center gap-2 border-y border-aviso-borde bg-aviso-suave px-4 py-1.5 text-xs text-aviso-texto lg:px-6" role="status">
+            <Icono nombre="simulado" tam={14} className="shrink-0" />
+            <span>
+              <b>Modo SIMULADO:</b> los mensajes se registran en la bandeja pero NO salen a ningún teléfono.
+              {s.tiene('whatsapp.configurar') ? ' Para enviar de verdad, conecta evolution-go en «Configuración».' : ''}
+            </span>
+          </div>
+        )}
+        <div role="tablist" className="flex gap-1 overflow-x-auto px-4 lg:px-6">
           {[
             ['bandeja', 'Bandeja'],
             ['enviar', 'Enviar'],
             ...(s.tiene('whatsapp.configurar') ? [['config', 'Configuración']] : []),
           ].map(([id, t]) => (
-            <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setQuery({ tab: id === 'bandeja' ? null : id, estado: null, q: null })} className={`h-12 whitespace-nowrap border-b-2 px-3 text-sm font-semibold ${tab === id ? 'border-acento text-acento' : 'border-transparent text-texto-suave hover:text-tinta'}`}>
+            <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setQuery({ tab: id === 'bandeja' ? null : id, estado: null, q: null })} className={`h-11 whitespace-nowrap border-b-2 px-3 text-sm font-semibold transition-colors duration-rapida ${tab === id ? 'border-acento text-acento' : 'border-transparent text-texto-suave hover:text-tinta'}`}>
               {t}
             </button>
           ))}
         </div>
       </Encabezado>
       <Contenido>
-        {config.datos && simulado && (
-          <div className="flex items-start gap-3 rounded-tarjeta border-2 border-aviso-borde bg-aviso-suave p-4 text-aviso-texto" role="status">
-            <Icono nombre="alerta" tam={22} className="mt-0.5 shrink-0 text-aviso" />
-            <div className="flex flex-col gap-1">
-              <b className="text-base">Modo SIMULADO</b>
-              <span className="text-sm">Los mensajes se registran en la bandeja pero NO salen a ningún teléfono. Para enviar de verdad, conecta evolution-go en «Configuración».</span>
-            </div>
-          </div>
-        )}
         {config.error && <ErrorCarga error={config.error} onReintentar={config.recargar} compacto />}
         {tab === 'bandeja' && <Bandeja />}
         {tab === 'enviar' && <Enviar simulado={simulado} />}
@@ -94,15 +94,15 @@ function Bandeja() {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
         <div className="-mx-4 flex gap-2 overflow-x-auto px-4 lg:mx-0 lg:flex-wrap lg:px-0" role="group" aria-label="Filtrar por estado">
           {ESTADOS.map((e) => (
-            <button key={e || 'todos'} type="button" aria-pressed={estado === e} onClick={() => setQuery({ estado: e || null }, { reemplazar: true })} className={`h-10 shrink-0 rounded-full border px-4 text-sm font-semibold ${estado === e ? 'border-tinta bg-tinta text-white' : 'border-borde-fuerte bg-superficie'}`}>
-              {e ? <Insignia estado={e} className="border-0 bg-transparent p-0 text-inherit" /> : 'Todos'}
-            </button>
+            <Chip key={e || 'todos'} activo={estado === e} icono={e ? infoEstado(e).icono : undefined} onClick={() => setQuery({ estado: e || null }, { reemplazar: true })}>
+              {e ? infoEstado(e).texto : 'Todos'}
+            </Chip>
           ))}
         </div>
         <label className="relative lg:ml-auto lg:w-72">
           <span className="sr-only">Buscar por teléfono, unidad o texto</span>
           <Icono nombre="buscar" tam={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-texto-apoyo" />
-          <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Teléfono, unidad o texto" className="h-11 w-full rounded-control border border-borde-fuerte bg-superficie pl-9 pr-3 text-base focus:outline-none focus:ring-2 focus:ring-acento sm:text-sm" />
+          <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Teléfono, unidad o texto" className="h-11 w-full rounded-control border border-borde-fuerte bg-superficie pl-9 pr-3 text-base transition-colors duration-rapida focus:border-acento focus:outline-none focus:ring-2 focus:ring-acento lg:h-8 lg:text-sm" />
         </label>
       </div>
       {error ? (
@@ -112,32 +112,70 @@ function Bandeja() {
       ) : mensajes.length === 0 ? (
         <Vacio titulo="No hay mensajes" texto={estado || busca ? 'Prueba con otro filtro.' : 'Los recibos y avisos que envíes aparecerán aquí.'} icono="mensaje" compacto />
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col divide-y divide-superficie-2 overflow-hidden rounded-tarjeta border border-borde bg-superficie" aria-label="Mensajes">
           {mensajes.map((m) => (
-            <li key={m.id} className={`flex flex-col gap-2 rounded-tarjeta border p-4 ${m.direccion === 'entrante' ? 'border-acento-borde bg-acento-suave' : 'border-borde bg-superficie'}`}>
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="flex items-center gap-2 text-sm">
-                  <Icono nombre={m.direccion === 'entrante' ? 'volver' : 'enviar'} tam={16} className={m.direccion === 'entrante' ? 'text-acento' : 'text-texto-apoyo'} />
-                  <b>{m.destinatario || nombreUnidad(m.unidad) || m.telefono}</b>
-                  <span className="text-texto-apoyo">
-                    {[m.destinatario ? nombreUnidad(m.unidad) : null, m.telefono].filter(Boolean).join(' · ')}
-                  </span>
-                </span>
-                <span className="flex items-center gap-2">
-                  {m.plantilla && <span className="text-xs text-texto-apoyo">{m.plantilla}</span>}
-                  <Insignia estado={m.estado} />
-                </span>
-              </div>
-              <p className="whitespace-pre-line text-base">{m.texto}</p>
-              <div className="flex flex-wrap justify-between gap-2 text-xs text-texto-apoyo">
-                <span>{m.direccion === 'entrante' ? 'Recibido' : 'Enviado'} {formatearFechaHora(m.fecha || m.creado_en)}{m.enviado_por ? ` · ${m.enviado_por}` : ''}{m.intencion ? ` · intención: ${m.intencion}` : ''}</span>
-                {m.error && <span className="font-semibold text-alerta">{m.error}</span>}
-              </div>
-            </li>
+            <Mensaje key={m.id} m={m} />
           ))}
         </ul>
       )}
     </>
+  );
+}
+
+/** Iniciales para el avatar: «María Demo» → «MD»; «Dpto 201» → «201». */
+function iniciales(nombre) {
+  const t = String(nombre || '').trim();
+  if (!t) return '?';
+  const num = t.match(/\d+[A-Za-z]?$/);
+  if (/^dpto/i.test(t) && num) return num[0].slice(0, 3);
+  if (/^\+?\d[\d\s]+$/.test(t)) return t.replace(/\D/g, '').slice(-2);
+  return t.split(/\s+/).slice(0, 2).map((p) => p[0]).join('').toUpperCase();
+}
+
+/** Un mensaje de la bandeja como fila de conversación; el texto completo se despliega al tocarlo. */
+function Mensaje({ m }) {
+  const [abierto, setAbierto] = useState(false);
+  const entrante = m.direccion === 'entrante';
+  const quien = m.destinatario || nombreUnidad(m.unidad) || m.telefono;
+  const largo = String(m.texto || '').length > 140 || String(m.texto || '').includes('\n');
+  return (
+    <li className={`flex gap-3 px-4 py-3 transition-colors duration-rapida ${entrante ? 'bg-acento-suave/60' : ''}`}>
+      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-chip text-sm font-semibold ${entrante ? 'bg-acento text-white' : 'bg-superficie-2 text-texto-suave'}`} aria-hidden="true">
+        {iniciales(quien)}
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+          <span className="flex min-w-0 items-center gap-1.5 text-sm">
+            <Icono nombre={entrante ? 'entrante' : 'enviar'} tam={14} className={entrante ? 'text-acento' : 'text-texto-apoyo'} />
+            <b className="truncate">{quien}</b>
+            <span className="truncate text-xs text-texto-apoyo">{[m.destinatario ? nombreUnidad(m.unidad) : null, m.telefono].filter((x) => x && x !== quien).join(' · ')}</span>
+          </span>
+          <span className="flex items-center gap-2">
+            <span className="text-xs tabular-nums text-texto-apoyo">{formatearFechaHora(m.fecha || m.creado_en)}</span>
+            <Insignia estado={m.estado} />
+          </span>
+        </div>
+        <p className={`whitespace-pre-line text-sm text-tinta ${abierto ? '' : 'line-clamp-2'}`}>{m.texto}</p>
+        {largo && (
+          <button type="button" onClick={() => setAbierto(!abierto)} aria-expanded={abierto} className="self-start text-xs font-semibold text-acento">
+            {abierto ? 'Ver menos' : 'Ver mensaje completo'}
+          </button>
+        )}
+        <div className="flex flex-wrap justify-between gap-2 text-xs text-texto-apoyo">
+          <span>
+            {entrante ? 'Recibido' : 'Enviado'}
+            {m.plantilla ? ` · ${NOMBRE_PLANTILLA[m.plantilla] || m.plantilla}` : ''}
+            {m.enviado_por ? ` · ${m.enviado_por}` : ''}
+            {m.intencion ? ` · intención: ${m.intencion}` : ''}
+          </span>
+          {m.error && (
+            <span className="flex items-center gap-1 font-semibold text-alerta">
+              <Icono nombre="alerta" tam={12} /> {m.error}
+            </span>
+          )}
+        </div>
+      </div>
+    </li>
   );
 }
 
@@ -202,13 +240,13 @@ function Enviar({ simulado }) {
 
   const listaUnidades = lista(unidades.datos);
   return (
-    <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
+    <div className="grid gap-4 lg:grid-cols-2 lg:gap-5">
       {dialogEl}
       <Guarda permiso="whatsapp.enviar" sino={<Vacio titulo="Solo lectura" texto="Tu rol puede ver la bandeja, pero no enviar." compacto />}>
         <Seccion titulo="Recibos del periodo">
           <p className="text-base text-texto-suave">Envía a cada unidad su recibo del periodo con el monto y la fecha de vencimiento.</p>
           <SelectorPeriodo periodo={periodo} onCambio={setPeriodo} />
-          <Boton icono="whatsapp" onClick={enviarRecibos} cargando={enviandoRecibos} className="self-start">
+          <Boton icono="enviar" onClick={enviarRecibos} cargando={enviandoRecibos} className="self-start">
             Enviar recibos de {mesDePeriodo(periodo)}
           </Boton>
         </Seccion>
@@ -263,7 +301,7 @@ function Configuracion({ inicial, onGuardado }) {
     }
   };
   const opcion = (valor, titulo, detalle) => (
-    <label className={`flex min-h-[56px] cursor-pointer items-start gap-3 rounded-tarjeta border bg-superficie p-4 ${f.modo === valor ? 'border-acento ring-1 ring-acento' : 'border-borde'}`}>
+    <label className={`flex min-h-[56px] cursor-pointer items-start gap-3 rounded-tarjeta border bg-superficie p-3 transition-colors duration-rapida ${f.modo === valor ? 'border-acento ring-1 ring-acento' : 'border-borde'}`}>
       <input type="radio" name="modo" checked={f.modo === valor} onChange={() => setF({ ...f, modo: valor })} className="mt-0.5 h-5 w-5 accent-[var(--color-acento)]" />
       <span className="flex flex-col">
         <b>{titulo}</b>

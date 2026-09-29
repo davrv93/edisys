@@ -244,7 +244,7 @@ export default component$(() => {
   const deshabilitado = enviando.value || bloqueado;
 
   const campo =
-    "h-12 w-full rounded-lg border bg-superficie px-4 text-base text-tinta placeholder:text-texto-apoyo " +
+    "h-12 w-full rounded-control border bg-superficie px-4 text-base text-tinta placeholder:text-texto-apoyo transition-colors duration-rapida " +
     "focus:outline-none focus:ring-1 disabled:bg-fondo disabled:text-texto-apoyo";
   const campoOk = "border-borde-fuerte focus:border-acento focus:ring-acento";
   const campoMal = "border-alerta focus:border-alerta focus:ring-alerta";
@@ -252,19 +252,19 @@ export default component$(() => {
   return (
     <div class="flex min-h-screen flex-col bg-fondo lg:flex-row">
       {/* Panel de marca: escritorio */}
-      <aside class="hidden w-[640px] shrink-0 flex-col justify-between bg-tinta p-16 text-borde lg:flex">
+      <aside class="hidden w-[480px] shrink-0 flex-col justify-between bg-tinta p-12 text-borde lg:flex xl:w-[540px] xl:p-14">
         <a href="/" class="self-start rounded-lg" aria-label="EDISYS, ir a la página principal">
           <Logo tam={40} texto="text-3xl" />
         </a>
         <div class="flex flex-col gap-6">
-          <h1 class="font-titulo text-5xl font-medium leading-[1.15] text-white">{LEMA}</h1>
+          <h1 class="font-titulo text-4xl font-medium leading-[1.15] text-white xl:text-5xl">{LEMA}</h1>
           <p class="text-lg leading-relaxed text-texto-claro">
             Recibos, balance, reservas y mantenimiento en un solo lugar para la administración, la junta y cada
             propietario.
           </p>
-          <ul class="mt-4 grid grid-cols-3 gap-3">
+          <ul class="mt-4 grid grid-cols-3 gap-2">
             {TARJETAS.map((t) => (
-              <li key={t.titulo} class="flex flex-col gap-1 rounded-xl border border-superficie-oscura-2 p-4">
+              <li key={t.titulo} class="flex flex-col gap-1 rounded-tarjeta border border-superficie-oscura-2 p-3">
                 <span class="text-xs text-texto-tenue">{t.titulo}</span>
                 <span class="text-sm font-semibold text-white">{t.valor}</span>
               </li>
@@ -282,7 +282,7 @@ export default component$(() => {
         <h1 class="font-titulo text-3xl font-medium leading-tight text-white">{LEMA}</h1>
       </header>
 
-      <main class="flex flex-1 justify-center lg:items-center">
+      <main class="flex flex-1 justify-center px-0 lg:items-center lg:px-12">
         <form
           method="post"
           action={loc.url.pathname + loc.url.search}
@@ -290,7 +290,7 @@ export default component$(() => {
           preventdefault:submit
           onSubmit$={enviar}
           aria-busy={enviando.value}
-          class="flex w-full max-w-[400px] flex-col gap-5 px-6 py-8 lg:gap-6 lg:px-0 lg:py-12"
+          class={["flex w-full max-w-[400px] flex-col gap-5 px-6 py-8 transition-opacity duration-media animate-aparecer lg:gap-6 lg:px-0 lg:py-16", enviando.value ? "opacity-80" : ""]}
         >
           <input type="hidden" name="next" value={destino} />
 
@@ -303,7 +303,7 @@ export default component$(() => {
           {error.value && (
             <div
               role="alert"
-              class="rounded-lg border border-alerta-borde bg-alerta-suave p-4 text-sm leading-normal text-alerta"
+              class="rounded-control border border-alerta-borde bg-alerta-suave p-4 text-sm leading-normal text-alerta-texto animate-desplegar"
             >
               <p class="font-semibold">
                 {bloqueado
@@ -320,7 +320,7 @@ export default component$(() => {
           {nota.value && (
             <div
               role="status"
-              class="rounded-lg border border-acento-borde bg-acento-suave p-4 text-sm leading-normal text-acento-hover"
+              class="rounded-control border border-acento-borde bg-acento-suave p-4 text-sm leading-normal text-acento-hover animate-desplegar"
             >
               {nota.value}
             </div>
@@ -422,7 +422,7 @@ export default component$(() => {
           <button
             type="submit"
             disabled={deshabilitado}
-            class="flex h-13 items-center justify-center gap-2 rounded-lg bg-acento text-base font-semibold text-white hover:bg-acento-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento disabled:cursor-not-allowed disabled:opacity-70 lg:h-12"
+            class="flex h-13 items-center justify-center gap-2 rounded-control bg-acento text-base font-semibold text-white transition-[background-color,transform] duration-rapida hover:bg-acento-hover enabled:active:scale-98 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento disabled:cursor-not-allowed disabled:opacity-70 lg:h-12"
           >
             {enviando.value && <Spinner />}
             {enviando.value ? "Ingresando…" : "Ingresar"}
@@ -436,7 +436,7 @@ export default component$(() => {
             type="button"
             onClick$={avisarWhatsApp}
             disabled={enviando.value}
-            class="h-13 rounded-lg border border-borde-fuerte bg-superficie text-base font-semibold text-tinta hover:bg-fondo focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento lg:h-12"
+            class="h-13 rounded-control border border-borde-fuerte bg-superficie text-base font-semibold text-tinta transition-[background-color,transform] duration-rapida hover:bg-fondo enabled:active:scale-98 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento lg:h-12"
           >
             Recibir código por WhatsApp
           </button>

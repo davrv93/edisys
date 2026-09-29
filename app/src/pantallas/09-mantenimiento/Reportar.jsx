@@ -113,7 +113,7 @@ export default function Reportar() {
           <input ref={input} type="file" accept="image/*" capture="environment" multiple className="sr-only" onChange={agregar} aria-label="Tomar foto" />
           <div className="grid grid-cols-3 gap-2">
             {fotos.map((f, i) => (
-              <div key={f.url} className="relative aspect-square overflow-hidden rounded-control bg-superficie-oscura">
+              <div key={f.url} className="relative aspect-square overflow-hidden rounded-control bg-superficie-oscura animate-escala-entrar">
                 <img src={f.url} alt={`Foto ${i + 1}`} className="h-full w-full object-cover" />
                 <button type="button" onClick={() => quitar(i)} aria-label={`Quitar foto ${i + 1}`} className="absolute right-1 top-1 flex h-8 w-8 items-center justify-center rounded-full bg-tinta/70 text-white">
                   <Icono nombre="cerrar" tam={14} />
@@ -134,7 +134,7 @@ export default function Reportar() {
           <span className="text-sm font-semibold">Tipo</span>
           <div className="flex flex-wrap gap-2">
             {CATEGORIAS.map((c) => (
-              <button key={c.valor} type="button" aria-pressed={categoria === c.valor} onClick={() => setCategoria(c.valor)} className={`h-11 rounded-full border px-4 text-sm font-semibold ${categoria === c.valor ? 'border-acento bg-acento text-white' : 'border-borde-fuerte bg-superficie'}`}>
+              <button key={c.valor} type="button" aria-pressed={categoria === c.valor} onClick={() => setCategoria(c.valor)} className={`h-11 rounded-chip border px-4 text-sm font-semibold transition-colors duration-rapida active:scale-97 ${categoria === c.valor ? 'border-acento bg-acento text-white' : 'border-borde-fuerte bg-superficie'}`}>
                 {c.etiqueta}
               </button>
             ))}

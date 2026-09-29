@@ -182,16 +182,16 @@ export default function NuevaReserva() {
 
             <section className="flex flex-col gap-2">
               <span className="text-sm font-semibold">Día</span>
-              <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+              <div className="carrusel -mx-4 gap-2 px-4 pb-1">
                 {dias.map((d) => (
                   <button
                     key={d}
                     type="button"
                     aria-pressed={d === dia}
                     onClick={() => setDia(d)}
-                    className={`flex h-16 w-13 shrink-0 flex-col items-center justify-center gap-0.5 rounded-control border ${d === dia ? 'border-acento bg-acento text-white' : 'border-borde-fuerte bg-superficie'}`}
+                    className={`flex h-16 w-13 shrink-0 flex-col items-center justify-center gap-0.5 rounded-control border transition-colors duration-rapida active:scale-97 ${d === dia ? 'border-acento bg-acento text-white' : d === hoy ? 'border-curso-borde bg-curso-suave text-curso-texto' : 'border-borde-fuerte bg-superficie'}`}
                   >
-                    <span className={`text-xs ${d === dia ? '' : 'text-texto-apoyo'}`}>{DIAS_CORTOS[diaSemana(d)]}</span>
+                    <span className={`text-xs ${d === dia || d === hoy ? '' : 'text-texto-apoyo'}`}>{d === hoy ? 'Hoy' : DIAS_CORTOS[diaSemana(d)]}</span>
                     <b className="text-base">{Number(d.slice(8))}</b>
                   </button>
                 ))}
@@ -220,7 +220,7 @@ export default function NuevaReserva() {
                           disabled={!libre}
                           aria-pressed={sel}
                           onClick={() => setFranja(f)}
-                          className={`flex h-13 flex-col items-center justify-center rounded-control border text-sm font-semibold ${
+                          className={`flex h-13 flex-col items-center justify-center rounded-control border text-sm font-semibold transition-colors duration-rapida active:scale-97 animate-escala-entrar ${
                             sel ? 'border-acento bg-acento-suave text-acento-hover ring-2 ring-acento' : libre ? 'border-borde-fuerte bg-superficie' : 'cursor-not-allowed border-borde bg-superficie-2 text-texto-tenue'
                           }`}
                         >
@@ -283,7 +283,7 @@ export default function NuevaReserva() {
 function Chip({ activo, onClick, children, suave = false }) {
   const on = suave ? 'border-acento bg-acento-suave text-acento-hover' : 'border-acento bg-acento text-white';
   return (
-    <button type="button" aria-pressed={activo} onClick={onClick} className={`h-11 rounded-full border px-4 text-sm font-semibold ${activo ? on : 'border-borde-fuerte bg-superficie text-tinta'}`}>
+    <button type="button" aria-pressed={activo} onClick={onClick} className={`h-11 rounded-chip border px-4 text-sm font-semibold transition-colors duration-rapida active:scale-97 ${activo ? on : 'border-borde-fuerte bg-superficie text-tinta'}`}>
       {children}
     </button>
   );

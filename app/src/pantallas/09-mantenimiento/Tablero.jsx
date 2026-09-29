@@ -1,25 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../lib/api.js';
 import { useCarga } from '../../lib/useCarga.js';
-import { formatearSoles } from '../../lib/dinero.js';
+import { formatearSoles, formatearSolesCorto } from '../../lib/dinero.js';
 import { formatearFecha, haceCuanto } from '../../lib/fechas.js';
 import {
   ACCION_HACIA, CATEGORIAS, COLUMNAS, CRITICIDADES, agruparPorEstado, filtrarIncidencias, filtrosAURL, filtrosDesdeURL,
-  hayFiltros, normalizarIncidencia, puedeTransicionar, transicionesPermitidas, PERMISO_HACIA, esSalida,
+  hayFiltros, normalizarIncidencia, puedeTransicionar, transicionesPermitidas, PERMISO_HACIA, esSalida, alternarCriticidad, criticidadesDe,
 } from '../../lib/kanban.js';
 import { lista as aLista } from '../../lib/api.js';
 import { ruta, useQuery } from '../../lib/nav.jsx';
 import { useSesion, Guarda } from '../../layout/Sesion.jsx';
 import Encabezado, { Contenido } from '../../layout/Encabezado.jsx';
-import { Boton, Campo, ErrorCarga, Esqueleto, Icono, Insignia, Modal, useDialog, useToast } from '../../ui/index.js';
+import { Boton, Campo, Chip, Desplegable, ErrorCarga, Esqueleto, Icono, Insignia, MenuAcciones, Modal, PuntoEstado, Vacio, infoEstado, TONO_PUNTO, useDialog, useToast } from '../../ui/index.js';
 
-const CRIT = {
-  critica: { texto: 'CRÍTICO', clase: 'text-alerta', caja: 'bg-alerta-suave border-alerta-borde' },
-  media: { texto: 'MEDIO', clase: 'text-aviso', caja: 'bg-superficie border-borde' },
-  baja: { texto: 'BAJO', clase: 'text-texto-suave', caja: 'bg-superficie border-borde' },
-};
+const TEXTO_CRIT = { critica: 'Crítico', media: 'Medio', baja: 'Bajo' };
 
-/** Tablero kanban por estado, con barra de filtros sincronizada con la URL. */
+/** Tablero kanban por estado (v2): barra de filtros de una línea, tarjetas compactas, arrastre con movimiento. */
 export default function Tablero() {
   const s = useSesion();
   const [q, setQuery] = useQuery();
@@ -28,11 +24,12 @@ export default function Tablero() {
   const filtros = useMemo(() => filtrosDesdeURL(q), [q]);
   const claveFiltros = filtrosAURL(filtros).toString();
   const [texto, setTexto] = useState(filtros.q || '');
-  const [verFiltros, setVerFiltros] = useState(false);
   const [arrastrando, setArrastrando] = useState(null);
   const [sobre, setSobre] = useState(null);
   const [detalle, setDetalle] = useState(null);
   const [moviendo, setMoviendo] = useState(null);
+  const [asentada, setAsentada] = useState(null); // tarjeta que acaba de caer en su columna
+  const [rechazada, setRechazada] = useState(null); // tarjeta que el API devolvió (tiembla)
   const colMovil = COLUMNAS.some((c) => c.estado === q.get('col')) ? q.get('col') : 'reportado';
 
   const carga = useCarga(() => api.get('/mantenimiento/incidencias', filtros), [claveFiltros]);
@@ -61,12 +58,20 @@ export default function Tablero() {
     setTexto('');
     setQuery(filtrosAURL({}, window.location.search), { reemplazar: true });
   };
-  const nFiltros = Object.keys(filtros).length;
   const permitidas = (inc) => transicionesPermitidas(inc.estado, s.tiene, inc.transiciones);
+  const crits = criticidadesDe(filtros);
+  // Filtros del menú «Filtros» (los que no son buscador ni criticidad).
+  const activosMenu = [
+    filtros.categoria && { k: 'categoria', texto: CATEGORIAS.find((c) => c.valor === filtros.categoria)?.etiqueta || filtros.categoria },
+    filtros.responsable_id && { k: 'responsable_id', texto: responsables.find((r) => String(r.id) === String(filtros.responsable_id))?.nombre || `Responsable ${filtros.responsable_id}` },
+    filtros.desde && { k: 'desde', texto: `Desde ${formatearFecha(filtros.desde)}` },
+    filtros.hasta && { k: 'hasta', texto: `Hasta ${formatearFecha(filtros.hasta)}` },
+  ].filter(Boolean);
 
   const mover = async (inc, a) => {
     if (!puedeTransicionar(inc.estado, a, inc.transiciones) || !s.tiene(PERMISO_HACIA[a])) {
       toast(`No se puede pasar de «${etiqueta(inc.estado)}» a «${etiqueta(a)}».`, { tipo: 'aviso' });
+      setRechazada(inc.id);
       return;
     }
     let cuerpo = { estado: a };
@@ -93,17 +98,32 @@ export default function Tablero() {
       return Array.isArray(d) ? l : { ...d, datos: l };
     });
     setMoviendo(inc.id);
+    setAsentada(inc.id);
     try {
       await api.patch(`/mantenimiento/incidencias/${inc.id}/estado`, cuerpo);
       toast(`${inc.codigo} → ${etiqueta(a)}.`, { tipo: 'exito', duracion: 2500 });
       if (detalle?.id === inc.id) setDetalle({ ...inc, estado: a });
     } catch (err) {
       carga.setDatos(previo);
-      await dialog.alert({ title: 'No se pudo mover', text: err.message });
+      setAsentada(null);
+      setRechazada(inc.id);
+      toast(`No se pudo mover ${inc.codigo}: ${err.message}`, { tipo: 'error' });
     } finally {
       setMoviendo(null);
     }
   };
+
+  // El temblor y el asentado se ven una vez y se limpian.
+  useEffect(() => {
+    if (rechazada == null) return undefined;
+    const t = setTimeout(() => setRechazada(null), 400);
+    return () => clearTimeout(t);
+  }, [rechazada]);
+  useEffect(() => {
+    if (asentada == null) return undefined;
+    const t = setTimeout(() => setAsentada(null), 400);
+    return () => clearTimeout(t);
+  }, [asentada]);
 
   const soltar = (estado) => {
     setSobre(null);
@@ -113,24 +133,65 @@ export default function Tablero() {
   };
 
   const barraFiltros = (
-    <div className={`flex-col gap-3 rounded-tarjeta border border-borde bg-superficie p-4 lg:flex lg:flex-row lg:flex-wrap lg:items-end ${verFiltros ? 'flex' : 'hidden'}`} role="search" aria-label="Filtros del tablero">
-      <Campo className="lg:w-40" etiqueta="Criticidad" tipo="select" valor={filtros.criticidad || ''} onCambio={(v) => setFiltro('criticidad', v)} opciones={[{ valor: '', etiqueta: 'Todas' }, ...CRITICIDADES]} />
-      <Campo className="lg:w-48" etiqueta="Categoría" tipo="select" valor={filtros.categoria || ''} onCambio={(v) => setFiltro('categoria', v)} opciones={[{ valor: '', etiqueta: 'Todas' }, ...CATEGORIAS]} />
-      <Campo className="lg:w-48" etiqueta="Responsable" tipo="select" valor={filtros.responsable_id || ''} onCambio={(v) => setFiltro('responsable_id', v)} opciones={[{ valor: '', etiqueta: 'Todos' }, ...responsables.map((r) => ({ valor: String(r.id), etiqueta: r.nombre }))]} />
-      <Campo className="lg:w-40" etiqueta="Desde" tipo="fecha" valor={filtros.desde || ''} onCambio={(v) => setFiltro('desde', v)} />
-      <Campo className="lg:w-40" etiqueta="Hasta" tipo="fecha" valor={filtros.hasta || ''} onCambio={(v) => setFiltro('hasta', v)} />
-      <Campo className="min-w-[200px] flex-1" etiqueta="Buscar" tipo="buscar" valor={texto} onCambio={setTexto} placeholder="Código, título, ubicación…" />
-      {hayFiltros(filtros) && (
-        <Boton variante="fantasma" onClick={limpiar} icono="cerrar">
-          Limpiar filtros
-        </Boton>
+    <div className="flex flex-col gap-2" role="search" aria-label="Filtros del tablero">
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="relative min-w-[180px] flex-1 sm:max-w-xs">
+          <span className="sr-only">Buscar por código, título o ubicación</span>
+          <Icono nombre="buscar" tam={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-texto-apoyo" />
+          <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Código, título, ubicación…" className="h-11 w-full rounded-control border border-borde-fuerte bg-superficie pl-9 pr-3 text-base transition-colors duration-rapida focus:border-acento focus:outline-none focus:ring-2 focus:ring-acento lg:h-8 lg:text-sm" />
+        </label>
+        <div className="flex gap-1.5 overflow-x-auto" role="group" aria-label="Criticidad (puedes elegir varias)">
+          {CRITICIDADES.map((c) => (
+            <Chip key={c.valor} activo={crits.includes(c.valor)} tono={infoEstado(c.valor).tono} onClick={() => setFiltro('criticidad', alternarCriticidad(filtros, c.valor))}>
+              {TEXTO_CRIT[c.valor]}
+            </Chip>
+          ))}
+        </div>
+        <Desplegable
+          etiqueta="Más filtros"
+          alinear="izq"
+          disparador={({ alternar, ref, props, abierto }) => (
+            <Boton ref={ref} variante="secundario" tamano="sm" icono="ajustes" onClick={alternar} {...props} className={abierto ? 'bg-fondo' : ''}>
+              Filtros{activosMenu.length ? ` · ${activosMenu.length}` : ''}
+            </Boton>
+          )}
+        >
+          <Campo etiqueta="Categoría" tipo="select" valor={filtros.categoria || ''} onCambio={(v) => setFiltro('categoria', v)} opciones={[{ valor: '', etiqueta: 'Todas' }, ...CATEGORIAS]} />
+          <Campo etiqueta="Responsable" tipo="select" valor={filtros.responsable_id || ''} onCambio={(v) => setFiltro('responsable_id', v)} opciones={[{ valor: '', etiqueta: 'Todos' }, ...responsables.map((r) => ({ valor: String(r.id), etiqueta: r.nombre }))]} />
+          <div className="grid grid-cols-2 gap-2">
+            <Campo etiqueta="Desde" tipo="fecha" valor={filtros.desde || ''} onCambio={(v) => setFiltro('desde', v)} />
+            <Campo etiqueta="Hasta" tipo="fecha" valor={filtros.hasta || ''} onCambio={(v) => setFiltro('hasta', v)} />
+          </div>
+        </Desplegable>
+        {hayFiltros(filtros) && (
+          <Boton variante="fantasma" tamano="sm" onClick={limpiar} icono="cerrar">
+            Limpiar
+          </Boton>
+        )}
+        <p className="ml-auto hidden text-xs text-texto-apoyo lg:block" aria-live="polite">
+          {visibles.length} {visibles.length === 1 ? 'trabajo' : 'trabajos'}
+          {hayFiltros(filtros) ? ' con estos filtros' : ''}
+        </p>
+      </div>
+      {activosMenu.length > 0 && (
+        <div className="flex flex-wrap gap-1.5" aria-label="Filtros activos">
+          {activosMenu.map((f) => (
+            <Chip key={f.k} onQuitar={() => setFiltro(f.k, null)} etiquetaQuitar={`Quitar filtro: ${f.texto}`}>
+              {f.texto}
+            </Chip>
+          ))}
+        </div>
       )}
     </div>
   );
 
   const tarjeta = (inc) => {
-    const c = CRIT[inc.criticidad];
     const acc = permitidas(inc);
+    const siguiente = acc.find((a) => !esSalida(a));
+    const otras = acc.filter((a) => a !== siguiente);
+    const tono = inc.criticidad ? infoEstado(inc.criticidad).tono : null;
+    const monto = inc.estado === 'terminado' ? inc.costo_real_cts ?? inc.monto_cts : inc.monto_cts;
+    const levantada = arrastrando?.id === inc.id;
     return (
       <article
         key={inc.id}
@@ -141,45 +202,70 @@ export default function Tablero() {
           e.dataTransfer.setData('text/plain', String(inc.id));
         }}
         onDragEnd={() => (setArrastrando(null), setSobre(null))}
-        className={`flex flex-col gap-1.5 rounded-control border p-3 text-xs ${c ? c.caja : 'bg-superficie border-borde'} ${acc.length ? 'cursor-grab active:cursor-grabbing' : ''} ${moviendo === inc.id ? 'opacity-60' : ''}`}
+        className={[
+          'group relative flex flex-col gap-1 rounded-control border bg-superficie p-2.5 text-xs transition-[transform,box-shadow,opacity] duration-media',
+          tono === 'alerta' ? 'border-alerta-borde' : 'border-borde',
+          acc.length ? 'cursor-grab active:cursor-grabbing' : '',
+          levantada ? 'rotate-2 opacity-80 shadow-flotante' : 'hover:border-borde-fuerte',
+          moviendo === inc.id ? 'opacity-60' : '',
+          asentada === inc.id ? 'animate-asentar' : '',
+          rechazada === inc.id ? 'animate-temblor' : '',
+        ].join(' ')}
       >
-        <button type="button" onClick={() => setDetalle(inc)} className="flex flex-col gap-1 text-left">
-          <span className="flex items-center justify-between gap-2">
-            <span className={c ? `font-bold ${c.clase}` : 'text-texto-apoyo'}>{c ? c.texto : `${inc.codigo}${inc.unidad ? ` · ${inc.unidad}` : inc.reportado_por ? ` · ${inc.reportado_por}` : ''}`}</span>
-            {acc.length > 0 && <Icono nombre="arrastrar" tam={14} className="hidden text-texto-tenue lg:block" />}
+        <div className="flex items-center justify-between gap-2">
+          <span className="flex min-w-0 items-center gap-1.5 text-texto-apoyo">
+            {inc.criticidad ? <PuntoEstado estado={inc.criticidad} texto={<span className="sr-only">{TEXTO_CRIT[inc.criticidad]}</span>} className="-mr-1" /> : null}
+            <span className="font-semibold text-texto-suave">{inc.codigo}</span>
+            {tono === 'alerta' && <span className="font-semibold text-alerta">· Crítico</span>}
           </span>
-          <b className="text-sm leading-snug text-tinta">{c ? `${inc.codigo} ${inc.titulo}` : inc.titulo}</b>
-          <span className="text-texto-apoyo">
-            {inc.votos && inc.estado === 'presupuestado'
-              ? `${formatearSoles(inc.monto_cts)} · ${inc.votos.a_favor} de ${inc.votos.necesarios ?? '?'} votos necesarios`
-              : inc.estado === 'terminado' && inc.monto_cts != null
-                ? `${formatearSoles(inc.costo_real_cts ?? inc.monto_cts)} · en balance`
-                : inc.monto_cts != null
-                  ? `${formatearSoles(inc.monto_cts)}${inc.responsable_nombre ? ` · ${inc.responsable_nombre}` : ''}`
-                  : `${inc.n_fotos || 0} foto${inc.n_fotos === 1 ? '' : 's'} · ${haceCuanto(inc.reportado_en)}`}
+          <span className="flex items-center">
+            {acc.length > 0 && <Icono nombre="arrastrar" tam={14} className="hidden text-texto-apoyo lg:block" />}
+            <MenuAcciones
+              etiqueta={`Acciones de ${inc.codigo}`}
+              variante="fantasma"
+              className="-my-2 -mr-2 scale-90"
+              items={[
+                { etiqueta: 'Ver detalle', icono: 'ver', onClick: () => setDetalle(inc) },
+                ...acc.map((a) => ({ etiqueta: ACCION_HACIA[a], icono: esSalida(a) ? (a === 'descartado' ? 'archivado' : 'cancelado') : infoEstado(a).icono, peligro: esSalida(a), onClick: () => mover(inc, a), deshabilitado: moviendo === inc.id })),
+              ]}
+            />
           </span>
-          {inc.avance_pct != null && (
-            <span className="mt-1 h-1.5 rounded-full bg-borde" aria-label={`Avance ${inc.avance_pct} %`}>
-              <span className="block h-1.5 rounded-full bg-acento" style={{ width: `${inc.avance_pct}%` }} />
-            </span>
-          )}
+        </div>
+        <button type="button" onClick={() => setDetalle(inc)} className="text-left">
+          <b className="line-clamp-2 text-sm leading-snug text-tinta" title={inc.titulo}>
+            {inc.titulo}
+          </b>
         </button>
-        {acc.length > 0 && (
-          <div className="mt-1 flex flex-wrap gap-1.5">
-            {acc.map((a) => (
-              <button
-                key={a}
-                type="button"
-                onClick={() => mover(inc, a)}
-                disabled={moviendo === inc.id}
-                className={`min-h-[36px] rounded-control border px-2 text-xs font-semibold ${esSalida(a) ? 'border-alerta-borde text-alerta hover:bg-alerta-suave' : 'border-acento-borde bg-acento-suave text-acento hover:bg-acento hover:text-white'}`}
-              >
-                {ACCION_HACIA[a]}
-                {!esSalida(a) && ' →'}
-              </button>
-            ))}
-          </div>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-texto-apoyo">
+          {monto != null && <span className="font-semibold tabular-nums text-texto-suave">{formatearSoles(monto)}</span>}
+          {inc.estado === 'terminado' && monto != null && <span>en balance</span>}
+          {inc.responsable_nombre && <span className="truncate">{inc.responsable_nombre}</span>}
+          {inc.votos && inc.estado === 'presupuestado' ? (
+            <span className="inline-flex items-center gap-1 font-semibold text-aviso-texto" title="Espera a la junta">
+              <Icono nombre="junta" tam={13} /> {inc.votos.a_favor}/{inc.votos.necesarios ?? '?'} votos
+            </span>
+          ) : monto == null ? (
+            <span className="inline-flex items-center gap-1">
+              <Icono nombre="camara" tam={13} /> {inc.n_fotos || 0} · {haceCuanto(inc.reportado_en)}
+            </span>
+          ) : null}
+        </div>
+        {inc.avance_pct != null && (
+          <span className="mt-0.5 h-1 overflow-hidden rounded-chip bg-borde" role="progressbar" aria-valuenow={inc.avance_pct} aria-valuemin={0} aria-valuemax={100} aria-label={`Avance ${inc.avance_pct} %`}>
+            <span className="block h-1 rounded-chip bg-curso transition-[width] duration-lenta" style={{ width: `${inc.avance_pct}%` }} />
+          </span>
         )}
+        {siguiente && (
+          <button
+            type="button"
+            onClick={() => mover(inc, siguiente)}
+            disabled={moviendo === inc.id}
+            className="mt-0.5 inline-flex min-h-[32px] items-center justify-center gap-1 self-start rounded-control border border-acento-borde bg-acento-suave px-2 text-xs font-semibold text-acento transition-[opacity,background-color,color] duration-rapida hover:bg-acento hover:text-white disabled:opacity-50 shadow-flotante [@media(hover:hover)]:absolute [@media(hover:hover)]:bottom-2 [@media(hover:hover)]:right-2 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-focus-within:opacity-100 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:none)]:shadow-none"
+          >
+            {ACCION_HACIA[siguiente]} <Icono nombre="der" tam={12} grosor={2.25} />
+          </button>
+        )}
+        {otras.length > 0 && !siguiente && <span className="sr-only">Más acciones en el menú de la tarjeta.</span>}
       </article>
     );
   };
@@ -187,6 +273,9 @@ export default function Tablero() {
   const columna = (col, i, movil = false) => {
     const items = grupos[col.estado] || [];
     const valida = arrastrando && arrastrando.estado !== col.estado && puedeTransicionar(arrastrando.estado, col.estado, arrastrando.transiciones) && s.tiene(PERMISO_HACIA[col.estado]);
+    const invalida = arrastrando && arrastrando.estado !== col.estado && !valida;
+    const suma = items.reduce((a, x) => a + (Number(x.estado === 'terminado' ? x.costo_real_cts ?? x.monto_cts : x.monto_cts) || 0), 0);
+    const info = infoEstado(col.estado);
     return (
       <section
         key={col.estado}
@@ -203,14 +292,32 @@ export default function Tablero() {
           e.preventDefault();
           if (valida) soltar(col.estado);
         }}
-        className={`flex min-w-0 flex-col gap-2 rounded-tarjeta p-2 transition-colors ${movil ? '' : 'min-w-[176px] flex-1 basis-0'} ${sobre === col.estado ? 'bg-acento-suave ring-2 ring-acento' : valida ? 'bg-acento-suave/50 ring-1 ring-acento-borde' : arrastrando ? 'opacity-60' : ''}`}
+        className={[
+          'flex min-w-0 flex-col rounded-tarjeta transition-[background-color,box-shadow,opacity] duration-media',
+          movil ? '' : 'max-h-[calc(100dvh-230px)] w-[248px] shrink-0 overflow-y-auto bg-superficie-2/60',
+          sobre === col.estado ? 'bg-acento-suave ring-2 ring-acento' : valida ? 'bg-acento-suave/60 ring-1 ring-acento-borde' : invalida ? 'opacity-50' : '',
+        ].join(' ')}
       >
         {!movil && (
-          <h2 className="px-1 text-xs font-semibold text-texto-suave">
-            {i + 1} · {col.etiqueta.toUpperCase()} ({items.length})
+          <h2 className="sticky top-0 z-10 flex items-center justify-between gap-2 rounded-t-tarjeta bg-superficie-2 px-3 py-2 text-xs font-semibold text-texto-suave backdrop-blur">
+            <span className="flex items-center gap-1.5">
+              <span className={`h-2 w-2 rounded-chip ${TONO_PUNTO[info.tono]}`} aria-hidden="true" />
+              {col.etiqueta}
+            </span>
+            <span className="rounded-chip bg-superficie px-1.5 tabular-nums">{items.length}</span>
           </h2>
         )}
-        {items.length === 0 ? <p className="rounded-control border border-dashed border-borde px-3 py-6 text-center text-xs text-texto-apoyo">{valida ? 'Suelta aquí' : 'Sin trabajos'}</p> : items.map(tarjeta)}
+        <div className={`flex flex-col gap-1.5 ${movil ? '' : 'px-1.5 pb-1.5'}`}>
+          {items.length === 0 ? <p className="rounded-control border border-dashed border-borde px-3 py-5 text-center text-xs text-texto-apoyo">{valida ? 'Suelta aquí' : 'Sin trabajos'}</p> : items.map(tarjeta)}
+        </div>
+        {suma > 0 && (
+          <p className={`mt-auto flex justify-between px-3 py-2 text-xs text-texto-apoyo ${movil ? '' : 'sticky bottom-0 rounded-b-tarjeta bg-superficie-2'}`}>
+            <span>Suma</span>
+            <b className="tabular-nums text-texto-suave" title={formatearSoles(suma)}>
+              {formatearSolesCorto(suma)}
+            </b>
+          </p>
+        )}
       </section>
     );
   };
@@ -221,16 +328,11 @@ export default function Tablero() {
       <Encabezado
         titulo="Mantenimiento e incidencias"
         acciones={
-          <>
-            <Boton variante="secundario" icono="filtro" className="lg:hidden" onClick={() => setVerFiltros(!verFiltros)} aria-expanded={verFiltros}>
-              Filtros{nFiltros ? ` (${nFiltros})` : ''}
+          <Guarda permiso="incidencias.reportar">
+            <Boton icono="camara" href={ruta('mantenimiento', { reportar: 1 })}>
+              Registrar incidencia
             </Boton>
-            <Guarda permiso="incidencias.reportar">
-              <Boton icono="camara" href={ruta('mantenimiento', { reportar: 1 })}>
-                Registrar incidencia
-              </Boton>
-            </Guarda>
-          </>
+          </Guarda>
         }
       />
       <Contenido className="lg:max-w-none">
@@ -244,32 +346,47 @@ export default function Tablero() {
             ))}
           </div>
         ) : visibles.length === 0 && !hayFiltros(filtros) ? (
-          <div className="rounded-tarjeta border border-borde bg-superficie p-10 text-center text-base text-texto-suave">Sin trabajos este mes. Así da gusto.</div>
+          <div className="rounded-tarjeta border border-borde bg-superficie">
+            <Vacio titulo="Sin trabajos este mes" texto="Así da gusto. Cuando alguien reporte una incidencia, aparecerá aquí." icono="herramienta" compacto>
+              <Guarda permiso="incidencias.reportar">
+                <Boton icono="camara" href={ruta('mantenimiento', { reportar: 1 })}>
+                  Registrar incidencia
+                </Boton>
+              </Guarda>
+            </Vacio>
+          </div>
         ) : (
           <>
-            <p className="text-sm text-texto-apoyo" aria-live="polite">
-              {visibles.length} {visibles.length === 1 ? 'trabajo' : 'trabajos'}
-              {hayFiltros(filtros) ? ' con estos filtros' : ''}<span className="hidden lg:inline"> · arrastra una tarjeta o usa sus botones para cambiarla de columna</span>.
-            </p>
-            {/* Escritorio: columnas */}
-            <div className="hidden gap-3 overflow-x-auto pb-2 lg:flex" role="list">
+            {/* Tablet y escritorio: columnas con desplazamiento horizontal e imán por columna */}
+            <div className="carrusel -mx-4 hidden items-start gap-2 px-4 pb-2 md:flex lg:-mx-6 lg:px-6" role="list" aria-label="Columnas del tablero">
               {COLUMNAS.map((c, i) => columna(c, i))}
             </div>
-            {/* Móvil: pestañas por estado */}
-            <div className="flex flex-col gap-3 lg:hidden">
-              <div role="tablist" aria-label="Estado" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
-                {COLUMNAS.map((c) => (
-                  <button
-                    key={c.estado}
-                    type="button"
-                    role="tab"
-                    aria-selected={colMovil === c.estado}
-                    onClick={() => setQuery({ col: c.estado }, { reemplazar: true })}
-                    className={`h-11 shrink-0 rounded-full border px-4 text-sm font-semibold ${colMovil === c.estado ? 'border-tinta bg-tinta text-white' : 'border-borde-fuerte bg-superficie'}`}
-                  >
-                    {c.etiqueta} · {(grupos[c.estado] || []).length}
-                  </button>
-                ))}
+            <p className="hidden text-xs text-texto-apoyo lg:block">Arrastra una tarjeta, usa «siguiente paso» o su menú ⋯ para cambiarla de columna.</p>
+            {/* Móvil: pestañas por estado, con contador */}
+            <div className="flex flex-col gap-3 md:hidden">
+              <p className="text-xs text-texto-apoyo" aria-live="polite">
+                {visibles.length} {visibles.length === 1 ? 'trabajo' : 'trabajos'}
+                {hayFiltros(filtros) ? ' con estos filtros' : ''}
+              </p>
+              <div role="tablist" aria-label="Estado" className="carrusel -mx-4 gap-2 px-4 pb-1">
+                {COLUMNAS.map((c) => {
+                  const n = (grupos[c.estado] || []).length;
+                  const act = colMovil === c.estado;
+                  return (
+                    <button
+                      key={c.estado}
+                      type="button"
+                      role="tab"
+                      aria-selected={act}
+                      onClick={() => setQuery({ col: c.estado }, { reemplazar: true })}
+                      className={`inline-flex h-11 shrink-0 items-center gap-1.5 rounded-chip border px-3.5 text-sm font-semibold transition-colors duration-rapida ${act ? 'border-tinta bg-tinta text-white' : 'border-borde-fuerte bg-superficie'}`}
+                    >
+                      <span className={`h-2 w-2 rounded-chip ${TONO_PUNTO[infoEstado(c.estado).tono]}`} aria-hidden="true" />
+                      {c.etiqueta}
+                      <span className={`rounded-chip px-1.5 text-xs tabular-nums ${act ? 'bg-superficie-oscura-2' : 'bg-superficie-2'}`}>{n}</span>
+                    </button>
+                  );
+                })}
               </div>
               {columna(
                 COLUMNAS.find((c) => c.estado === colMovil),
@@ -308,7 +425,7 @@ function Detalle({ inc, onCerrar, acciones, onMover }) {
             const actual = !rechazado && i === idx;
             return (
               <li key={p} className="flex flex-col gap-1 text-xs" aria-current={actual ? 'step' : undefined}>
-                <span className={`h-1.5 rounded-full ${hecho ? 'bg-acento' : actual ? (inc.criticidad === 'critica' ? 'bg-alerta' : 'bg-acento') : 'bg-borde'}`} />
+                <span className={`h-1.5 rounded-full transition-colors duration-media ${hecho ? 'bg-acento' : actual ? (inc.criticidad === 'critica' ? 'bg-alerta' : 'bg-curso') : 'bg-borde'}`} />
                 <b className={actual ? 'text-tinta' : hecho ? '' : 'text-texto-apoyo'}>{etiqueta(p)}</b>
               </li>
             );
@@ -337,7 +454,8 @@ function Detalle({ inc, onCerrar, acciones, onMover }) {
           {inc.votos && (
             <>
               <dt className="text-texto-apoyo">Junta</dt>
-              <dd>
+              <dd className="flex items-center gap-1.5">
+                <Icono nombre="junta" tam={14} className="text-aviso" />
                 {inc.votos.a_favor} de {inc.votos.necesarios} votos necesarios{inc.votos.miembros ? ` (junta de ${inc.votos.miembros})` : ''}
               </dd>
             </>

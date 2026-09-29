@@ -5,7 +5,7 @@ import { formatearHora } from '../../lib/fechas.js';
 import { ruta } from '../../lib/nav.jsx';
 import { useEid } from '../../layout/Sesion.jsx';
 import Encabezado from '../../layout/Encabezado.jsx';
-import { Boton, Campo, Icono, Spinner } from '../../ui/index.js';
+import { Boton, Campo, Icono } from '../../ui/index.js';
 
 const SUGERENCIAS = ['Hola', '¿Cuánto debo?', 'Mi recibo', 'Quiero reservar la parrilla', 'Hay una fuga en el pasadizo'];
 
@@ -48,7 +48,7 @@ export default function Chatbot() {
   return (
     <>
       <Encabezado titulo="Simulador del chatbot" subtitulo="Prueba lo que respondería el asistente de WhatsApp. No se envía ningún mensaje." volver={ruta('whatsapp')} />
-      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-3 p-4 lg:p-8">
+      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-3 p-4 lg:p-6">
         <div className="grid gap-3 sm:grid-cols-2">
           <Campo
             etiqueta="Escribir como"
@@ -63,7 +63,7 @@ export default function Chatbot() {
         <div className="flex min-h-[360px] flex-1 flex-col overflow-hidden rounded-tarjeta border border-borde bg-superficie">
           <div className="flex items-center gap-3 border-b border-borde bg-tinta px-4 py-3 text-white">
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-acento">
-              <Icono nombre="robot" tam={18} />
+              <Icono nombre="chatbot" tam={18} />
             </span>
             <span className="flex flex-col">
               <b className="text-sm">Asistente del edificio</b>
@@ -73,7 +73,7 @@ export default function Chatbot() {
           <div className="flex flex-1 flex-col gap-3 overflow-y-auto bg-fondo p-4" aria-live="polite" style={{ maxHeight: '55vh' }}>
             {chat.length === 0 && <p className="m-auto max-w-xs text-center text-sm text-texto-apoyo">Escribe un mensaje o toca una sugerencia para empezar.</p>}
             {chat.map((m, i) => (
-              <div key={i} className={`flex max-w-[85%] flex-col gap-1 ${m.de === 'yo' ? 'self-end items-end' : 'self-start'}`}>
+              <div key={i} className={`flex max-w-[85%] flex-col gap-1 ${m.de === 'yo' ? 'self-end items-end animate-entrar-derecha' : 'self-start animate-entrar-izquierda'}`}>
                 <div className={`whitespace-pre-line rounded-tarjeta px-4 py-2 text-base ${m.de === 'yo' ? 'rounded-br-sm bg-acento text-white' : m.de === 'error' ? 'border border-alerta-borde bg-alerta-suave text-alerta-texto' : 'rounded-bl-sm border border-borde bg-superficie'}`}>{m.texto}</div>
                 <span className="flex flex-wrap items-center gap-2 text-[11px] text-texto-apoyo">
                   {formatearHora(m.hora)}
@@ -88,15 +88,17 @@ export default function Chatbot() {
               </div>
             ))}
             {pensando && (
-              <div className="flex items-center gap-2 self-start rounded-tarjeta border border-borde bg-superficie px-4 py-2 text-sm text-texto-apoyo">
-                <Spinner /> escribiendo…
+              <div className="flex items-center gap-1 self-start rounded-tarjeta rounded-bl-sm border border-borde bg-superficie px-4 py-3 animate-aparecer" role="status" aria-label="El asistente está escribiendo">
+                {[0, 1, 2].map((i) => (
+                  <span key={i} className="h-2 w-2 rounded-chip bg-texto-apoyo animate-escribiendo" style={{ animationDelay: `${i * 160}ms` }} aria-hidden="true" />
+                ))}
               </div>
             )}
             <div ref={fin} />
           </div>
           <div className="flex gap-2 overflow-x-auto border-t border-borde px-3 py-2">
             {SUGERENCIAS.map((sug) => (
-              <button key={sug} type="button" onClick={() => mandar(sug)} disabled={!telefono || pensando} className="h-9 shrink-0 rounded-full border border-acento-borde bg-acento-suave px-3 text-sm text-acento disabled:opacity-50">
+              <button key={sug} type="button" onClick={() => mandar(sug)} disabled={!telefono || pensando} className="h-9 shrink-0 rounded-chip border border-acento-borde bg-acento-suave px-3 text-sm text-acento transition-[background-color,transform] duration-rapida hover:bg-acento-borde active:scale-97 disabled:opacity-50">
                 {sug}
               </button>
             ))}

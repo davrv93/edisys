@@ -38,10 +38,10 @@ function escala(max) {
 
 export function Leyenda({ items }) {
   return (
-    <div className="flex flex-wrap gap-4 text-xs text-texto-suave">
+    <div className="flex flex-wrap gap-3 text-xs text-texto-suave">
       {items.map((it) => (
         <span key={it.texto} className="flex items-center gap-2">
-          <span className={`h-3 w-3 rounded-sm ${it.clase}`} />
+          <span className={`h-2.5 w-2.5 rounded-sm ${it.clase}`} />
           {it.texto}
         </span>
       ))}
@@ -65,7 +65,7 @@ export function BarrasAgrupadas({ datos, series, formato, etiquetaX, alto = 220,
       <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label={titulo}>
         {marcas.map((v) => (
           <g key={v}>
-            <line x1={m.i} x2={W - m.d} y1={y(v)} y2={y(v)} className="stroke-borde" strokeWidth="1" />
+            <line x1={m.i} x2={W - m.d} y1={y(v)} y2={y(v)} className="stroke-superficie-2" strokeWidth="1" />
             <text x={m.i - 6} y={y(v) + 4} textAnchor="end" className="fill-texto-apoyo text-[11px]">
               {formato(v, true)}
             </text>
@@ -82,7 +82,7 @@ export function BarrasAgrupadas({ datos, series, formato, etiquetaX, alto = 220,
                 const h = Math.max(0, y(0) - y(v));
                 const r = Math.min(4, barra / 2, h);
                 const x = x0 + j * (barra + 2);
-                return <path key={s.clave} className={`${s.claseSvg} pointer-events-none`} d={`M${x},${y(0)} v${-(h - r)} q0,${-r} ${r},${-r} h${barra - 2 * r} q${r},0 ${r},${r} v${h - r} z`} />;
+                return <path key={s.clave} className={`${s.claseSvg} crece-y pointer-events-none`} style={{ animationDelay: `${Math.min(i, 11) * 20}ms` }} d={`M${x},${y(0)} v${-(h - r)} q0,${-r} ${r},${-r} h${barra - 2 * r} q${r},0 ${r},${r} v${h - r} z`} />;
               })}
               {(datos.length <= 12 || i % 2 === 0) && (
                 <text x={cx} y={H - 8} textAnchor="middle" className="fill-texto-apoyo text-[11px]">
@@ -117,16 +117,16 @@ export function Linea({ datos, clave, formato, etiquetaX, alto = 200, titulo, cl
       <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label={titulo}>
         {marcas.map((v) => (
           <g key={v}>
-            <line x1={m.i} x2={W - m.d} y1={y(v)} y2={y(v)} className="stroke-borde" strokeWidth="1" />
+            <line x1={m.i} x2={W - m.d} y1={y(v)} y2={y(v)} className="stroke-superficie-2" strokeWidth="1" />
             <text x={m.i - 6} y={y(v) + 4} textAnchor="end" className="fill-texto-apoyo text-[11px]">
               {formato(v, true)}
             </text>
           </g>
         ))}
-        <polyline points={puntos} fill="none" className={claseTrazo} strokeWidth="2" strokeLinejoin="round" />
+        <polyline points={puntos} fill="none" className={`${claseTrazo} animate-trazar`} strokeWidth="2" strokeLinejoin="round" pathLength="1" strokeDasharray="1" />
         {datos.map((d, i) => (
           <g key={i}>
-            <circle cx={x(i)} cy={y(d[clave] || 0)} r="4" className={`${claseMarca} stroke-superficie`} strokeWidth="2" />
+            <circle cx={x(i)} cy={y(d[clave] || 0)} r="4" className={`${claseMarca} stroke-superficie animate-fundir`} strokeWidth="2" />
             <rect x={x(i) - paso / 2} y={m.s} width={Math.max(paso, 20)} height={H - m.s - m.b} fill="transparent" onMouseMove={(e) => mostrar(e, [etiquetaX(d), formato(d[clave])])} onTouchStart={(e) => mostrar(e, [etiquetaX(d), formato(d[clave])])} />
             {(datos.length <= 12 || i % 2 === 0) && (
               <text x={x(i)} y={H - 8} textAnchor="middle" className="fill-texto-apoyo text-[11px]">
@@ -147,7 +147,7 @@ export function Linea({ datos, clave, formato, etiquetaX, alto = 200, titulo, cl
 }
 
 /** Barras horizontales con etiqueta y valor (magnitud de una sola serie). */
-export function BarrasH({ datos, etiqueta, valor, formato, detalle, resaltar, titulo }) {
+export function BarrasH({ datos, etiqueta, valor, formato, detalle, resaltar, titulo, claseBarra }) {
   const max = Math.max(1, ...datos.map(valor));
   return (
     <ul className="flex flex-col gap-2" aria-label={titulo}>
@@ -158,11 +158,11 @@ export function BarrasH({ datos, etiqueta, valor, formato, detalle, resaltar, ti
           <li key={i} className="grid grid-cols-[88px_1fr_auto] items-center gap-3 text-sm sm:grid-cols-[120px_1fr_auto]" title={detalle ? detalle(d) : undefined}>
             <span className="truncate text-texto-suave">{etiqueta(d)}</span>
             <span className="h-3 rounded-r bg-superficie-2">
-              <span className={`block h-3 rounded-r ${fuerte ? 'bg-aviso' : 'bg-acento'}`} style={{ width: `${(v / max) * 100}%` }} />
+              <span className={`crece-x block h-3 rounded-r ${claseBarra ? claseBarra(d) : fuerte ? 'bg-serie-4' : 'bg-serie-1'}`} style={{ width: `${(v / max) * 100}%`, animationDelay: `${Math.min(i, 10) * 20}ms` }} />
             </span>
             <span className="text-right font-semibold tabular-nums">
               {formato(v)}
-              {fuerte && <span className="ml-1 text-xs font-normal text-aviso">pico</span>}
+              {fuerte && <span className="ml-1 text-xs font-normal text-aviso-texto">pico</span>}
             </span>
           </li>
         );
@@ -175,7 +175,7 @@ export function BarrasH({ datos, etiqueta, valor, formato, detalle, resaltar, ti
 export function TablaDatos({ columnas, filas }) {
   return (
     <details className="text-sm">
-      <summary className="cursor-pointer text-acento">Ver como tabla</summary>
+      <summary className="cursor-pointer text-xs font-semibold text-acento">Ver como tabla</summary>
       <div className="mt-2 max-h-64 overflow-auto">
         <table className="w-full">
           <thead>

@@ -48,20 +48,20 @@ export default function Portal() {
   else estadoCuenta = { titulo: 'Al día', tono: 'text-acento-oscuro', detalle: `${mesDePeriodo(r.periodo).replace(/^./, (c) => c.toUpperCase())} ${formatearSoles(r.total_cts)}${pago ? ` · pagado ${formatearDiaMes(pago.fecha)}` : ''}` };
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col lg:gap-6 lg:p-8">
-      <header className="flex flex-col gap-4 bg-tinta px-4 pb-4 pt-5 text-white lg:rounded-tarjeta lg:p-6">
+    <div className="mx-auto flex w-full max-w-3xl flex-col lg:gap-5 lg:p-6">
+      <header className="flex flex-col gap-3 bg-tinta px-4 pb-4 pt-4 text-white lg:rounded-tarjeta lg:p-5">
         <div className="flex items-center justify-between gap-3">
           <div className="flex flex-col">
             <span className="text-xs text-texto-tenue">
               {s.edificio.nombre}
               {unidad ? ` · ${unidad.nombre || `Dpto ${unidad.codigo}`}` : ''}
             </span>
-            <span className="font-titulo text-2xl font-semibold">Hola, {nombre}</span>
+            <span className="font-titulo text-titulo-pantalla font-semibold">Hola, {nombre}</span>
           </div>
           <span className="flex h-10 w-10 items-center justify-center rounded-full bg-superficie-oscura-2 text-sm font-semibold">{s.usuario.iniciales}</span>
         </div>
         {verRecibos && (
-          <div className="flex items-center justify-between gap-3 rounded-tarjeta bg-superficie-oscura p-4">
+          <div className="flex items-center justify-between gap-3 rounded-tarjeta bg-superficie-oscura px-4 py-3 animate-aparecer">
             {!estadoCuenta ? (
               <Esqueleto className="h-14 w-2/3 bg-superficie-oscura-2" />
             ) : (
@@ -72,7 +72,8 @@ export default function Portal() {
               </div>
             )}
             {r && (
-              <a href={ruta('recibos', deuda > 0 ? { id: r.id, pagar: 1 } : { id: r.id })} className="flex h-11 shrink-0 items-center rounded-control bg-superficie px-4 text-sm font-semibold text-tinta hover:text-tinta">
+              <a href={ruta('recibos', deuda > 0 ? { id: r.id, pagar: 1 } : { id: r.id })} className="flex h-11 shrink-0 items-center gap-1.5 rounded-control bg-superficie px-4 text-sm font-semibold text-tinta transition-transform duration-rapida hover:text-tinta active:scale-98">
+                <Icono nombre={deuda > 0 ? 'voucher' : 'recibo'} tam={16} />
                 {deuda > 0 ? 'Pagar' : 'Ver recibo'}
               </a>
             )}
@@ -80,24 +81,28 @@ export default function Portal() {
         )}
       </header>
 
-      <div className="flex flex-col gap-4 p-4 lg:p-0">
+      <div className="escalonado flex flex-col gap-3 p-4 lg:gap-4 lg:p-0">
         {error && <ErrorCarga error={error} onReintentar={recargar} compacto />}
 
         {reservaPendiente && (
-          <a href={ruta('reservas', { nueva: 1 })} className="flex items-center justify-between gap-3 rounded-tarjeta border border-aviso-borde bg-aviso-suave p-4 text-sm text-aviso-texto hover:text-aviso-texto">
+          <a href={ruta('reservas', { nueva: 1 })} className="flex items-center justify-between gap-3 rounded-tarjeta border border-aviso-borde bg-aviso-suave px-4 py-3 text-sm text-aviso-texto hover:text-aviso-texto">
             <span className="flex flex-col">
               <b>
                 {reservaPendiente.recurso || 'Reserva'} · {etiquetaDia(diaLima(reservaPendiente.inicio))}, {formatearHora(reservaPendiente.inicio)}
               </b>
               <span>Falta pagar {formatearSoles(reservaPendiente.total_cts)}</span>
             </span>
-            <span className="font-semibold">Pagar</span>
+            <span className="flex items-center gap-1 font-semibold">
+              <Icono nombre="temporizador" tam={16} /> Pagar
+            </span>
           </a>
         )}
 
         {deuda > 0 && (d?.deuda?.meses?.length > 0 || d?.deuda?.por_unidad?.length > 0) && (
-          <section className="flex flex-col gap-2 rounded-tarjeta border border-alerta-borde bg-alerta-suave p-4 text-alerta-texto">
-            <h2 className="text-base font-semibold">Detalle de tu deuda</h2>
+          <section className="flex flex-col gap-1.5 rounded-tarjeta border border-alerta-borde bg-alerta-suave p-tarjeta text-alerta-texto">
+            <h2 className="flex items-center gap-2 text-base font-semibold">
+              <Icono nombre="moroso" tam={18} /> Detalle de tu deuda
+            </h2>
             {(d.deuda.meses || []).map((m) => (
               <div key={m.periodo} className="flex justify-between text-base">
                 <span>{nombrePeriodo(m.periodo)}</span>
@@ -149,7 +154,7 @@ export default function Portal() {
                 </a>
               </Guarda>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-tarjeta border border-borde bg-borde">
               <MiniKpi titulo="Ingresos" valor={formatearSoles(k.ingresos_cts, { sinDecimales: true })} />
               <MiniKpi titulo="Egresos" valor={formatearSoles(k.egresos_cts, { sinDecimales: true })} />
               <MiniKpi titulo="Saldo del mes" valor={formatearSoles(k.saldo_cts, { sinDecimales: true })} tono="acento" />
@@ -161,12 +166,19 @@ export default function Portal() {
         {d?.mis_incidencias?.map((inc) => {
           const i = PASOS.indexOf(inc.estado);
           return (
-            <section key={inc.id} className="flex flex-col gap-2 rounded-tarjeta border border-borde bg-superficie p-4">
-              <span className="text-xs text-texto-apoyo">Tu reporte {inc.codigo}</span>
-              <b className="text-base">{inc.titulo}</b>
-              <div className="flex gap-1" aria-label={`Estado: ${TEXTO_PASO[inc.estado]}`}>
+            <section key={inc.id} className="flex flex-col gap-1.5 rounded-tarjeta border border-borde bg-superficie p-tarjeta">
+              <span className="flex items-center justify-between gap-2 text-xs text-texto-apoyo">
+                Tu reporte {inc.codigo}
+                <Insignia estado={inc.estado} />
+              </span>
+              <b className="line-clamp-2 text-base" title={inc.titulo}>
+                {inc.titulo}
+              </b>
+              <div className="flex gap-1" role="img" aria-label={`Estado: ${TEXTO_PASO[inc.estado]}`}>
                 {PASOS.map((p, j) => (
-                  <span key={p} className={`h-1.5 flex-1 rounded-full ${inc.estado === 'rechazado' ? 'bg-alerta-borde' : j <= i ? 'bg-acento' : 'bg-borde'}`} />
+                  <span key={p} className="h-1.5 flex-1 overflow-hidden rounded-chip bg-borde">
+                    <span className={`crece-x block h-full rounded-chip ${inc.estado === 'rechazado' ? 'bg-alerta-borde' : j <= i ? (j === i && inc.estado !== 'terminado' ? 'bg-curso' : 'bg-acento') : 'bg-transparent'}`} style={{ animationDelay: `${j * 60}ms` }} />
+                  </span>
                 ))}
               </div>
               <span className="text-sm text-texto-suave">{TEXTO_PASO[inc.estado] || inc.estado}</span>
@@ -175,7 +187,7 @@ export default function Portal() {
         })}
 
         {d?.proximas_reservas?.length > 0 && (
-          <section className="flex flex-col gap-2 rounded-tarjeta border border-borde bg-superficie p-4">
+          <section className="flex flex-col gap-2 rounded-tarjeta border border-borde bg-superficie p-tarjeta">
             <h2 className="text-base font-semibold">Mis reservas</h2>
             {d.proximas_reservas.map((x) => (
               <div key={x.id} className="flex items-center justify-between gap-2 border-t border-superficie-2 pt-2 text-sm first:border-0 first:pt-0">
@@ -189,7 +201,7 @@ export default function Portal() {
         )}
 
         {d?.trabajos_mes?.length > 0 && (
-          <section className="flex flex-col gap-2 rounded-tarjeta border border-borde bg-superficie p-4">
+          <section className="flex flex-col gap-2 rounded-tarjeta border border-borde bg-superficie p-tarjeta">
             <h2 className="text-base font-semibold">Mantenimiento del mes</h2>
             {d.trabajos_mes.map((t) => (
               <div key={t.id} className="flex items-center justify-between gap-2 text-sm">
@@ -202,7 +214,7 @@ export default function Portal() {
           </section>
         )}
 
-        <section className="flex items-center justify-between gap-3 rounded-tarjeta border border-borde bg-superficie p-4">
+        <section className="flex items-center justify-between gap-3 rounded-tarjeta border border-borde bg-superficie p-tarjeta">
           <span className="flex items-center gap-3">
             <Icono nombre="documento" className="text-acento" />
             <span className="flex flex-col">
@@ -225,13 +237,13 @@ export default function Portal() {
 }
 
 function MiniKpi({ titulo, valor, tono }) {
-  const cajas = { acento: 'bg-acento-suave border-acento-borde', alerta: 'bg-alerta-suave border-alerta-borde' };
+  const cajas = { acento: 'bg-acento-suave', alerta: 'bg-alerta-suave' };
   const titulos = { acento: 'text-acento-hover', alerta: 'text-alerta-texto' };
   const valores = { acento: 'text-acento', alerta: 'text-alerta' };
   return (
-    <div className={`flex flex-col gap-1 rounded-tarjeta border p-4 ${cajas[tono] || 'bg-superficie border-borde'}`}>
+    <div className={`flex flex-col gap-0.5 px-4 py-3 ${cajas[tono] || 'bg-superficie'}`}>
       <span className={`text-xs ${titulos[tono] || 'text-texto-apoyo'}`}>{titulo}</span>
-      <span className={`font-titulo text-2xl font-semibold tabular-nums ${valores[tono] || ''}`}>{valor}</span>
+      <span className={`font-titulo text-xl font-semibold tabular-nums ${valores[tono] || ''}`}>{valor}</span>
     </div>
   );
 }

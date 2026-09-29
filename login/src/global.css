@@ -12,4 +12,12 @@
   html { -webkit-text-size-adjust: 100%; }
   body { @apply bg-fondo font-sans text-tinta antialiased; }
   a { @apply text-acento hover:text-acento-hover; }
+  :focus-visible { outline: 2px solid var(--color-acento); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }

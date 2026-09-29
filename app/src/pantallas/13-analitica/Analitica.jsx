@@ -5,7 +5,7 @@ import { esPeriodo, nombrePeriodo, periodoActual, sumarMeses } from '../../lib/f
 import { COLUMNAS } from '../../lib/kanban.js';
 import { useQuery } from '../../lib/nav.jsx';
 import Encabezado, { Contenido, Seccion } from '../../layout/Encabezado.jsx';
-import { Boton, ErrorCarga, Esqueleto, TarjetaKPI, Vacio } from '../../ui/index.js';
+import { Chip, ErrorCarga, Esqueleto, FranjaKPI, SelectorMes, TONO_PUNTO, Vacio, tonoDe } from '../../ui/index.js';
 import { BarrasAgrupadas, BarrasH, Leyenda, Linea, TablaDatos } from './Graficos.jsx';
 
 const cortoSoles = (cts, eje) => (eje ? (cts === 0 ? 'S/ 0' : `S/ ${formatearNumero(cts / 100000, cts % 100000 ? 1 : 0)} mil` ) : formatearSoles(cts));
@@ -29,20 +29,22 @@ export default function Analitica() {
   const totEmitido = cob.reduce((a, x) => a + x.emitido, 0);
   const totCobrado = cob.reduce((a, x) => a + x.cobrado, 0);
 
+  const meses = (() => {
+    const [a1, m1] = desde.split('-').map(Number);
+    const [a2, m2] = hasta.split('-').map(Number);
+    return (a2 - a1) * 12 + (m2 - m1) + 1;
+  })();
   const filtro = (
-    <div className="flex flex-wrap items-end gap-2" role="group" aria-label="Rango de fechas">
-      <label className="flex flex-col gap-1 text-xs font-semibold">
-        Desde
-        <input type="month" value={desde} max={hasta} onChange={(e) => esPeriodo(e.target.value) && setQuery({ desde: e.target.value }, { reemplazar: true })} className="h-11 rounded-control border border-borde-fuerte bg-superficie px-2 text-sm lg:h-10" />
-      </label>
-      <label className="flex flex-col gap-1 text-xs font-semibold">
-        Hasta
-        <input type="month" value={hasta} min={desde} onChange={(e) => esPeriodo(e.target.value) && setQuery({ hasta: e.target.value }, { reemplazar: true })} className="h-11 rounded-control border border-borde-fuerte bg-superficie px-2 text-sm lg:h-10" />
-      </label>
+    <div className="flex items-center gap-1.5" role="group" aria-label="Rango de fechas">
+      <SelectorMes etiqueta="Desde" valor={desde} max={hasta} onCambio={(v) => setQuery({ desde: v }, { reemplazar: true })} />
+      <span className="text-texto-apoyo" aria-hidden="true">
+        –
+      </span>
+      <SelectorMes etiqueta="Hasta" valor={hasta} min={desde} onCambio={(v) => setQuery({ hasta: v }, { reemplazar: true })} />
       {[3, 6, 12].map((n) => (
-        <Boton key={n} variante="secundario" tamano="sm" onClick={() => rango(n)}>
-          {n} meses
-        </Boton>
+        <Chip key={n} activo={meses === n} onClick={() => rango(n)}>
+          {n} m
+        </Chip>
       ))}
     </div>
   );
@@ -61,24 +63,26 @@ export default function Analitica() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-              <TarjetaKPI titulo="Emitido en el rango" valor={formatearSoles(totEmitido, { sinDecimales: true })} />
-              <TarjetaKPI tono="acento" titulo="Cobrado en el rango" valor={formatearSoles(totCobrado, { sinDecimales: true })} nota={totEmitido ? `${formatearPct((totCobrado / totEmitido) * 100)} de lo emitido` : undefined} />
-              <TarjetaKPI tono="alerta" titulo="Morosidad del último mes" valor={mor.length ? formatearPct(mor[mor.length - 1].pct) : '—'} />
-              <TarjetaKPI titulo="Tiempo de resolución" valor={d.tiempo_resolucion_dias != null ? `${formatearNumero(d.tiempo_resolucion_dias, 1)} días` : '—'} nota="promedio de reporte a terminado" />
-            </div>
+            <FranjaKPI
+              etiqueta="Indicadores del rango"
+              principal={{ titulo: 'Cobrado en el rango', tono: 'acento', valor: formatearSoles(totCobrado, { sinDecimales: true }), nota: totEmitido ? `${formatearPct((totCobrado / totEmitido) * 100)} de lo emitido` : undefined }}
+              items={[
+                { titulo: 'Emitido en el rango', valor: formatearSoles(totEmitido, { sinDecimales: true }) },
+                { titulo: 'Morosidad del último mes', tono: 'alerta', valor: mor.length ? formatearPct(mor[mor.length - 1].pct) : '—' },
+                { titulo: 'Tiempo de resolución', valor: d.tiempo_resolucion_dias != null ? `${formatearNumero(d.tiempo_resolucion_dias, 1)} días` : '—', nota: 'de reporte a terminado' },
+              ]}
+            />
 
-            <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
-              <Seccion titulo="Cobranza: emitido vs. cobrado">
+            <div className="grid gap-4 lg:grid-cols-2 lg:gap-5">
+              <Seccion titulo="Cobranza: emitido vs. cobrado" extra={cob.length ? <Leyenda items={[{ texto: 'Emitido', clase: 'bg-serie-2' }, { texto: 'Cobrado', clase: 'bg-serie-1' }]} /> : null}>
                 {cob.length ? (
                   <>
-                    <Leyenda items={[{ texto: 'Emitido', clase: 'bg-borde-fuerte' }, { texto: 'Cobrado', clase: 'bg-acento' }]} />
                     <BarrasAgrupadas
                       titulo="Emitido y cobrado por mes"
                       datos={cob}
                       series={[
-                        { clave: 'emitido', nombre: 'Emitido', claseSvg: 'fill-borde-fuerte' },
-                        { clave: 'cobrado', nombre: 'Cobrado', claseSvg: 'fill-acento' },
+                        { clave: 'emitido', nombre: 'Emitido', claseSvg: 'fill-serie-2' },
+                        { clave: 'cobrado', nombre: 'Cobrado', claseSvg: 'fill-serie-1' },
                       ]}
                       formato={cortoSoles}
                       etiquetaX={etiquetaMes}
@@ -114,7 +118,7 @@ export default function Analitica() {
                 )}
               </Seccion>
 
-              <Seccion titulo="Consumo de agua por unidad (m³)" extra={<span className="text-xs text-texto-apoyo">media {formatearNumero(mediaAgua, 1)} m³ · ámbar = más del doble</span>}>
+              <Seccion titulo="Consumo de agua por unidad (m³)" extra={<span className="text-xs text-texto-apoyo">media {formatearNumero(mediaAgua, 1)} m³ · «pico» = más del doble</span>}>
                 {agua.length ? (
                   <div className="max-h-[420px] overflow-y-auto pr-1">
                     <BarrasH titulo="Consumo por unidad" datos={agua} etiqueta={(x) => x.unidad} valor={(x) => x.m3} formato={(v) => formatearNumero(v, 1)} resaltar={(x) => x.m3 > 2 * mediaAgua} />
@@ -124,7 +128,7 @@ export default function Analitica() {
                 )}
               </Seccion>
 
-              <div className="flex flex-col gap-4 lg:gap-6">
+              <div className="flex flex-col gap-4 lg:gap-5">
                 <Seccion titulo="Reservas por área">
                   {reservas.length ? (
                     <>
@@ -142,7 +146,7 @@ export default function Analitica() {
                   )}
                 </Seccion>
                 <Seccion titulo="Incidencias por estado">
-                  {inc.length ? <BarrasH titulo="Incidencias por estado" datos={inc} etiqueta={(x) => ETIQUETA_ESTADO[x.estado] || x.estado} valor={(x) => x.cantidad} formato={(v) => `${v}`} /> : <Vacio titulo="Sin incidencias" compacto />}
+                  {inc.length ? <BarrasH titulo="Incidencias por estado" datos={inc} etiqueta={(x) => ETIQUETA_ESTADO[x.estado] || x.estado} valor={(x) => x.cantidad} formato={(v) => `${v}`} claseBarra={(x) => TONO_PUNTO[tonoDe(x.estado)]} /> : <Vacio titulo="Sin incidencias" compacto />}
                 </Seccion>
               </div>
             </div>

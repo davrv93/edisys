@@ -20,3 +20,5 @@ export { MenuAcciones, Desplegable } from './Menu.jsx';
 export { ICONOS, existeIcono } from './Icono.jsx';
 export { default as Chip } from './Chip.jsx';
 export { default as FranjaKPI, Variacion } from './FranjaKPI.jsx';
+export { default as SelectorFecha, SelectorMes, isoADmy, dmyAIso } from './SelectorFecha.jsx';
+export { useFlotante } from './Menu.jsx';

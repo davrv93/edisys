@@ -105,7 +105,13 @@ export function filtrosDesdeURL(params) {
   for (const k of CLAVES_FILTRO) {
     const v = (sp.get(k) || '').trim();
     if (!v) continue;
-    if (k === 'criticidad' && !CRITICIDADES.some((c) => c.valor === v)) continue;
+    if (k === 'criticidad') {
+      // v2: multiselección («critica,media»); se descartan los valores que no existen.
+      const validas = CRITICIDADES.map((c) => c.valor).filter((c) => v.split(',').map((x) => x.trim()).includes(c));
+      if (!validas.length) continue;
+      f[k] = validas.join(',');
+      continue;
+    }
     if ((k === 'desde' || k === 'hasta') && !FECHA.test(v)) continue;
     f[k] = v;
   }
@@ -126,6 +132,19 @@ export function filtrosAURL(filtros, base) {
   return sp;
 }
 
+/** Criticidades elegidas (lista), a partir del filtro «critica,media». */
+export function criticidadesDe(filtros) {
+  return filtros.criticidad ? String(filtros.criticidad).split(',').filter(Boolean) : [];
+}
+
+/** Activa o desactiva una criticidad dentro de la multiselección; devuelve el nuevo valor del filtro. */
+export function alternarCriticidad(filtros, valor) {
+  const actual = new Set(criticidadesDe(filtros));
+  if (actual.has(valor)) actual.delete(valor);
+  else actual.add(valor);
+  return CRITICIDADES.map((c) => c.valor).filter((c) => actual.has(c)).join(',') || null;
+}
+
 export function hayFiltros(filtros) {
   return CLAVES_FILTRO.some((k) => filtros[k]);
 }
@@ -139,7 +158,7 @@ const sinTildes = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, ''
 export function filtrarIncidencias(lista, filtros) {
   const q = sinTildes(filtros.q).trim();
   return lista.filter((i) => {
-    if (filtros.criticidad && i.criticidad !== filtros.criticidad) return false;
+    if (filtros.criticidad && !String(filtros.criticidad).split(',').includes(i.criticidad)) return false;
     if (filtros.categoria && i.categoria !== filtros.categoria) return false;
     if (filtros.responsable_id && String(i.responsable_id ?? '') !== String(filtros.responsable_id)) return false;
     const dia = (i.reportado_en || '').slice(0, 10);
