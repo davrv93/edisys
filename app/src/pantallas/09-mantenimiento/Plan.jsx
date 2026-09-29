@@ -17,7 +17,7 @@ function Hitos({ estado }) {
   const idx = PASOS.indexOf(estado);
   const pasos = salida ? [...PASOS.slice(0, 3), estado] : PASOS;
   return (
-    <ol className="grid grid-cols-6 gap-1 sm:grid-cols-7" aria-label={`Avance: ${etiquetaDe(estado)}`}>
+    <ol className="grid grid-cols-6 gap-1" aria-label={`Avance: ${etiquetaDe(estado)}`}>
       {pasos.map((p, i) => {
         const esSalidaPaso = esSalida(p);
         const hecho = !salida ? i < idx : i < 3;
