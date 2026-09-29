@@ -30,7 +30,31 @@ interface ResultadoServidor {
  * Sin JS, el <form method="post"> llega aquí: se reenvía al API por la red
  * interna y se copian sus Set-Cookie (HttpOnly) a la respuesta.
  * ------------------------------------------------------------------ */
-export const onPost: RequestHandler = async ({ request, headers, redirect, sharedMap, url, clientConn }) => {
+type Jarra = Parameters<RequestHandler>[0]["cookie"];
+
+/** Copia un Set-Cookie del API a la respuesta con cookie.set, conservando sus atributos. */
+function copiarCookie(cookie: Jarra, linea: string) {
+  const [par, ...attrs] = linea.split(";").map((x) => x.trim());
+  const i = par.indexOf("=");
+  if (i <= 0) return;
+  const opts: Record<string, unknown> = {};
+  for (const a of attrs) {
+    const [k, ...v] = a.split("=");
+    const val = v.join("=");
+    switch (k.toLowerCase()) {
+      case "path": opts.path = val; break;
+      case "domain": opts.domain = val; break;
+      case "max-age": opts.maxAge = Number(val); break;
+      case "expires": opts.expires = new Date(val); break;
+      case "httponly": opts.httpOnly = true; break;
+      case "secure": opts.secure = true; break;
+      case "samesite": opts.sameSite = val.toLowerCase(); break;
+    }
+  }
+  cookie.set(par.slice(0, i), decodeURIComponent(par.slice(i + 1)), opts);
+}
+
+export const onPost: RequestHandler = async ({ request, cookie, redirect, sharedMap, url, clientConn }) => {
   const form = await request.formData();
   const correo = String(form.get("correo") ?? "").trim();
   const clave = String(form.get("clave") ?? "");
@@ -62,7 +86,9 @@ export const onPost: RequestHandler = async ({ request, headers, redirect, share
   }
 
   if (res.ok) {
-    for (const c of res.headers.getSetCookie()) headers.append("Set-Cookie", c);
+    // headers.append("Set-Cookie") dos veces se colapsa en una sola cabecera y el
+    // navegador pierde edisys_at; cookie.set de Qwik City emite una por cookie.
+    for (const c of res.headers.getSetCookie()) copiarCookie(cookie, c);
     throw redirect(303, destino);
   }
   let cuerpo: unknown = null;
