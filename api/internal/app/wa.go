@@ -80,7 +80,7 @@ func (s *Server) despacharPendientes(ctx context.Context) {
 		return
 	}
 	type msg struct {
-		id, eid     int64
+		id, eid    int64
 		tel, texto string
 	}
 	var ms []msg

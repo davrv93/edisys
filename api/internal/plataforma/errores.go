@@ -53,9 +53,11 @@ func (e *Error) Campo(campo, mensaje string) *Error {
 func NoEncontrado(que string) *Error {
 	return Err(http.StatusNotFound, "NO_ENCONTRADO", "No encontramos "+que+".")
 }
-func Validacion(mensaje string) *Error { return Err(http.StatusUnprocessableEntity, "VALIDACION", mensaje) }
+func Validacion(mensaje string) *Error {
+	return Err(http.StatusUnprocessableEntity, "VALIDACION", mensaje)
+}
 func Conflicto(codigo, mensaje string) *Error { return Err(http.StatusConflict, codigo, mensaje) }
-func Prohibido(codigo, mensaje string) *Error  { return Err(http.StatusForbidden, codigo, mensaje) }
+func Prohibido(codigo, mensaje string) *Error { return Err(http.StatusForbidden, codigo, mensaje) }
 
 // JSON responde con el estado y el cuerpo dados.
 func JSON(w http.ResponseWriter, status int, v any) {

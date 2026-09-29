@@ -583,17 +583,17 @@ func (s *sembrador) incidencias() error {
 	junta := []int64{s.usuarios["junta@demo.pe"], s.usuarios["junta2@demo.pe"], s.usuarios["junta3@demo.pe"], s.usuarios["junta4@demo.pe"], s.usuarios["junta5@demo.pe"]}
 	type paso struct {
 		estado, fecha, nota string
-		quien              int64
+		quien               int64
 	}
 	type inc struct {
 		titulo, desc, ubic, cat, crit, estado, creado string
-		reporta                                        int64
-		unidad                                         string
-		presup, costo                                  int64
-		proveedor                                      string
-		pasos                                          []paso
-		votos                                          []string // aprueba/rechaza por miembro en orden
-		motivo                                         string
+		reporta                                       int64
+		unidad                                        string
+		presup, costo                                 int64
+		proveedor                                     string
+		pasos                                         []paso
+		votos                                         []string // aprueba/rechaza por miembro en orden
+		motivo                                        string
 	}
 	lista := []inc{
 		{"Fuga en la cisterna", "Se escucha agua corriendo en el cuarto de la cisterna.", "Cuarto de bombas", "gasfiteria", "critica", "terminado", "2026-04-03 07:40", op, "", 90000, 95000, "Gasfitería Rápida EIRL",

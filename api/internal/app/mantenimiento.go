@@ -349,7 +349,7 @@ type opcionesCambio struct {
 // el umbral de aprobación y las evidencias de cierre. Al terminar, el costo real entra como egreso.
 func (s *Server) Transicionar(ctx context.Context, e *Edificio, uid, id int64, hacia string, o opcionesCambio) (map[string]any, error) {
 	if !M.EstadoValido(hacia) {
-		return nil, P.Validacion("Estado desconocido: " + hacia).Campo("estado", "Uno de: "+strings.Join(M.Estados, ", "))
+		return nil, P.Validacion("Estado desconocido: "+hacia).Campo("estado", "Uno de: "+strings.Join(M.Estados, ", "))
 	}
 	tx, err := s.DB.Begin(ctx)
 	if err != nil {
@@ -590,8 +590,8 @@ func (s *Server) validarIncidencia(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var in struct {
-		Accion   string `json:"accion"`
-		UnirCon  string `json:"unir_con"`
+		Accion  string `json:"accion"`
+		UnirCon string `json:"unir_con"`
 		opcionesCambio
 	}
 	if err := P.Leer(r, &in); err != nil {

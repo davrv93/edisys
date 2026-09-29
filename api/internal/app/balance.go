@@ -55,10 +55,10 @@ type KPIs struct {
 
 // Arbol del periodo con su índice por id.
 type Arbol struct {
-	Periodo string
-	Raiz    *Nodo
-	Indice  map[string]*Nodo
-	KPIs    KPIs
+	Periodo  string
+	Raiz     *Nodo
+	Indice   map[string]*Nodo
+	KPIs     KPIs
 	HayDatos bool
 }
 
@@ -534,9 +534,9 @@ func (s *Server) dashboard(w http.ResponseWriter, r *http.Request) {
 		}
 		resp["variacion_vs_mes_anterior"] = map[string]any{
 			"periodo": ant, "nombre_periodo": P.NombrePeriodo(ant),
-			"ingresos_pct": variacion(a.KPIs.IngresosCts, b.KPIs.IngresosCts),
-			"egresos_pct":  variacion(a.KPIs.EgresosCts, b.KPIs.EgresosCts),
-			"saldo_cts":    a.KPIs.SaldoCts - b.KPIs.SaldoCts,
+			"ingresos_pct":     variacion(a.KPIs.IngresosCts, b.KPIs.IngresosCts),
+			"egresos_pct":      variacion(a.KPIs.EgresosCts, b.KPIs.EgresosCts),
+			"saldo_cts":        a.KPIs.SaldoCts - b.KPIs.SaldoCts,
 			"morosidad_puntos": math.Round((a.KPIs.Morosidad.Pct-b.KPIs.Morosidad.Pct)*10) / 10,
 		}
 	} else {
@@ -636,14 +636,14 @@ func (s *Server) crearEgreso(w http.ResponseWriter, r *http.Request) {
 	e := edf(r)
 	ctx := r.Context()
 	var in struct {
-		RubroID    int64  `json:"rubro_id"`
-		Rubro      string `json:"rubro"`
-		ConceptoID int64  `json:"concepto_id"`
-		Concepto   string `json:"concepto"`
+		RubroID     int64  `json:"rubro_id"`
+		Rubro       string `json:"rubro"`
+		ConceptoID  int64  `json:"concepto_id"`
+		Concepto    string `json:"concepto"`
 		Descripcion string `json:"descripcion"`
-		MontoCts   int64  `json:"monto_cts"`
-		Fecha      string `json:"fecha"`
-		Periodo    string `json:"periodo"`
+		MontoCts    int64  `json:"monto_cts"`
+		Fecha       string `json:"fecha"`
+		Periodo     string `json:"periodo"`
 	}
 	var docs []Subido
 	if esMultipart(r) {

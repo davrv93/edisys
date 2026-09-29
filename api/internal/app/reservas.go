@@ -271,11 +271,11 @@ func (s *Server) calcularDisponibilidad(ctx context.Context, eid int64, recurso,
 	}
 	filas.Close()
 	type ocup struct {
-		recurso    int64
-		ini, fin   time.Time
-		estado     string
-		codigo     string
-		vence      *time.Time
+		recurso  int64
+		ini, fin time.Time
+		estado   string
+		codigo   string
+		vence    *time.Time
 	}
 	fin := hasta.AddDate(0, 0, 1)
 	fo, err := s.DB.Query(ctx, `SELECT recurso_id, inicio, fin, estado, codigo, vence_retencion FROM reserva

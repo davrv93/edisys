@@ -120,15 +120,15 @@ func (s *Server) analitica(w http.ResponseWriter, r *http.Request) {
 	}
 	P.JSON(w, http.StatusOK, map[string]any{
 		"desde": d, "hasta": h,
-		"cobranza_mensual":       cobranza,
-		"morosidad_mensual":      morosidad,
-		"consumo_agua":           consumo,
-		"consumo_agua_mensual":   consumoMes,
-		"reservas_por_area":      reservas,
-		"incidencias_por_estado": incid,
+		"cobranza_mensual":          cobranza,
+		"morosidad_mensual":         morosidad,
+		"consumo_agua":              consumo,
+		"consumo_agua_mensual":      consumoMes,
+		"reservas_por_area":         reservas,
+		"incidencias_por_estado":    incid,
 		"incidencias_por_categoria": porCat,
-		"tiempo_resolucion_dias": tr,
-		"totales": map[string]any{"emitido_cts": emitido, "cobrado_cts": cobrado, "efectividad_cobranza_pct": pct(cobrado, emitido)},
+		"tiempo_resolucion_dias":    tr,
+		"totales":                   map[string]any{"emitido_cts": emitido, "cobrado_cts": cobrado, "efectividad_cobranza_pct": pct(cobrado, emitido)},
 	})
 }
 

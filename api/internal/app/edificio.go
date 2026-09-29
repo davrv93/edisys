@@ -552,14 +552,14 @@ type ProblemaImport struct {
 
 // ResultadoImport es la vista previa de una importación.
 type ResultadoImport struct {
-	Filas         int              `json:"filas"`
-	Validas       int              `json:"validas"`
-	Errores       []ProblemaImport `json:"errores"`
-	Advertencias  []ProblemaImport `json:"advertencias"`
-	SumaPct       string           `json:"suma_participacion_pct"`
-	Bloqueante    bool             `json:"bloqueante"`
-	Padron        []FilaPadron     `json:"-"`
-	Deudas        []DeudaImport    `json:"-"`
+	Filas        int              `json:"filas"`
+	Validas      int              `json:"validas"`
+	Errores      []ProblemaImport `json:"errores"`
+	Advertencias []ProblemaImport `json:"advertencias"`
+	SumaPct      string           `json:"suma_participacion_pct"`
+	Bloqueante   bool             `json:"bloqueante"`
+	Padron       []FilaPadron     `json:"-"`
+	Deudas       []DeudaImport    `json:"-"`
 }
 
 var reDNI = regexp.MustCompile(`^\d{8}$`)
