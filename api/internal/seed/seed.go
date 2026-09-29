@@ -12,6 +12,7 @@ import (
 	"image/color"
 	"log/slog"
 	"math"
+	"os"
 	"strings"
 	"time"
 
@@ -170,6 +171,20 @@ func Sembrar(ctx context.Context, pool *pgxpool.Pool, alm archivo.Almacen, op Op
 			adm, u.correo, u.nombre, u.tel, hash, u.rol == "superadmin")
 		s.usuarios[u.correo] = id
 		s.exec(`INSERT INTO usuario_edificio_rol (usuario_id, edificio_id, rol) VALUES ($1,$2,$3)`, id, s.eid, u.rol)
+	}
+	// Administrador propio, fuera de la demo: sobrevive a cada resiembra. La clave llega
+	// por entorno (EDISYS_ADMIN_EXTRA_CLAVE, en .env sin versionar), nunca en el repo.
+	if u, c := strings.TrimSpace(os.Getenv("EDISYS_ADMIN_EXTRA_USUARIO")), os.Getenv("EDISYS_ADMIN_EXTRA_CLAVE"); u != "" && c != "" {
+		h, err := auth.HashClave(c)
+		if err != nil {
+			return nil, err
+		}
+		nombre := strings.TrimSpace(os.Getenv("EDISYS_ADMIN_EXTRA_NOMBRE"))
+		if nombre == "" {
+			nombre = u
+		}
+		id := s.id(`INSERT INTO usuario (administradora_id, correo, nombre, clave_hash) VALUES ($1,$2,$3,$4) RETURNING id`, adm, u, nombre, h)
+		s.exec(`INSERT INTO usuario_edificio_rol (usuario_id, edificio_id, rol) VALUES ($1,$2,'administrador')`, id, s.eid)
 	}
 	for i, c := range []string{"junta@demo.pe", "junta2@demo.pe", "junta3@demo.pe", "junta4@demo.pe", "junta5@demo.pe"} {
 		cargo := []string{"presidente", "vicepresidenta", "tesorero", "secretaria", "vocal"}[i]

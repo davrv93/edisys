@@ -121,6 +121,9 @@ services:
       <<: *api-env
       SEMBRAR: ${SEMBRAR:-si_vacia}
       SEMBRAR_PENDIENTES: ${SEMBRAR_PENDIENTES:-0}
+      EDISYS_ADMIN_EXTRA_USUARIO: ${EDISYS_ADMIN_EXTRA_USUARIO:-}
+      EDISYS_ADMIN_EXTRA_CLAVE: ${EDISYS_ADMIN_EXTRA_CLAVE:-}
+      EDISYS_ADMIN_EXTRA_NOMBRE: ${EDISYS_ADMIN_EXTRA_NOMBRE:-}
     depends_on:
       postgres: { condition: service_healthy }
       s3: { condition: service_healthy }
