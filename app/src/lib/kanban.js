@@ -31,6 +31,12 @@ export const TRANSICIONES = {
 /** Estados finales o de salida: no son el «siguiente paso feliz». */
 const SALIDAS = ['rechazado', 'descartado'];
 
+/** Columnas del flujo principal: las 6 que el tablero de escritorio muestra en rejilla (caben a 1440). */
+export const COLUMNAS_FLUJO = COLUMNAS.filter((c) => !SALIDAS.includes(c.estado));
+
+/** Columnas de salida: en escritorio van en una franja secundaria, con las mismas acciones. */
+export const COLUMNAS_SALIDA = COLUMNAS.filter((c) => SALIDAS.includes(c.estado));
+
 /** Verbo del botón que lleva a cada estado. */
 export const ACCION_HACIA = {
   validado: 'Validar',

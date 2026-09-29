@@ -2,7 +2,16 @@ import { describe, it, expect } from 'vitest';
 import {
   puedeTransicionar, siguienteEstado, transicionesPermitidas, filtrosDesdeURL, filtrosAURL,
   filtrarIncidencias, agruparPorEstado, normalizarIncidencia, hayFiltros,
+  COLUMNAS, COLUMNAS_FLUJO, COLUMNAS_SALIDA,
 } from './kanban.js';
+
+describe('columnas del tablero', () => {
+  it('flujo (6) + salidas (2) cubren las 8 sin repetir', () => {
+    expect(COLUMNAS_FLUJO.map((c) => c.estado)).toEqual(['reportado', 'validado', 'presupuestado', 'aprobado', 'en_ejecucion', 'terminado']);
+    expect(COLUMNAS_SALIDA.map((c) => c.estado)).toEqual(['rechazado', 'descartado']);
+    expect([...COLUMNAS_FLUJO, ...COLUMNAS_SALIDA].map((c) => c.estado).sort()).toEqual(COLUMNAS.map((c) => c.estado).sort());
+  });
+});
 
 describe('transiciones', () => {
   it('solo avanza un paso por el camino feliz', () => {

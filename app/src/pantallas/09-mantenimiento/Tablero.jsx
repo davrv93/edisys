@@ -4,7 +4,7 @@ import { useCarga } from '../../lib/useCarga.js';
 import { formatearSoles, formatearSolesCorto } from '../../lib/dinero.js';
 import { formatearFecha, haceCuanto } from '../../lib/fechas.js';
 import {
-  ACCION_HACIA, CATEGORIAS, COLUMNAS, CRITICIDADES, agruparPorEstado, filtrarIncidencias, filtrosAURL, filtrosDesdeURL,
+  ACCION_HACIA, CATEGORIAS, COLUMNAS, COLUMNAS_FLUJO, COLUMNAS_SALIDA, CRITICIDADES, agruparPorEstado, filtrarIncidencias, filtrosAURL, filtrosDesdeURL,
   hayFiltros, normalizarIncidencia, puedeTransicionar, transicionesPermitidas, PERMISO_HACIA, esSalida, alternarCriticidad, criticidadesDe,
 } from '../../lib/kanban.js';
 import { lista as aLista } from '../../lib/api.js';
@@ -270,7 +270,9 @@ export default function Tablero() {
     );
   };
 
-  const columna = (col, i, movil = false) => {
+  // movil: pestaña del celular (sin caja). fijo: carrusel de la tablet (248 px con imán).
+  // En escritorio la columna es fluida: la rejilla la estira y las 6 del flujo caben a 1440 sin scroll.
+  const columna = (col, i, movil = false, fijo = true) => {
     const items = grupos[col.estado] || [];
     const valida = arrastrando && arrastrando.estado !== col.estado && puedeTransicionar(arrastrando.estado, col.estado, arrastrando.transiciones) && s.tiene(PERMISO_HACIA[col.estado]);
     const invalida = arrastrando && arrastrando.estado !== col.estado && !valida;
@@ -294,7 +296,7 @@ export default function Tablero() {
         }}
         className={[
           'flex min-w-0 flex-col rounded-tarjeta transition-[background-color,box-shadow,opacity] duration-media',
-          movil ? '' : 'max-h-[calc(100dvh-230px)] w-[248px] shrink-0 overflow-y-auto bg-superficie-2/60',
+          movil ? '' : fijo ? 'max-h-[calc(100dvh-230px)] w-[248px] shrink-0 overflow-y-auto bg-superficie-2/60' : 'max-h-[calc(100dvh-230px)] overflow-y-auto bg-superficie-2/60',
           sobre === col.estado ? 'bg-acento-suave ring-2 ring-acento' : valida ? 'bg-acento-suave/60 ring-1 ring-acento-borde' : invalida ? 'opacity-50' : '',
         ].join(' ')}
       >
@@ -357,9 +359,16 @@ export default function Tablero() {
           </div>
         ) : (
           <>
-            {/* Tablet y escritorio: columnas con desplazamiento horizontal e imán por columna */}
-            <div className="carrusel -mx-4 hidden items-start gap-2 px-4 pb-2 md:flex lg:-mx-6 lg:px-6" role="list" aria-label="Columnas del tablero">
+            {/* Tablet: columnas con desplazamiento horizontal e imán por columna */}
+            <div className="carrusel -mx-4 hidden items-start gap-2 px-4 pb-2 md:flex lg:hidden" role="list" aria-label="Columnas del tablero">
               {COLUMNAS.map((c, i) => columna(c, i))}
+            </div>
+            {/* Escritorio: las 6 del flujo en rejilla fluida (caben a 1440 sin scroll) y las salidas debajo */}
+            <div className="hidden items-start gap-2 lg:grid lg:grid-cols-6" role="list" aria-label="Columnas del tablero">
+              {COLUMNAS_FLUJO.map((c, i) => columna(c, i, false, false))}
+            </div>
+            <div className="hidden items-start gap-2 lg:grid lg:grid-cols-2" role="list" aria-label="Salidas del tablero">
+              {COLUMNAS_SALIDA.map((c, i) => columna(c, i, false, false))}
             </div>
             <p className="hidden text-xs text-texto-apoyo lg:block">Arrastra una tarjeta, usa «siguiente paso» o su menú ⋯ para cambiarla de columna.</p>
             {/* Móvil: pestañas por estado, con contador */}
