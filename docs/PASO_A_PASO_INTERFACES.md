@@ -5,10 +5,12 @@
 **Qué es EDISYS:** software de administración de edificios para Perú que junta *property* (cuotas, recibos, morosidad, balance, reservas, junta) y *facility* (mantenimiento, medidores, operarios).
 
 **Fuentes que mandan, en este orden:**
-1. Esta guía, para el stack y el alcance del MVP de **133.33 h** (S/ 4,000 a S/ 30 la hora).
+1. Esta guía, para el stack y el alcance del MVP de **133,33 h** (S/ 4.000 a S/ 30 la hora).
 2. [`PLAN_TRABAJO_ADMINISTRACION_EDIFICIOS.md`](../../PLAN_TRABAJO_ADMINISTRACION_EDIFICIOS.md), para las fases y las notas del dueño (§0).
 3. [`PLAN_REQUERIMIENTOS_ADMINISTRACION_EDIFICIOS.md`](../../PLAN_REQUERIMIENTOS_ADMINISTRACION_EDIFICIOS.md) y `~/Downloads/Requerimientos-Sistema-Edificios.md` (RF-01 a RF-20), para las reglas de negocio.
-4. [`../design/DISENO.md`](../design/DISENO.md), para colores, tipografía y el lienzo de diseño.
+4. [`../design/DISENO.md`](../design/DISENO.md), para colores, tipografía y los datos de la demo.
+
+**Lienzo de diseño (todas las pantallas):** https://claude.ai/artifact/FyfD7psiPNCxcudrJT9PWe — privado hasta que se comparta desde el menú *Share*. Cada pantalla de §3 dice qué *artboard* (`NN-nombre.dc.html`) le corresponde. **Si esta guía y el lienzo no coinciden en lo visual, manda el lienzo; en reglas de negocio y endpoints, manda esta guía.**
 
 > **Ojo, cambio frente al plan de trabajo.** El plan (§1, decisión 3, y §2) proponía montar EDISYS como un vertical de PjgFactSalud en Laravel. **Eso ya no vale.** El stack está fijado: backend en **Go**, login en **Qwik**, landing en **Astro**, app en **React + Tailwind**, todo en **docker compose** sobre un EC2 propio de 4 GB. De PjgFactSalud solo se copian ideas (el diálogo propio en vez de `alert`, los permisos por rol, Garage como S3), no código.
 
@@ -27,14 +29,14 @@
 
 ## 0. Reglas que no se negocian
 
-1. **Dinero en céntimos enteros** (`bigint`), nunca `float`. S/ 5.000,00 se guarda como `500000`. El formato `S/ 5,000.00` se aplica solo al mostrar.
+1. **Dinero en céntimos enteros** (`bigint`), nunca `float`. S/ 5.000,00 se guarda como `500000`. El formato `S/ 5.000,00` se aplica solo al mostrar.
 2. **Toda cifra económica tiene sustento:** una foto, un PDF, un voucher o un código de operación. Un egreso sin documento se puede guardar, pero sale marcado como «sin sustento» en el balance.
 3. **El permiso se valida en Go.** Las guardas de React solo esconden botones. Si un endpoint no comprueba el rol, está mal aunque la pantalla no muestre el botón.
 4. **Las reglas duras viven en la base:** la doble reserva y los votos duplicados se impiden con restricciones de PostgreSQL. La pantalla puede avisar antes, pero no es la que impide.
 5. **Nada de `window.alert`, `window.confirm` ni `window.prompt`.** Usa el componente `Dialog` (§2.2).
 6. **Fechas en UTC en la base (`timestamptz`)** y en hora de Lima (`America/Lima`) en pantalla. Los periodos se escriben `AAAA-MM` (ej. `2026-09`).
 7. **Datos personales (Ley 29733):** las fotos y los vouchers van en un cubo **privado**; se sirven con URL firmada que caduca en 10 minutos. Los DNI no se muestran enteros en listados: `4512****`.
-8. **Español de Perú en toda la interfaz**, con tuteo. Números con coma de miles y punto decimal (`S/ 4,800.00`), como en los recibos de Sedapal.
+8. **Español de Perú en toda la interfaz**, con tuteo. Números como en el lienzo: **punto de miles y coma decimal** (`S/ 4.800,00`, `13,1 %`). Usa un formateador propio en `lib/dinero.js` (no `Intl` con `es-PE`, que según el navegador devuelve `4,800.00`). El API siempre habla en céntimos enteros y en JSON con punto decimal; el formato es solo de pantalla.
 
 ---
 
@@ -64,7 +66,7 @@ edisys/
 │   │   ├── archivo/            # subida a S3 y URLs firmadas
 │   │   └── plataforma/         # errores, paginación, dinero, fechas Lima
 │   ├── migrations/             # SQL numerado (golang-migrate)
-│   ├── seed/                   # datos de ejemplo de la demo (Edificio Los Olivos)
+│   ├── seed/                   # datos de ejemplo de la demo (Edificio Demo, 24 dptos)
 │   └── Dockerfile
 │
 ├── login/                      # Qwik City (adaptador Node), solo /login
@@ -144,26 +146,109 @@ Todo bajo **un mismo dominio**. Así la cookie de sesión la leen el login y el 
 
 ### 2.1 Tokens de diseño
 
-Los tokens **se toman de [`EDISYS/design/DISENO.md`](../design/DISENO.md)**, que deja el equipo de diseño con la paleta, la tipografía y la URL del lienzo. Cuando se escribió esta guía ese archivo aún no existía; **no inventes colores**: copia los valores de DISENO.md a `packages/tokens/tokens.css` apenas esté.
+Los valores salen de [`EDISYS/design/DISENO.md`](../design/DISENO.md) y del [lienzo](https://claude.ai/artifact/FyfD7psiPNCxcudrJT9PWe). Si cambian allí, se cambian aquí y en `packages/tokens/tokens.css`, en el mismo commit.
 
-Cómo se implementan, sea cual sea la paleta:
+**Identidad:** sobria y confiable, porque se administra dinero ajeno. Neutros **slate**, un acento **petróleo (cyan-800)** y un color de **alerta (red-700)**. Todo sale de la **paleta por defecto de Tailwind**: no hay colores a medida.
 
-1. **Variables CSS semánticas en `:root`**, no colores sueltos en las clases. Nombres fijos que todo el equipo usa:
+**Regla de color:** «correcto / pagado» usa el **acento petróleo, no verde**. Así el estado no depende de distinguir rojo y verde. El verde no existe en EDISYS.
 
-   | Token | Uso |
-   |---|---|
-   | `--color-fondo`, `--color-superficie`, `--color-borde` | Fondo de página, tarjetas, divisores |
-   | `--color-texto`, `--color-texto-suave` | Texto principal y secundario |
-   | `--color-primario`, `--color-primario-texto` | Botón principal, enlaces, foco |
-   | `--color-exito`, `--color-alerta`, `--color-peligro`, `--color-info` | Estados: pagado, por vencer, moroso o crítico, informativo |
-   | `--color-ingreso`, `--color-egreso` | Balance: siempre el mismo color para ingresos y para egresos |
-   | `--radio`, `--sombra`, `--fuente-base`, `--fuente-titulos`, `--fuente-numeros` | Forma y tipografía (números en tabular) |
+#### Colores: nombre semántico → valor → Tailwind
 
-2. **Modo oscuro** redefiniendo las mismas variables bajo `@media (prefers-color-scheme: dark)` y bajo `[data-tema="oscuro"]`.
-3. **Preset de Tailwind** (`packages/tokens/tailwind-preset.js`) que mapea cada variable: `bg-superficie`, `text-texto-suave`, `border-borde`, `bg-primario`… Así ninguna pantalla escribe `bg-blue-600`.
-4. **Los tres front (Qwik, Astro, React) importan el mismo preset.** El login y la landing se ven de la misma familia que la app.
-5. **Semáforo de estados** con un solo mapa en `app/src/ui/estados.js`: `pagado → exito`, `por_vencer → alerta`, `vencido → peligro`, etc. Ninguna pantalla decide colores de estado por su cuenta.
-6. **Nunca un color como único portador del significado:** cada estado lleva también texto o icono (daltonismo, pantallas al sol en la azotea).
+| Token CSS | Hex | Tailwind | Uso |
+|---|---|---|---|
+| `--color-acento` | `#155E75` | `cyan-800` | Botón principal, elemento activo, enlaces, foco, **pagado / correcto**, ingresos en el balance |
+| `--color-acento-hover` | `#164E63` | `cyan-900` | Hover del acento; texto de acento sobre fondo claro |
+| `--color-acento-suave` | `#ECFEFF` | `cyan-50` | Fondo de chips «pagado», fila seleccionada, nodo abierto |
+| `--color-acento-borde` | `#CFFAFE` | `cyan-100` | Borde de chips y tarjetas de acento |
+| `--color-acento-oscuro` | `#67E8F9` | `cyan-300` | Acento sobre fondo oscuro (sidebar, ítem activo) |
+| `--color-tinta` | `#0F172A` | `slate-900` | Texto principal y fondo del sidebar |
+| `--color-superficie-oscura` | `#1E293B` / `#334155` | `slate-800` / `slate-700` | Hover y separadores dentro del sidebar |
+| `--color-texto-suave` | `#475569` | `slate-600` | Texto secundario (etiquetas, subtítulos) |
+| `--color-texto-apoyo` | `#64748B` | `slate-500` | Texto de ayuda, pies de tabla, fechas |
+| `--color-borde` | `#E2E8F0` | `slate-200` | Bordes de tarjetas y divisores |
+| `--color-borde-fuerte` | `#CBD5E1` | `slate-300` | Bordes de campos |
+| `--color-fondo` | `#F8FAFC` | `slate-50` | Fondo de la app |
+| `--color-superficie` | `#FFFFFF` | `white` | Tarjetas, tablas, diálogos |
+| `--color-alerta` | `#B91C1C` | `red-700` | **Morosidad, crítico, vencido**, errores, botón `danger` |
+| `--color-alerta-suave` / `--color-alerta-borde` | `#FEF2F2` / `#FECACA` | `red-50` / `red-200` | Fondo y borde de avisos de alerta |
+| `--color-aviso` | `#B45309` | `amber-700` | **Criticidad media, pendiente, retenido**, consumo con pico |
+| `--color-aviso-suave` / `--color-aviso-borde` | `#FFFBEB` / `#FDE68A` | `amber-50` / `amber-200` | Fondo y borde de avisos |
+| `--color-ingreso` | = `--color-acento` | `cyan-800` | Totales de ingresos en 03, 04 y 10 |
+| `--color-egreso` | `#334155` | `slate-700` | Totales de egresos. **No rojo:** gastar no es un error |
+
+Mapa único de estados (`app/src/ui/estados.js`). Ninguna pantalla decide colores de estado por su cuenta:
+
+| Estado | Token | Texto que acompaña siempre |
+|---|---|---|
+| `pagado`, `confirmada`, `terminado`, `aprobado`, `leida` | acento | «Pagado», «Confirmada»… |
+| `pendiente`, `pagado_parcial`, `pendiente_pago` (retenida), `presupuestado`, criticidad `media`, alerta `PICO` | aviso | «Pendiente», «Retenida 15 min»… |
+| `vencido`, moroso, criticidad `critica`, `rechazado`, alerta `NEGATIVO` | alerta | «Vencido», «Crítico»… |
+| `borrador`, `reportado`, `anulado`, criticidad `baja` | slate (texto suave, borde) | «Borrador», «Baja»… |
+
+**Nunca un color como único portador del significado:** cada estado lleva también texto o icono (daltonismo, pantallas al sol en la azotea).
+
+#### Tipografía
+
+- **Fraunces** (500, 600, 700): títulos, logotipo y **cifras grandes** (KPIs, total del recibo).
+- **Public Sans** (400 a 700): interfaz y lectura. Todas las cifras con `font-variant-numeric: tabular-nums` (clase `tabular-nums`) para que las columnas de soles se alineen.
+- **Escala:** 12 / 14 / 16 / 18 / 20 / 24 / 30 / 36 / 48 / 60 px = `text-xs` … `text-6xl` de Tailwind, sin tamaños a medida. En móvil, el texto de lectura nunca baja de 16 px.
+- **Carga de fuentes:**
+  - En la landing (Astro), Google Fonts con `preconnect` y `display=swap`.
+  - En la app y el login, `@fontsource/fraunces` y `@fontsource/public-sans` servidas desde el propio dominio, para que la PWA funcione sin depender de Google.
+
+#### Escala y forma
+
+- **Espaciado** en múltiplos de 4 px: `p-3`, `p-4`, `p-5`, `gap-3`, `gap-4`, `gap-6`, `px-8`…
+- **Radios:**
+  - `rounded-lg` (8 px): campos y botones;
+  - `rounded-xl` (12 px): tarjetas;
+  - `rounded-full`: chips e insignias.
+- **Alto de botones y campos:** de 40 a 52 px (`h-10` a `h-13`). En móvil, los objetivos táctiles miden 44 px o más.
+- **Armazón de escritorio:** sidebar `slate-900` de **248 px** y barra superior de **72 px**. **Referencia móvil:** 390 × 844.
+- **Logotipo:** cuadrado petróleo `rounded-lg` con tres pisos escalonados en blanco y «EDISYS» en Fraunces.
+
+#### Cómo se implementa
+
+1. **`packages/tokens/tokens.css`** declara las variables de la tabla en `:root`, con `color-scheme: light`.
+2. **Modo oscuro:** el lienzo solo define el claro. Deja las variables listas para redefinirse bajo `@media (prefers-color-scheme: dark)` y `[data-tema="oscuro"]`, pero **no lo actives en el MVP** sin que diseño lo apruebe. Propuesta, por si lo piden: fondo `slate-900`, superficie `slate-800`, texto `slate-50`, acento `cyan-300`.
+3. **Preset de Tailwind compartido** (`packages/tokens/tailwind-preset.js`), que importan los tres front (Qwik, Astro, React):
+
+   ```js
+   // packages/tokens/tailwind-preset.js
+   export default {
+     theme: {
+       extend: {
+         colors: {
+           fondo: 'var(--color-fondo)',             // slate-50
+           superficie: 'var(--color-superficie)',   // white
+           tinta: 'var(--color-tinta)',             // slate-900
+           'texto-suave': 'var(--color-texto-suave)', // slate-600
+           'texto-apoyo': 'var(--color-texto-apoyo)', // slate-500
+           borde: { DEFAULT: 'var(--color-borde)', fuerte: 'var(--color-borde-fuerte)' },
+           acento: {
+             DEFAULT: 'var(--color-acento)',        // cyan-800 #155E75
+             hover: 'var(--color-acento-hover)',    // cyan-900
+             suave: 'var(--color-acento-suave)',    // cyan-50
+             borde: 'var(--color-acento-borde)',    // cyan-100
+             oscuro: 'var(--color-acento-oscuro)',  // cyan-300
+           },
+           alerta: { DEFAULT: 'var(--color-alerta)', suave: 'var(--color-alerta-suave)', borde: 'var(--color-alerta-borde)' }, // red-700/50/200
+           aviso:  { DEFAULT: 'var(--color-aviso)',  suave: 'var(--color-aviso-suave)',  borde: 'var(--color-aviso-borde)' },  // amber-700/50/200
+           ingreso: 'var(--color-ingreso)',
+           egreso: 'var(--color-egreso)',
+         },
+         fontFamily: {
+           titulo: ['Fraunces', 'Georgia', 'serif'],
+           sans: ['"Public Sans"', 'system-ui', 'sans-serif'],
+         },
+         spacing: { sidebar: '248px', topbar: '72px', 13: '52px' },
+       },
+     },
+   };
+   ```
+
+   Con eso se escribe `bg-acento text-white rounded-lg h-11`, `text-alerta`, `bg-aviso-suave border-aviso-borde`, `font-titulo text-4xl tabular-nums`. Una revisión de código **rechaza** clases de color crudas en las pantallas (`bg-cyan-800`, `text-red-700`): van solo en `tokens.css`.
+4. **Resultado:** el login y la landing se ven de la misma familia que la app, porque comparten preset y fuentes.
 
 ### 2.2 Componentes compartidos (`app/src/ui/`)
 
@@ -191,7 +276,7 @@ Ejemplo de uso del diálogo (así se confirma todo en EDISYS):
 ```jsx
 const { dialog, dialogEl } = useDialog();
 const ok = await dialog.confirm({
-  title: '¿Emitir 10 recibos de setiembre?',
+  title: '¿Emitir 24 recibos de setiembre?',
   text: 'Después de emitirlos ya no se editan; solo se anulan.',
 });
 if (!ok) return;
@@ -201,7 +286,7 @@ if (!ok) return;
 
 - **Se diseña a 360 px y se agranda**, nunca al revés. Puntos de quiebre de Tailwind: `sm 640`, `md 768`, `lg 1024`, `xl 1280`.
 - **Móvil (< 768 px):** cabecera con nombre del edificio y menú de usuario; **barra inferior de 4 o 5 pestañas** según el rol; contenido a una columna; acciones principales en un botón fijo abajo (por encima de la barra).
-- **Escritorio (≥ 1024 px):** menú lateral plegable, cabecera con `SelectorEdificio` y `SelectorPeriodo`, contenido con ancho máximo de 1280 px.
+- **Escritorio (≥ 1024 px):** menú lateral `slate-900` de 248 px (plegable), barra superior de 72 px cabecera con `SelectorEdificio` y `SelectorPeriodo`, contenido con ancho máximo de 1280 px.
 - **Menú según rol**, generado desde `GET /api/v1/yo` (no hay menú escrito a mano por rol):
 
   | Rol | Pestañas en móvil |
@@ -255,7 +340,7 @@ Paso a paso:
 ### 2.6 Formato de errores del API (igual en todos los endpoints)
 
 ```json
-{ "error": { "codigo": "PARTICIPACION_NO_SUMA_100", "mensaje": "Las participaciones suman 99.50 %; deben sumar 100 %.", "campos": { "participacion_pct": "…" } } }
+{ "error": { "codigo": "PARTICIPACION_NO_SUMA_100", "mensaje": "Las participaciones suman 99,50 %; deben sumar 100 %.", "campos": { "participacion_pct": "…" } } }
 ```
 
 | HTTP | Cuándo | Qué hace la pantalla |
@@ -282,6 +367,7 @@ Formato de cada pantalla: **objetivo · roles · dispositivo · endpoints · est
 **Objetivo:** entrar rápido desde el celular o la PC y aterrizar en la pantalla que corresponde al rol.
 **Roles:** todos. **Dispositivo:** móvil primero; también escritorio.
 **Ruta:** `/login` (servicio `login`).
+**Artboard:** `01-login-escritorio.dc.html` y `01-login-movil.dc.html` en el [lienzo](https://claude.ai/artifact/FyfD7psiPNCxcudrJT9PWe).
 
 **Endpoints Go**
 
@@ -304,8 +390,8 @@ Formato de cada pantalla: **objetivo · roles · dispositivo · endpoints · est
 - Funciona **sin JavaScript** para el envío (formulario HTML que procesa la acción de Qwik): útil en celulares viejos.
 
 **Criterios de aceptación**
-- [ ] Con `admin@losolivos.pe / demo1234` aterrizas en el dashboard (03) en menos de 2 s en 4G.
-- [ ] Con `101 + DNI` aterrizas en el portal del propietario (10).
+- [ ] Con `admin@demo.edisys.pe / demo1234` aterrizas en el dashboard (03) en menos de 2 s en 4G.
+- [ ] Con `201 + DNI` (María Demo) aterrizas en el portal del propietario (10).
 - [ ] Al sexto intento fallido en 15 min recibes el aviso de espera y el API responde `429`.
 - [ ] Las cookies salen `HttpOnly` y `Secure` (verificado en DevTools); `document.cookie` no muestra el token.
 - [ ] Un `?volver=https://otro-sitio.com` se ignora y te manda a `/app/`.
@@ -324,6 +410,7 @@ Formato de cada pantalla: **objetivo · roles · dispositivo · endpoints · est
 **Objetivo:** explicar EDISYS a administradoras y juntas, y captar contactos para demos.
 **Roles:** público (sin sesión). **Dispositivo:** móvil y escritorio.
 **Ruta:** `/` (estático servido por `edge`).
+**Artboard:** `02-landing.dc.html` (escritorio, 1440 × 2320; la versión móvil se deriva a una columna) en el [lienzo](https://claude.ai/artifact/FyfD7psiPNCxcudrJT9PWe).
 
 **Secciones:** portada con la propuesta («Property + facility en un solo sistema. Tu propietario ve en qué se gastó cada sol»); problema (Excel, capturas por WhatsApp, balances que nadie entiende); módulos (balance por nodos, recibos, reservas, medidores con foto, mantenimiento con aprobación de junta); cómo funciona en 3 pasos; precio de referencia (por confirmar con el dueño: ~S/ 100 al mes por edificio); formulario de contacto; pie con enlace a «Entrar» (`/login`), términos y política de datos personales.
 
@@ -343,7 +430,7 @@ Cuerpo: `{ nombre, correo, celular, empresa, edificios_aprox, mensaje, sitio_web
 - [ ] Lighthouse ≥ 95 en rendimiento, accesibilidad, buenas prácticas y SEO.
 - [ ] Se ve bien a 360 px sin scroll horizontal.
 - [ ] Un envío de contacto llega a la tabla `lead` y dispara un correo al dueño.
-- [ ] Usa el mismo preset de tokens que la app (mismo primario, misma tipografía).
+- [ ] Usa el mismo preset de tokens que la app (mismo acento cyan-800, Fraunces y Public Sans).
 
 **Recorte para el MVP de 133 h:** una sola página con las secciones de arriba, sin blog ni páginas por módulo; los textos los pone el dueño.
 
@@ -358,9 +445,10 @@ Cuerpo: `{ nombre, correo, celular, empresa, edificios_aprox, mensaje, sitio_web
 **Objetivo:** en una sola pantalla, saber cómo está el edificio este mes y qué hay que hacer hoy.
 **Roles:** administrador (completo), junta (solo lectura, sin accesos de acción). **Dispositivo:** escritorio primero, usable en móvil.
 **Ruta:** `/app/e/:eid/inicio`.
+**Artboard:** `03-dashboard.dc.html` en el [lienzo](https://claude.ai/artifact/FyfD7psiPNCxcudrJT9PWe).
 
 **Contenido**
-- **Fila de 4 KPIs** (los mismos 4 que verá el propietario en su vista ejecutiva): ingresos del mes, egresos del mes, saldo, índice de morosidad (% de unidades con deuda vencida y S/ adeudado).
+- **Fila de 4 KPIs** (los mismos 4 que verá el propietario en su vista ejecutiva): ingresos del mes, egresos del mes, saldo, índice de morosidad (**saldo pendiente ÷ emitido del periodo**, más el número de unidades morosas). Con la demo: ingresos S/ 19.460, egresos S/ 18.950, saldo S/ 510 y morosidad **13,1 %** (S/ 2.940 de S/ 22.400, 3 unidades).
 - **Cobranza del periodo:** recibos emitidos, pagados, parciales y pendientes (barra apilada) y un enlace a 05.
 - **Tareas de hoy:** lecturas pendientes del periodo (enlace a 08), vouchers por validar (05 y 07), incidencias por validar (09), trabajos esperando aprobación de la junta (09).
 - **Mantenimiento del mes:** trabajos programados y su estado.
@@ -401,29 +489,47 @@ Un **solo endpoint** agregado (una ida al servidor en 4G). Las cifras salen de l
 **Objetivo:** que cualquier propietario entienda en qué se gastó cada sol, bajando de lo general al documento.
 **Roles:** administrador, junta (todo); propietario (vista ejecutiva y nodos, documentos según configuración del edificio); inquilino (solo vista ejecutiva, si el propietario lo habilita). **Dispositivo:** móvil y escritorio.
 **Ruta:** `/app/e/:eid/balance`.
+**Artboard:** `04-balance-nodos.dc.html` en el [lienzo](https://claude.ai/artifact/FyfD7psiPNCxcudrJT9PWe).
 
-**El árbol (nota del dueño §0.5)**
+**El árbol (nota del dueño §0.5).** Se muestra con los datos de la demo del lienzo (`04-balance-nodos.dc.html`):
 
 ```
-Edificio Los Olivos · setiembre 2026 ............. saldo S/ 3,150.00
-├── Ingresos ...................................... S/ 21,450.00
-│   ├── Cuotas de mantenimiento ................... S/ 18,000.00
-│   │   ├── Recibo 2026-09-101 (pagado) .......... S/ 1,800.00  [voucher]
+Edificio Demo · setiembre 2026 ........................ saldo del mes S/ 510,00
+├── Ingresos (cobrado) ................................ S/ 19.460,00
+│   ├── Cuotas de mantenimiento ....................... S/ 14.630,00
+│   │   ├── Recibo 2026-09-201 · María Demo (pagado) .. S/ 705,60   [voucher]
 │   │   └── …
-│   ├── Agua (reparto de medidores) .............. S/ 5,000.00 …
-│   └── Alquiler de áreas (parrillas) ............ S/ 450.00
-│       └── Reserva R-0412 Parrilla 2 ............ S/ 150.00   [voucher Yape]
-└── Egresos ....................................... S/ 18,300.00
-    ├── Administración ............................ S/ 12,000.00
-    │   ├── Conserjería (proveedor X) ............ S/ 7,500.00
-    │   │   └── Factura F001-2231 ................ [PDF]
-    ├── Servicios básicos
-    │   └── Sedapal setiembre .................... S/ 5,000.00 [foto del recibo]
-    └── Mantenimiento
-        └── Trabajo T-0031 cambio de bomba ....... S/ 1,300.00 [informe]
+│   ├── Agua y áreas comunes (reparto de medidores) ... S/ 4.230,00
+│   └── Reservas de áreas ............................. S/ 600,00
+│       └── R-0412 Parrilla 1 · Dpto 201 .............. S/ 80,00    [cargada al recibo]
+└── Egresos ........................................... S/ 18.950,00
+    ├── Administración ................................ S/ 10.500,00
+    │   ├── Conserjería ............................... S/ 6.300,00  [factura PDF]
+    │   ├── Limpieza .................................. S/ 2.800,00
+    │   └── Administrador ............................. S/ 1.400,00
+    ├── Servicios básicos ............................. S/ 6.150,00
+    │   ├── Sedapal setiembre ......................... S/ 5.000,00  [foto del recibo]
+    │   ├── Luz de áreas comunes ...................... S/ 980,00
+    │   └── Internet de áreas sociales ................ S/ 170,00
+    ├── Mantenimiento preventivo ...................... S/ 1.600,00
+    └── Fondo de contingencia ......................... S/ 700,00
+Saldo en banco (acumulado) ............................ S/ 34.120,00
 ```
 
-(Cifras solo ilustrativas; la demo usa las de §5.)
+Cifras fijas de `DISENO.md`:
+- emitido S/ 22.400;
+- cobrado S/ 19.460;
+- egresos S/ 18.950;
+- saldo del mes S/ 510;
+- banco S/ 34.120.
+
+El desglose por rubro es la propuesta de esta guía para la semilla y ya suma exacto:
+- ingresos 14.630 + 4.230 + 600 = 19.460;
+- egresos 10.500 + 6.150 + 1.600 + 700 = 18.950.
+
+Lo no cobrado es la morosidad: (16.800 − 14.630) + (5.000 − 4.230) = **S/ 2.940**. Es la deuda de los Dptos 402 (S/ 1.420), 503 (S/ 760) y 104 (S/ 760).
+
+INC-014 (bomba N.º 2, S/ 1.850) **no** figura en los egresos: sigue esperando a la junta. Entra al balance cuando se termine y se pague (09).
 
 Niveles: **edificio → ingresos/egresos → rubro → concepto → documento**. Cada nodo muestra su total, su porcentaje dentro del padre y se despliega.
 
@@ -451,12 +557,12 @@ Los `nodo_id` son estables y legibles (`ing`, `egr`, `egr.administracion`, `egr.
 - La conciliación bancaria (subir extracto y cuadrar) queda **fuera del MVP** (ver §4.3); el árbol ya deja el campo `movimiento_banco_id` para cuando entre.
 
 **Criterios de aceptación**
-- [ ] Abrir «Egresos → Servicios básicos → Sedapal» muestra la foto del recibo de S/ 5,000.00 en un visor, sin salir de la pantalla.
+- [ ] Abrir «Egresos → Servicios básicos → Sedapal» muestra la foto del recibo de S/ 5.000,00 en un visor, sin salir de la pantalla.
 - [ ] El total de «Ingresos» menos «Egresos» es igual al KPI «Saldo».
 - [ ] Una reserva pagada aparece sola bajo «Alquiler de áreas» con su código.
 - [ ] El enlace con `abrir=` abre directamente ese nodo.
 - [ ] Todo el árbol se navega con teclado (Tab, flechas, Enter).
-- [ ] Un propietario de la unidad 101 **no** ve los vouchers de otras unidades (sale el nodo con el total, sin documento).
+- [ ] María Demo (Dpto 201) **no** ve los vouchers de otras unidades (sale el nodo con el total, sin documento).
 
 **Recorte para el MVP de 133 h:** la exportación a PDF del balance (`/balance/exportar.pdf`) pasa a la etapa 2; el propietario lo ve en pantalla y el administrador puede imprimirlo desde el navegador.
 
@@ -471,15 +577,16 @@ Los `nodo_id` son estables y legibles (`ing`, `egr`, `egr.administracion`, `egr.
 **Objetivo:** generar, emitir, enviar y cobrar el recibo mensual de cada unidad, con su desglose y su sustento.
 **Roles:** administrador (todo); junta (ver); propietario e inquilino (ver y pagar **los suyos**, desde 10). **Dispositivo:** escritorio para el administrador; móvil para ver y pagar.
 **Ruta:** `/app/e/:eid/recibos` y `/app/e/:eid/recibos/:rid`.
+**Artboard:** `05-recibos.dc.html` en el [lienzo](https://claude.ai/artifact/FyfD7psiPNCxcudrJT9PWe).
 
-> **Recibo interno de mantenimiento, no comprobante SUNAT** (decisión 1 del plan). Las «boletas y facturas por departamento» del dueño se cubren así en el MVP. Si un edificio exige SUNAT, se añade después como integración (unas 20 h, fuera de las 133.33 h). El módulo «Facturación» de la cotización cubre el **documento por departamento**: correlativo, PDF, pagos con voucher, validación y envío por correo.
+> **Recibo interno de mantenimiento, no comprobante SUNAT** (decisión 1 del plan). Las «boletas y facturas por departamento» del dueño se cubren así en el MVP. Si un edificio exige SUNAT, se añade después como integración (unas 20 h, fuera de las 133,33 h). El módulo «Facturación» de la cotización cubre el **documento por departamento**: correlativo, PDF, pagos con voucher, validación y envío por correo.
 
 **Flujo del periodo**
 1. **Abrir periodo** `2026-09` con la fecha de corte del edificio (1, 15 o 30).
 2. **Presupuesto del mes** por rubro: administración, mantenimiento, servicios, fondo de contingencia.
 3. **Generar borradores**: el motor de reparto calcula cada recibo (§ reglas).
 4. **Revisar** la tabla: total por unidad, diferencias con el mes anterior resaltadas.
-5. **Emitir**: numera `2026-09-101` / correlativo `R-000123`, congela los montos y genera el PDF.
+5. **Emitir**: numera `2026-09-201` / correlativo `R-000123`, congela los montos y genera el PDF.
 6. **Enviar** por correo (WhatsApp queda para después; ver §4.3).
 7. **Registrar pagos**: voucher + código de operación; pagos parciales permitidos.
 
@@ -492,11 +599,11 @@ Los `nodo_id` son estables y legibles (`ing`, `egr`, `egr.administracion`, `egr.
 | `POST` | `/edificios/{eid}/periodos` | Abre periodo `{ periodo, fecha_corte }` → `201` · `409 PERIODO_EXISTE` |
 | `PUT` | `/edificios/{eid}/periodos/{p}/presupuesto` | Guarda montos por rubro → `200` |
 | `POST` | `/edificios/{eid}/periodos/{p}/recibos/generar` | Borradores: `{ recibos: [{ unidad, lineas, total_cts }], total_cts, advertencias }` |
-| `POST` | `/edificios/{eid}/periodos/{p}/recibos/emitir` | `{ emitidos: 10 }` · `409 YA_EMITIDO` · `422 LECTURAS_PENDIENTES` (si el edificio cobra agua y faltan lecturas) |
+| `POST` | `/edificios/{eid}/periodos/{p}/recibos/emitir` | `{ emitidos: 24 }` · `409 YA_EMITIDO` · `422 LECTURAS_PENDIENTES` (si el edificio cobra agua y faltan lecturas) |
 | `GET` | `/edificios/{eid}/recibos?periodo=&estado=&unidad=&pagina=` | Lista paginada `{ numero, unidad, propietario, total_cts, pagado_cts, saldo_cts, estado, vence }` |
 | `GET` | `/edificios/{eid}/recibos/{rid}` | Detalle con líneas, pagos y `foto_medidor_url` firmada |
 | `GET` | `/edificios/{eid}/recibos/{rid}/pdf` | PDF |
-| `POST` | `/edificios/{eid}/recibos/enviar` | `{ recibo_ids }` → `202 { en_cola: 10 }` |
+| `POST` | `/edificios/{eid}/recibos/enviar` | `{ recibo_ids }` → `202 { en_cola: 24 }` |
 | `POST` | `/edificios/{eid}/recibos/{rid}/pagos` | Multipart `{ monto_cts, medio: yape|transferencia|efectivo|deposito, codigo_operacion, fecha, voucher }` → `201` |
 | `PATCH` | `/edificios/{eid}/pagos/{pid}` | Validar o rechazar un pago informado por el propietario `{ estado: validado|rechazado, motivo }` |
 | `POST` | `/edificios/{eid}/recibos/{rid}/anular` | `{ motivo }` → `200` (solo sin pagos) |
@@ -511,13 +618,14 @@ Los `nodo_id` son estables y legibles (`ing`, `egr`, `egr.administracion`, `egr.
 - Un pago informado por el propietario con voucher entra como `pendiente_validacion` y **no** baja la deuda hasta que el administrador lo valida.
 - El pago se aplica primero al periodo más antiguo (salvo que el administrador elija otro).
 - Código de operación único por medio y fecha: repetirlo → `409 PAGO_DUPLICADO` (evita registrar dos veces el mismo Yape).
-- **Moroso** = unidad con saldo de un recibo vencido hace más de `dias_gracia` (configurable, por defecto 15). Esta misma función la usan 07 (bloqueo de reservas) y 03.
+- **Índice de morosidad** = saldo pendiente de los recibos del periodo ÷ total emitido (13,1 % en la demo). **Moroso** = unidad con saldo de un recibo vencido hace más de `dias_gracia` (configurable, por defecto 15). Esta misma función la usan 07 (bloqueo de reservas) y 03.
 
 **Criterios de aceptación**
-- [ ] Con el presupuesto de la demo, la suma de los 10 recibos es igual al presupuesto al céntimo, incluso con participaciones que dejan residuos (prueba con participaciones 33.3333 % × 3).
-- [ ] El recibo de la unidad 101 muestra la línea de agua **S/ 400.00**, la de agua común **S/ 18.00** y la foto de su medidor (caso de 08).
+- [ ] Con la demo, los 24 recibos suman **S/ 22.400,00** (16.800 + 4.800 + 200 + 600) al céntimo; y con participaciones que dejan residuos (33,3333 % × 3) la suma también cuadra.
+- [ ] El recibo del Dpto 201 (María Demo) muestra **S/ 705,60 + 196,00 + 8,40 + 80,00 = S/ 990,00**, con la foto de su medidor (caso de 08), igual que en `05-recibos.dc.html`.
 - [ ] Emitir dos veces el mismo periodo responde `409` y no duplica recibos.
-- [ ] Un pago parcial de S/ 500 sobre S/ 1,800 deja el recibo en `pagado_parcial` con saldo S/ 1,300.00.
+- [ ] Un pago parcial de S/ 500 sobre los S/ 990 del 201 deja el recibo en `pagado_parcial` con saldo S/ 490,00.
+- [ ] El índice de morosidad de la demo da **13,1 %** (S/ 2.940 ÷ S/ 22.400) y lista 402, 503 y 104.
 - [ ] El mismo código de operación registrado dos veces responde `409`.
 - [ ] El PDF abre en el celular y cabe en una hoja A4.
 
@@ -532,6 +640,7 @@ Los `nodo_id` son estables y legibles (`ing`, `egr`, `egr.administracion`, `egr.
 **Objetivo:** cargar el edificio completo desde su Excel, sin registrar a nadie a mano, y mantener el historial de propietarios e inquilinos.
 **Roles:** administrador (todo); junta (ver, sin DNI completo). **Dispositivo:** escritorio (la importación); móvil solo para consultar.
 **Ruta:** `/app/e/:eid/unidades` e `/app/e/:eid/unidades/importar`.
+**Artboard:** `06-unidades-importacion.dc.html` en el [lienzo](https://claude.ai/artifact/FyfD7psiPNCxcudrJT9PWe).
 
 **Contenido**
 - Ficha del edificio (RF-01): nombre, dirección, distrito, fecha de corte, política de reparto, modo de cobro de reservas, días de gracia, manual de convivencia y reglamento (PDF o texto).
@@ -559,7 +668,7 @@ La importación se procesa en el API con `excelize` **en streaming** (no carga t
 **Estados:** edificio sin unidades (Vacio grande con los dos caminos: «Importar Excel» o «Agregar una unidad»); subiendo y validando; vista previa con errores (filas en rojo, el botón Confirmar desactivado y la razón escrita); importado (resumen y enlace a la tabla).
 
 **Reglas y validaciones**
-- **La participación suma 100 %** (con 4 decimales, tolerancia de 0.0001 %). Si no suma, es error **bloqueante** y el mensaje dice cuánto suma y cuánto falta.
+- **La participación suma 100 %** (con 4 decimales, tolerancia de 0,0001 %). Si no suma, es error **bloqueante** y el mensaje dice cuánto suma y cuánto falta.
 - DNI: 8 dígitos; RUC: 11 dígitos que empiezan con 10 o 20. Celular peruano: 9 dígitos que empiezan con 9.
 - **DNI repetido** → advertencia, no error (una persona puede tener dos departamentos).
 - Código de unidad único por edificio.
@@ -570,11 +679,11 @@ La importación se procesa en el API con `excelize` **en streaming** (no carga t
 - Al crear un propietario con correo se le crea usuario con rol `propietario` y se le envía una invitación (el envío real puede quedar para la entrega; en el MVP basta el enlace copiable).
 
 **Criterios de aceptación**
-- [ ] El Excel de ejemplo de 10 unidades entra completo en menos de 5 s y la tabla muestra las 10.
-- [ ] Un Excel con participaciones que suman 99.5 % se rechaza con «Suman 99.5000 %, faltan 0.5000 %» y no crea nada.
+- [ ] El Excel de ejemplo del Edificio Demo (24 departamentos, 101–604) entra completo en menos de 5 s y la tabla muestra los 24 con las participaciones de 08.
+- [ ] Un Excel con participaciones que suman 99,5 % se rechaza con «Suman 99,5000 %, faltan 0,5000 %» y no crea nada.
 - [ ] Un Excel de 300 filas se valida en menos de 10 s sin pasar el límite de 256 MB del API.
 - [ ] La fila con DNI de 7 dígitos se marca en rojo con el mensaje exacto.
-- [ ] Cambiar el propietario de la 101 deja visible al anterior en el historial con su fecha de salida.
+- [ ] Cambiar el propietario del 201 deja visible al anterior en el historial con su fecha de salida.
 
 **Recorte para el MVP de 133 h:** la ficha del edificio lleva el manual y el reglamento como PDF subido (sin editor de texto); la invitación al propietario es un enlace copiable, sin envío automático.
 
@@ -589,6 +698,7 @@ La importación se procesa en el API con `excelize` **en streaming** (no carga t
 **Objetivo:** reservar parrillas, SUM, piscina, etc. sin dobles reservas, con cobro trazable que entra solo al balance.
 **Roles:** administrador (configura áreas, ve el calendario completo, confirma pagos, reserva a nombre de cualquiera); propietario (reserva y paga); inquilino (reserva si el propietario lo habilita); operario (ve las reservas del día). **Dispositivo:** escritorio para el admin; **móvil** para el propietario.
 **Rutas:** `/app/e/:eid/reservas` (calendario) y `/app/e/:eid/reservas/nueva`.
+**Artboard:** `07-reservas-calendario.dc.html` (admin) y `07-reservas-propietario-movil.dc.html` (propietario) en el [lienzo](https://claude.ai/artifact/FyfD7psiPNCxcudrJT9PWe).
 
 **Flujo del propietario (móvil)**
 1. Elige el área (Parrillas) y el recurso (Parrilla 2), o «cualquiera libre».
@@ -650,38 +760,48 @@ La importación se procesa en el API con `excelize` **en streaming** (no carga t
 **Objetivo:** que el conserje tome la foto de cada medidor desde el celular en la fecha de corte y que el sistema reparta solo el recibo general.
 **Roles:** operario (registra lecturas); administrador (registra el recibo general, revisa alertas, aprueba el reparto); propietario (ve su foto y su consumo en el recibo). **Dispositivo:** **celular del operario** (pantalla de un solo paso: foto y listo); escritorio para el reparto.
 **Rutas:** `/app/e/:eid/lecturas` (operario) y `/app/e/:eid/lecturas/reparto` (admin).
+**Artboard:** `08-medidores-operario-movil.dc.html` (la vista de reparto del admin no tiene artboard propio: usa la tabla y las tarjetas de 05) en el [lienzo](https://claude.ai/artifact/FyfD7psiPNCxcudrJT9PWe).
 
 **Pantalla del operario**
-- Arriba: periodo y tipo (Agua / Energía) y el avance: «7 de 10 leídas».
+- Arriba: periodo y tipo (Agua / Energía) y el avance: «17 de 24 leídas».
 - Lista de unidades en el orden de la ronda (piso por piso), con estado: pendiente, leída, con alerta.
 - Al tocar una unidad: botón grande **«Tomar foto»** (abre la cámara trasera) → la foto aparece arriba y **debajo** el campo «Lectura (m³)» con teclado numérico, junto a la lectura anterior como referencia → «Guardar y siguiente».
 - Sin escribir nada más. Nada de menús intermedios.
 
-**Caso del dueño (prueba automática obligatoria)**
-
-Datos de la demo, edificio Los Olivos, 10 departamentos, agua de setiembre 2026:
+**Caso del dueño (prueba automática obligatoria).** Son los datos de la demo del lienzo (`08-medidores-operario-movil.dc.html`): Edificio Demo, 24 departamentos (101–604), agua de setiembre de 2026.
 
 | Concepto | Valor |
 |---|---|
-| Recibo general de Sedapal | **S/ 5,000.00** por **1,000 m³** |
-| Tarifa efectiva | 5,000 ÷ 1,000 = **S/ 5.00 por m³** |
-| Consumo de los 10 departamentos (suma de sus medidores) | **960 m³ → S/ 4,800.00** |
-| Diferencia (riego, limpieza) = agua común | 40 m³ → **S/ 200.00** |
+| Recibo general de Sedapal | **S/ 5.000,00** por **357,143 m³** en el medidor general |
+| Tarifa efectiva | 5.000 ÷ 357,143 = **S/ 14,00 por m³** (la «tarifa demo» del diseño) |
+| Consumo de los 24 departamentos (suma de sus contómetros) | **342,857 m³ → S/ 4.800,00** |
+| Diferencia (riego, limpieza) = áreas comunes | 14,286 m³ → **S/ 200,00** |
 | Reparto de los S/ 200 | **por participación** |
 
-| Unidad | Participación | Consumo | Agua propia | Agua común | Total agua |
-|---|---|---|---|---|---|
-| 101 | 9 % | 80 m³ | 400.00 | 18.00 | **418.00** |
-| 102 | 9 % | 85 m³ | 425.00 | 18.00 | 443.00 |
-| 103 | 9 % | 90 m³ | 450.00 | 18.00 | 468.00 |
-| 104 | 9 % | 95 m³ | 475.00 | 18.00 | 493.00 |
-| 105 | 9 % | 70 m³ | 350.00 | 18.00 | 368.00 |
-| 201 | 11 % | 100 m³ | 500.00 | 22.00 | 522.00 |
-| 202 | 11 % | 110 m³ | 550.00 | 22.00 | 572.00 |
-| 203 | 11 % | 105 m³ | 525.00 | 22.00 | 547.00 |
-| 204 | 11 % | 115 m³ | 575.00 | 22.00 | 597.00 |
-| 205 | 11 % | 110 m³ | 550.00 | 22.00 | 572.00 |
-| **Total** | **100 %** | **960 m³** | **4,800.00** | **200.00** | **5,000.00** |
+> **Lecturas con 3 decimales (litros).** Con S/ 14,00/m³, los S/ 4.800 no dan un número redondo de m³. Los contómetros reales marcan litros, así que el campo de lectura acepta 3 decimales. Cada cargo se redondea al céntimo. La semilla fija los consumos para que los 24 cargos sumen **exactamente** S/ 4.800,00; por ejemplo, el Dpto 201 consume 14,000 m³ → S/ 196,00. Recuerda que el motor calcula la diferencia en soles: `diferencia = monto_general − Σ cargos de los departamentos`.
+
+**Participaciones de la semilla** (suman 100 %; el 201 al 4,20 %, como en el diseño):
+
+| Grupo | Departamentos | Participación c/u | Suman | Áreas comunes c/u (200 × %) | Suman | Cuota c/u (16.800 × %) | Suman |
+|---|---|---|---|---|---|---|---|
+| A | 101, 103, 104, 201, 203, 204, 301, 303, 304, 401, 403, 404, 501, 503, 504, 603 (16) | 4,20 % | 67,20 % | S/ 8,40 | S/ 134,40 | S/ 705,60 | S/ 11.289,60 |
+| B | 102, 202, 302, 402, 502, 602 (6) | 4,00 % | 24,00 % | S/ 8,00 | S/ 48,00 | S/ 672,00 | S/ 4.032,00 |
+| C | 601, 604 (2) | 4,40 % | 8,80 % | S/ 8,80 | S/ 17,60 | S/ 739,20 | S/ 1.478,40 |
+| **Total** | **24** | | **100,00 %** | | **S/ 200,00** | | **S/ 16.800,00** |
+
+Los repartos dan céntimos exactos, pero la prueba del redondeo por mayor residuo va aparte (participaciones de 33,3333 % × 3).
+
+**El recibo del Dpto 201 (María Demo, 4,20 %)**, igual al del lienzo:
+
+| Línea | Cálculo | Monto |
+|---|---|---|
+| Cuota de mantenimiento | 16.800 × 4,20 % | S/ 705,60 |
+| Agua (consumo propio) | 14,000 m³ × S/ 14,00 | S/ 196,00 |
+| Áreas comunes (agua) | 200 × 4,20 % | S/ 8,40 |
+| Reserva R-0412 Parrilla 1 (cargada al recibo) | tarifa | S/ 80,00 |
+| **Total** | | **S/ 990,00** |
+
+Cuadre del periodo: 16.800 (cuotas) + 4.800 (agua) + 200 (común) + 600 (reservas) = **S/ 22.400 emitidos**.
 
 La misma lógica sirve para **energía** de áreas comunes (el módulo es de *medidores*, no solo de agua; nota §0.3). La luz y el gas propios de cada departamento no entran (RF-09).
 
@@ -689,14 +809,14 @@ La misma lógica sirve para **energía** de áreas comunes (el módulo es de *me
 
 | Método | Ruta | Devuelve |
 |---|---|---|
-| `GET` | `/edificios/{eid}/lecturas?periodo=2026-09&tipo=agua` | `{ avance: { leidas: 7, total: 10 }, medidores: [{ medidor_id, unidad, orden_ronda, lectura_anterior, lectura_actual, foto_url, estado: pendiente|leida|alerta }] }` |
+| `GET` | `/edificios/{eid}/lecturas?periodo=2026-09&tipo=agua` | `{ avance: { leidas: 17, total: 24 }, medidores: [{ medidor_id, unidad, orden_ronda, lectura_anterior, lectura_actual, foto_url, estado: pendiente|leida|alerta }] }` |
 | `POST` | `/edificios/{eid}/medidores/{mid}/lecturas` | Multipart `{ periodo, valor, foto (obligatoria), tomada_en }` → `201 { consumo, alerta: null|"NEGATIVO"|"PICO" }` · `422 FOTO_OBLIGATORIA` · `409 YA_LEIDO` (corregir usa `PUT`) |
 | `PUT` | `/edificios/{eid}/lecturas/{lid}` | Corrección del administrador con motivo (queda en `auditoria`; la foto original no se borra) |
 | `POST` | `/edificios/{eid}/periodos/{p}/recibo-general` | Multipart `{ tipo, monto_cts, consumo_total, foto_recibo }` → `201` |
 | `POST` | `/edificios/{eid}/periodos/{p}/reparto-medidores/calcular?tipo=agua` | Vista previa: `{ tarifa_cts_x_1000, total_unidades_cts, diferencia_cts, lineas: [{ unidad, consumo, propio_cts, comun_cts, total_cts }], alertas }` |
 | `POST` | `/edificios/{eid}/periodos/{p}/reparto-medidores/aprobar?tipo=agua` | Escribe las líneas en los recibos borrador de 05 → `200` · `422 DIFERENCIA_NEGATIVA` · `422 LECTURAS_PENDIENTES` |
 
-**Estados:** lista cargando; ronda terminada («¡Listo! 10 de 10 leídas» y botón para salir); **sin señal** (en el MVP: mensaje claro «No se pudo subir, se reintentará» y 3 reintentos mientras la app siga abierta; la cola persistente en IndexedDB para sótanos sin señal pasa a la etapa 2); cámara sin permiso (instrucciones para habilitarla en Android e iOS); alerta de consumo (el campo se pinta ámbar y pide confirmar con `Dialog.confirm`, no bloquea).
+**Estados:** lista cargando; ronda terminada («¡Listo! 24 de 24 leídas» y botón para salir); **sin señal** (en el MVP: mensaje claro «No se pudo subir, se reintentará» y 3 reintentos mientras la app siga abierta; la cola persistente en IndexedDB para sótanos sin señal pasa a la etapa 2); cámara sin permiso (instrucciones para habilitarla en Android e iOS); alerta de consumo (el campo se pinta ámbar y pide confirmar con `Dialog.confirm`, no bloquea).
 
 **Reglas**
 - **Foto obligatoria:** el botón Guardar está desactivado sin foto **y** el API responde `422` si no llega la foto. Las dos cosas.
@@ -710,12 +830,12 @@ La misma lógica sirve para **energía** de áreas comunes (el módulo es de *me
 - La tarifa efectiva promedio (total ÷ m³) es el método por defecto. Si el piloto pide tramos como los de Sedapal, se agrega como política después.
 
 **Criterios de aceptación**
-- [ ] **Prueba unitaria con el caso del dueño:** 5,000 / 4,800 / 200 → la tabla de arriba exacta al céntimo, total 5,000.00.
-- [ ] Prueba con participaciones 33.3333 % × 3 y diferencia de S/ 100: las tres partes suman exactamente 100.00.
+- [ ] **Prueba unitaria con el caso del dueño:** 5.000 / 4.800 / 200 → las partes comunes de la tabla de arriba (8,40 / 8,00 / 8,80) exactas al céntimo, que suman S/ 200,00, y total S/ 5.000,00.
+- [ ] Prueba con participaciones 33,3333 % × 3 y diferencia de S/ 100: las tres partes suman exactamente S/ 100,00.
 - [ ] Intentar guardar sin foto: el botón está desactivado; un `curl` sin foto recibe `422 FOTO_OBLIGATORIA`.
-- [ ] Una ronda de 10 unidades se hace en menos de 5 minutos en un celular Android de gama media.
+- [ ] Una ronda de 24 unidades se hace en menos de 10 minutos en un celular Android de gama media.
 - [ ] Si la subida falla, la lectura no se da por guardada y el operario ve el reintento; un reintento que sí llega no crea una lectura duplicada (idempotencia por `medidor_id + periodo`).
-- [ ] El recibo de la 101 muestra su foto, 80 m³ y S/ 418.00 de agua.
+- [ ] El recibo del 201 muestra su foto, 14,000 m³, S/ 196,00 de agua y S/ 8,40 de áreas comunes.
 
 **Orden:** (1) función de reparto pura en Go con las pruebas del caso del dueño (**antes que cualquier pantalla**); (2) medidores y lecturas con foto al API; (3) pantalla del operario con `SubirFoto`; (4) recibo general y vista previa del reparto; (5) aprobar → líneas del recibo.
 
@@ -730,6 +850,7 @@ La misma lógica sirve para **energía** de áreas comunes (el módulo es de *me
 **Objetivo:** que ningún trabajo quede en el aire: se reporta, el administrador valida, publica informe y costos, la junta aprueba en la app y todos ven el estado (nota del dueño §0.2).
 **Roles:** propietario, inquilino, operario y técnico (reportan); administrador (valida, presupuesta, ejecuta, cierra); junta (aprueba o rechaza); técnico (actualiza avance de los trabajos asignados). **Dispositivo:** móvil para reportar, aprobar y ver; escritorio para presupuestar.
 **Rutas:** `/app/e/:eid/mantenimiento` (tablero), `/app/e/:eid/mantenimiento/reportar`, `/app/e/:eid/mantenimiento/:tid`.
+**Artboard:** `09-mantenimiento-tablero.dc.html` (admin y junta) y `09-mantenimiento-reporte-movil.dc.html` (reportar con foto) en el [lienzo](https://claude.ai/artifact/FyfD7psiPNCxcudrJT9PWe).
 
 **Estados del trabajo (la línea de tiempo que ven todos)**
 
@@ -749,7 +870,7 @@ reportado → validado → presupuestado → aprobado → en_ejecucion → termi
 
 | Método | Ruta | Devuelve |
 |---|---|---|
-| `POST` | `/edificios/{eid}/incidencias` | Multipart `{ descripcion, ubicacion, fotos[], video? }` → `201 { id, codigo: "INC-0045" }` |
+| `POST` | `/edificios/{eid}/incidencias` | Multipart `{ descripcion, ubicacion, fotos[], video? }` → `201 { id, codigo: "INC-015" }` |
 | `GET` | `/edificios/{eid}/trabajos?estado=&criticidad=&mes=` | Tablero con conteos por estado |
 | `GET` | `/edificios/{eid}/trabajos/{tid}` | Detalle con `linea_tiempo`, `evidencias`, `presupuestos`, `votos`, `puedo: [validar, presupuestar, votar…]` |
 | `POST` | `/edificios/{eid}/incidencias/{iid}/validar` | `{ accion: aceptar|descartar|unir, criticidad: critica|media|baja, unir_con?, motivo? }` |
@@ -772,10 +893,10 @@ reportado → validado → presupuestado → aprobado → en_ejecucion → termi
 
 **Criterios de aceptación**
 - [ ] Un propietario reporta una fuga con foto desde el celular en menos de 30 s.
-- [ ] Con umbral de S/ 1,000 y modo mayoría con 3 miembros: un presupuesto de S/ 800 lo aprueba el administrador; uno de S/ 1,300 necesita 2 votos a favor.
+- [ ] Con umbral de S/ 1.000 y modo mayoría en una junta de 5: un presupuesto de S/ 800 lo aprueba el administrador; **INC-014 · Bomba de agua N.º 2 (S/ 1.850)** muestra «Esperando a la junta: 2 de 3 votos» y pasa a `aprobado` con el tercer voto a favor (como en `09-mantenimiento-tablero.dc.html`).
 - [ ] Votar dos veces responde `409` y el conteo no cambia.
 - [ ] Un trabajo rechazado aparece como pendiente no aprobado, con criticidad, en el resumen del mes.
-- [ ] Al marcar `terminado` con costo real de S/ 1,300, el egreso aparece en el balance con el comprobante.
+- [ ] Al marcar INC-014 como `terminado` con costo real de S/ 1.850, el egreso aparece en el balance del mes del pago, bajo Mantenimiento, con el comprobante.
 - [ ] El que reportó ve la línea de tiempo completa desde su portal (10).
 
 **Orden:** (1) máquina de estados en Go con pruebas de transiciones permitidas y prohibidas; (2) reportar con foto; (3) validar; (4) informe y presupuestos; (5) votos y regla de umbral; (6) avance y cierre con egreso al balance; (7) tablero y línea de tiempo.
@@ -791,9 +912,10 @@ reportado → validado → presupuestado → aprobado → en_ejecucion → termi
 **Objetivo:** que el propietario, desde su celular, sepa cuánto debe, pague, vea en qué se gastó el dinero, reserve y reporte, sin llamar al administrador.
 **Roles:** propietario (todo lo suyo); inquilino (lo que el propietario habilite: por defecto reservas, reportar incidencias y normas; decisión 7). **Dispositivo:** **móvil primero** (PWA instalable).
 **Ruta:** `/app/e/:eid/portal`.
+**Artboard:** `10-portal-propietario-movil.dc.html` en el [lienzo](https://claude.ai/artifact/FyfD7psiPNCxcudrJT9PWe).
 
 **Contenido (de arriba abajo)**
-1. **Saludo y estado de cuenta:** «Hola, Rosa · Dpto. 101». Tarjeta grande: «Tu recibo de setiembre: S/ 1,800.00 · vence el 15/10» con estado (`Insignia`) y botón **«Pagar»**. Si debe meses anteriores, lo dice con el detalle por mes.
+1. **Saludo y estado de cuenta:** «Hola, María · Dpto. 201». Tarjeta grande: «Tu recibo de setiembre: S/ 990,00 · vence el 15/10» con estado (`Insignia`) y botón **«Pagar»**. Si debe meses anteriores, lo dice con el detalle por mes.
 2. **Accesos rápidos:** Pagar · Reservar (07) · Reportar (09) · Normas.
 3. **Mi recibo:** desglose con la **foto del medidor**, consumo y agua común; descargar PDF; historial de recibos y pagos.
 4. **Transparencia:** los 4 KPIs del edificio y el árbol de balance (04) en solo lectura.
@@ -812,7 +934,7 @@ reportado → validado → presupuestado → aprobado → en_ejecucion → termi
 | `GET` / `PUT` | `/edificios/{eid}/unidades/{uid}/permisos-inquilino` | `{ reservar, reportar, ver_recibos }` |
 | (reutiliza) | 04, 07, 09 | Balance, reservas e incidencias |
 
-**Pagar con Yape (MVP):** la pantalla muestra el QR y el número de Yape del edificio, el monto exacto y el concepto a poner («Dpto 101 set-2026»); el propietario sube la captura del voucher y el código de operación. Se ve «Pago enviado, en revisión» hasta que el administrador lo valida.
+**Pagar con Yape (MVP):** la pantalla muestra el QR y el número de Yape del edificio, el monto exacto y el concepto a poner («Dpto 201 set-2026»); el propietario sube la captura del voucher y el código de operación. Se ve «Pago enviado, en revisión» hasta que el administrador lo valida.
 
 **Estados:** cargando (esqueleto de la tarjeta de recibo); sin recibos aún («Tu primer recibo llega el 1 de octubre»); al día (tarjeta verde «Estás al día. ¡Gracias!»); moroso (tarjeta roja con total y meses, sin tono de reproche; el acceso a Reservar muestra el motivo del bloqueo); pago en revisión; inquilino sin permiso para una sección (la sección no aparece).
 
@@ -824,8 +946,8 @@ reportado → validado → presupuestado → aprobado → en_ejecucion → termi
 
 **Criterios de aceptación**
 - [ ] En un Android de gama media en 4G, la portada carga en menos de 2 s.
-- [ ] Rosa (101) ve S/ 418.00 de agua con la foto de su medidor.
-- [ ] Rosa sube un voucher de Yape y el administrador lo ve en «Vouchers por validar» del dashboard (03).
+- [ ] María Demo (201) ve su recibo de S/ 990,00 con S/ 196,00 de agua, S/ 8,40 de áreas comunes y la foto de su medidor.
+- [ ] María sube un voucher de Yape y el administrador lo ve en «Vouchers por validar» del dashboard (03).
 - [ ] Un inquilino sin permiso de recibos no ve la sección ni puede pedir `GET /recibos` (el API responde `403`).
 - [ ] La app se instala en Android e iOS y abre en `/app/` sin barra del navegador.
 
@@ -842,6 +964,7 @@ reportado → validado → presupuestado → aprobado → en_ejecucion → termi
 **Objetivo:** que el administrador decida quién entra, a qué edificio y con qué rol, y ajuste lo que ve cada rol sin tocar código.
 **Roles:** administrador (su administradora y sus edificios); superadmin (todas las administradoras). **Dispositivo:** escritorio.
 **Ruta:** `/app/e/:eid/ajustes/usuarios` y `/app/ajustes/roles`.
+**Artboard:** `11-roles-permisos.dc.html` (la matriz editable del artboard es de la etapa 2; ver el recorte) en el [lienzo](https://claude.ai/artifact/FyfD7psiPNCxcudrJT9PWe).
 
 **Contenido**
 - **Usuarios:** lista (nombre, correo o unidad, rol por edificio, último ingreso, estado); invitar; desactivar; restablecer clave (envía enlace; el administrador **nunca** ve ni fija claves).
@@ -888,7 +1011,7 @@ reportado → validado → presupuestado → aprobado → en_ejecucion → termi
 ## 4. Orden global de implementación y horas
 
 **Tarifa única: S/ 30 la hora** (demo e implementación).
-- **Implementación del MVP: 133.33 h × S/ 30 = S/ 4,000.**
+- **Implementación del MVP: 133,33 h × S/ 30 = S/ 4.000.**
 - **Demo: 8 h × S/ 30 = S/ 240**, aparte (§5).
 
 Con 133 h el MVP es **ajustado**: cada pantalla trae su línea «Recorte para el MVP de 133 h», que dice qué de su descripción pasa a la etapa 2. Constrúyelo tal cual y anota lo que el piloto pida de más; no metas funciones fuera de la lista sin cotizarlas.
@@ -912,15 +1035,15 @@ La cotización reparte las horas por **módulo técnico**; esta guía las repart
 | Mantenimiento | 11 | | | | | | | | | | 10 | 1 | | |
 | Almacenamiento / backups | 5 | 5 | | | | | | | | | | | | |
 | EC2 / SSL / despliegue | 4 | | | | | | | | | | | | | 4 |
-| Pruebas | 5.33 | | | | | | | | | | | | | 5.33 |
-| **Total** | **133.33** | **27** | **6** | **3** | **4** | **11** | **25** | **11** | **9** | **8** | **10** | **5** | **5** | **9.33** |
+| Pruebas | 5,33 | | | | | | | | | | | | | 5,33 |
+| **Total** | **133,33** | **27** | **6** | **3** | **4** | **11** | **25** | **11** | **9** | **8** | **10** | **5** | **5** | **9,33** |
 
 Qué hay en cada celda que no es obvia:
 - **B · Backend Go 6:** esqueleto, errores, middleware de sesión y permisos, JWT, `/yo`.
 - **B · PostgreSQL 6:** esquema, migraciones, índices y semilla de la demo.
 - **B · Almacenamiento 5:** Garage, subida por el API, URLs firmadas, `pg_dump` diario y copia a R2.
 - **B · Arquitectura 10:** monorepo, compose con límites, Caddy, CI, además de tokens, componentes compartidos, armazón y PWA.
-- **Pruebas 5.33:** e2e de Playwright del flujo principal y la corrida completa final. Las **pruebas unitarias** (motor de reparto, caso 5,000 / 4,800 / 200, reservas, máquina de estados, permisos) van **dentro** de las horas de cada módulo; no se recortan.
+- **Pruebas 5,33:** e2e de Playwright del flujo principal y la corrida completa final. Las **pruebas unitarias** (motor de reparto, caso 5.000 / 4.800 / 200, reservas, máquina de estados, permisos) van **dentro** de las horas de cada módulo; no se recortan.
 - **EC2 4:** endurecimiento, TLS, despliegue final y restaurar un respaldo para probarlo.
 
 ### 4.2 Orden de construcción y correspondencia con las fases del plan
@@ -935,13 +1058,13 @@ El orden sigue las fases del plan de trabajo, con una excepción: el **dashboard
 | 4 | 1 · Base | **06** Unidades + importación Excel | 11 | 49 | El padrón del piloto entra desde su Excel |
 | 5 | 2 · Cuotas y recibos | **05** Recibos y facturación | 25 | 74 | Los recibos cuadran al céntimo con el presupuesto |
 | 6 | 3 · Balance | **04** Balance por nodos | 11 | 85 | Un propietario entiende el mes sin ayuda |
-| 7 | 5 · Medidores | **08** Lectura de medidores | 8 | 93 | Caso 5,000 / 4,800 / 200 pasa y sale en el recibo |
+| 7 | 5 · Medidores | **08** Lectura de medidores | 8 | 93 | Caso 5.000 / 4.800 / 200 pasa y sale en el recibo |
 | 8 | 4 · Reservas | **07** Reservas con pago | 9 | 102 | Una reserva pagada aparece sola en el balance |
 | 9 | 6 · Mantenimiento | **09** Mantenimiento con aprobación | 10 | 112 | Una incidencia de punta a punta, visible para el propietario |
 | 10 | 3 | **03** Dashboard del administrador | 4 | 116 | Sus cifras coinciden con 04 y 05 |
-| 11 | 1 y 4 | **10** Portal del propietario | 5 | 121 | Rosa paga, reserva y reporta desde el celular |
+| 11 | 1 y 4 | **10** Portal del propietario | 5 | 121 | María Demo paga, reserva y reporta desde el celular |
 | 12 | — | **02** Landing (Astro) | 3 | 124 | Lighthouse ≥ 95 y el formulario llega |
-| 13 | — | **Cierre:** e2e completo, respaldo restaurado, TLS, despliegue final y carga del piloto | 9.33 | **133.33** | El piloto funciona en producción |
+| 13 | — | **Cierre:** e2e completo, respaldo restaurado, TLS, despliegue final y carga del piloto | 9,33 | **133,33** | El piloto funciona en producción |
 
 Por qué este orden:
 - **08 va antes que 07** aunque el plan los numere al revés: 08 alimenta los recibos (05) y el caso del dueño es lo que más vende. Las reservas se pueden probar con cargo al recibo sin depender de nada nuevo.
@@ -958,10 +1081,10 @@ Por qué este orden:
 | 4 Reservas y pagos | 07, 10 | 14 | 50 |
 | 5 Medidores | 08 | 8 | 35 |
 | 6 Flujo de mantenimiento | 09 | 10 | 50 |
-| Público y cierre | 02, cierre | 12.33 | — |
-| **Total** | **11 pantallas** | **133.33** | **~330** (+16 de fase 0) |
+| Público y cierre | 02, cierre | 12,33 | — |
+| **Total** | **11 pantallas** | **133,33** | **~330** (+16 de fase 0) |
 
-La **fase 0** del plan (descubrimiento, 16 h) no está en las 133.33 h: la cubren la demo de 8 h (§5), el lienzo de diseño y las reuniones con el dueño, que van por cuenta aparte.
+La **fase 0** del plan (descubrimiento, 16 h) no está en las 133,33 h: la cubren la demo de 8 h (§5), el lienzo de diseño y las reuniones con el dueño, que van por cuenta aparte.
 
 ### 4.4 Qué queda fuera del MVP (etapa 2)
 
@@ -982,7 +1105,7 @@ Para bajar de ~330 h a 133 h, además de los recortes de cada pantalla, esto que
 ### 4.5 Riesgos del calendario
 
 - **Margen casi nulo.** 133 h para 11 pantallas solo alcanza si nadie rehace trabajo: respeta el orden de §4.2, empieza cada bloque por la función pura y su prueba, y reutiliza los componentes de §2.2 en lugar de estilar cada pantalla a mano.
-- **El Excel real de reparto** (decisión 9) no ha llegado. El motor de 05 se construye con las reglas conocidas; si el Excel trae fórmulas raras, cuesta entre 4 y 10 h extra, **fuera** de las 133.33 h.
+- **El Excel real de reparto** (decisión 9) no ha llegado. El motor de 05 se construye con las reglas conocidas; si el Excel trae fórmulas raras, cuesta entre 4 y 10 h extra, **fuera** de las 133,33 h.
 - **Datos del piloto:** sin padrón real, los criterios «sale cuando…» se validan con la demo y quedan pendientes de confirmar con datos reales.
 - **RAM:** los límites de §1.2 dejan margen, pero **no** construyas imágenes en el EC2.
 
@@ -992,37 +1115,47 @@ Para bajar de ~330 h a 133 h, además de los recortes de cada pantalla, esto que
 
 **Costo:** 8 h × S/ 30 = **S/ 240**, aparte de la implementación.
 
-**Objetivo:** en una reunión de 20 minutos, mostrar al dueño y a una administradora el login, el dashboard, el balance por nodos y la lectura de medidores con el caso S/ 5,000 / 4,800 / 200, funcionando en su propio celular y en `https://demo.edisys.pe`.
+**Objetivo:** en una reunión de 20 minutos, mostrar al dueño y a una administradora el login, el dashboard, el balance por nodos y la lectura de medidores con el caso S/ 5.000 / 4.800 / 200, funcionando en su propio celular y en `https://demo.edisys.pe`.
 
 **Qué entra:** 01 Login, 03 Dashboard (solo KPIs y tareas), 04 Balance por nodos (sin exportar PDF ni registrar egresos), 08 Lectura de medidores (operario + vista previa del reparto).
 **Qué no entra:** recibos emitidos (se siembran ya hechos), reservas, mantenimiento, roles editables, landing, refresh de token, límite de intentos, cola sin señal.
 
-**Datos de ejemplo (semilla `api/seed/losolivos.sql`):**
-- Administradora «Demo Administraciones SAC»; edificio **«Residencial Los Olivos»**, Jesús María, Lima; 10 departamentos (101–105 al 9 %, 201–205 al 11 %).
-- Usuarios: `admin@losolivos.pe` (administrador), `conserje@losolivos.pe` (operario), `101` + DNI `45120001` (propietaria Rosa Quispe; datos inventados).
-- Periodo setiembre 2026: presupuesto de S/ 18,000, pagos de 8 de 10 unidades (2 morosas), egresos con fotos de sustento, 2 reservas de parrilla pagadas, recibo de Sedapal de S/ 5,000 por 1,000 m³.
-- Lecturas de agosto sembradas como «lectura anterior»; las de setiembre **se toman en vivo** durante la demo (se llevan fotos impresas de medidores con las lecturas que dan los consumos de la tabla de 08).
+**Datos de ejemplo (semilla `api/seed/edificio-demo.sql`), los mismos del lienzo:**
+- Administradora «Demo Administraciones SAC»; **Edificio Demo**, Lima; **24 departamentos (101–604)**, 4 por piso en 6 pisos, con las participaciones de la tabla de 08 (el 201 al 4,20 %).
+- Usuarios (datos inventados):
+  - `admin@demo.edisys.pe` (administrador);
+  - `conserje@demo.edisys.pe` (operario);
+  - `201` + DNI `40000201` (propietaria **María Demo**);
+  - 5 miembros de la junta.
+- Periodo **setiembre 2026**:
+  - emitido S/ 22.400 (cuotas 16.800 + agua 4.800 + común 200 + reservas 600);
+  - cobrado S/ 19.460; egresos S/ 18.950; saldo del mes S/ 510; banco S/ 34.120;
+  - morosidad **13,1 %** (S/ 2.940 de S/ 22.400): Dptos 402 (S/ 1.420), 503 (S/ 760) y 104 (S/ 760);
+  - egresos con fotos de sustento (desglose de 04);
+  - recibo de Sedapal de S/ 5.000 (357,143 m³);
+  - **INC-014** Bomba de agua N.º 2, S/ 1.850, esperando a la junta (2 de 3 votos).
+- Lecturas de agosto sembradas como «lectura anterior». Las de setiembre de 22 departamentos ya van cargadas; **2 se toman en vivo** durante la demo, con fotos impresas de medidores cuyas lecturas dan los consumos de la semilla.
 
 ### Hora a hora
 
 | Hora | Qué se hace | Entregable al terminar la hora |
 |---|---|---|
-| **1** | Monorepo mínimo (`api`, `login`, `app`, `edge`, `packages/tokens`); `docker-compose.yml` con `edge`, `login`, `api`, `postgres`, `garage`; migraciones de las tablas que usa la demo (edificio, unidad, usuario, rol, rubro, concepto, egreso, documento, pago, medidor, lectura, recibo_general); semilla de Los Olivos | `make dev` levanta todo; `psql` muestra las 10 unidades y los egresos |
+| **1** | Monorepo mínimo (`api`, `login`, `app`, `edge`, `packages/tokens`); `docker-compose.yml` con `edge`, `login`, `api`, `postgres`, `garage`; migraciones de las tablas que usa la demo (edificio, unidad, usuario, rol, rubro, concepto, egreso, documento, pago, medidor, lectura, recibo_general); semilla del Edificio Demo (24 dptos) | `make dev` levanta todo; `psql` muestra los 24 departamentos y los egresos |
 | **2** | Go: `POST /auth/login` (bcrypt + JWT en cookie), middleware de sesión y de rol (sin refresh), `GET /yo`, `GET /edificios/{eid}/dashboard`, `GET /edificios/{eid}/balance` y `/balance/nodos/{id}` sobre la función `ArbolBalance` con su prueba del invariante | `curl` con la cookie devuelve el árbol y los KPIs correctos |
 | **3** | Qwik: pantalla de login con `routeAction$` que llama al API y escribe la cookie; redirección por rol. Tokens de diseño desde DISENO.md en el preset de Tailwind compartido | Entras con el admin y caes en `/app/`; con el conserje, en `/app/…/lecturas` |
-| **4** | React: armazón responsivo (menú lateral en escritorio, barra inferior en móvil), `SesionContext` con `/yo`, `TarjetaKPI`, `Dialog` y `Toast` mínimos; **pantalla 03** con los 4 KPIs y el bloque de tareas (lecturas pendientes: 10) | Dashboard visible en PC y en celular con cifras reales de la semilla |
-| **5** | **Pantalla 04:** `NodoDesplegable` con carga perezosa, visor de documentos con URL firmada de Garage, enlace desde los KPIs del dashboard | Bajas de «Egresos» a «Sedapal» y ves la foto del recibo de S/ 5,000 |
-| **6** | **Pantalla 08:** función de reparto en Go con la **prueba del caso del dueño** (5,000 / 4,800 / 200 → tabla exacta); `GET /lecturas`, `POST /medidores/{mid}/lecturas` con foto obligatoria a Garage; pantalla del operario con `SubirFoto` (cámara trasera, compresión) y «Guardar y siguiente» | El conserje registra lecturas con foto desde el celular; el contador sube a «10 de 10» |
-| **7** | Vista previa del reparto para el admin (`/reparto-medidores/calcular`): tabla por unidad con agua propia, agua común y total, que cuadra en S/ 5,000.00. Despliegue en el EC2: imágenes construidas en GitHub Actions (o en la laptop con `docker buildx` y `docker save`), TLS con Caddy en `demo.edisys.pe` | La demo corre en `https://demo.edisys.pe` y abre en el celular |
+| **4** | React: armazón responsivo (sidebar slate-900 de 248 px y barra de 72 px en escritorio, barra inferior en móvil), `SesionContext` con `/yo`, `TarjetaKPI`, `Dialog` y `Toast` mínimos; **pantalla 03** con los 4 KPIs y el bloque de tareas (lecturas pendientes: 2) | Dashboard visible en PC y en celular con cifras reales de la semilla |
+| **5** | **Pantalla 04:** `NodoDesplegable` con carga perezosa, visor de documentos con URL firmada de Garage, enlace desde los KPIs del dashboard | Bajas de «Egresos» a «Sedapal» y ves la foto del recibo de S/ 5.000 |
+| **6** | **Pantalla 08:** función de reparto en Go con la **prueba del caso del dueño** (5.000 / 4.800 / 200 → tabla exacta); `GET /lecturas`, `POST /medidores/{mid}/lecturas` con foto obligatoria a Garage; pantalla del operario con `SubirFoto` (cámara trasera, compresión) y «Guardar y siguiente» | El conserje registra lecturas con foto desde el celular; el contador sube a «24 de 24» |
+| **7** | Vista previa del reparto para el admin (`/reparto-medidores/calcular`): tabla por unidad con agua propia, agua común y total, que cuadra en S/ 5.000,00. Despliegue en el EC2: imágenes construidas en GitHub Actions (o en la laptop con `docker buildx` y `docker save`), TLS con Caddy en `demo.edisys.pe` | La demo corre en `https://demo.edisys.pe` y abre en el celular |
 | **8** | Ensayo completo con cronómetro y correcciones: orden del guion, textos, estados de carga y vacío visibles, prueba en un Android y un iPhone, `docker stats` bajo los límites; reinicio de datos con `make seed` para dejarla limpia | Guion de 20 minutos ensayado y demo reiniciada |
 
 ### Guion de la reunión (20 min)
 
-1. **Login en el celular** del dueño con `101` + DNI: cae en su vista (2 min). Luego con el admin en la laptop.
-2. **Dashboard:** «setiembre cerró con S/ X de saldo; 2 unidades morosas; 10 lecturas pendientes» (3 min).
+1. **Login en el celular** del dueño con `201` + DNI (María Demo): cae en su vista (2 min). Luego con el admin en la laptop.
+2. **Dashboard:** «setiembre: cobrado S/ 19.460, egresos S/ 18.950, saldo S/ 510; morosidad 13,1 % en 3 departamentos; 2 lecturas pendientes; INC-014 esperando a la junta» (3 min).
 3. **Balance por nodos:** de «Egresos» a la foto del recibo de Sedapal en tres toques (5 min). Frase clave: *«cada sol, con su sustento»*.
 4. **Medidores en vivo:** el dueño toma con su celular la foto de 2 medidores impresos; el resto ya está cargado (5 min).
-5. **El reparto:** S/ 5,000 → S/ 4,800 de departamentos + S/ 200 de agua común repartidos por participación; la 101 paga S/ 418.00 (3 min).
-6. **Cierre:** lo que falta para el MVP (§4) y la cotización: 133.33 h a S/ 30 = S/ 4,000 (2 min).
+5. **El reparto:** S/ 5.000 → S/ 4.800 de departamentos + S/ 200 de áreas comunes repartidos por participación; el 201 (4,20 %) paga S/ 196,00 + S/ 8,40, y su recibo completo da S/ 990,00 (3 min).
+6. **Cierre:** lo que falta para el MVP (§4) y la cotización: 133,33 h a S/ 30 = S/ 4.000 (2 min).
 
-**Lo que la demo deja para el MVP:** el esqueleto del monorepo, el compose, el login, la función `ArbolBalance`, la función de reparto con sus pruebas y los componentes `TarjetaKPI`, `NodoDesplegable` y `SubirFoto`. Se reaprovechan, pero **no se descuentan** de las 133.33 h: en la demo se escriben sin refresh, sin límites de intentos, sin cola sin señal y sin pruebas e2e, y todo eso se completa en el MVP.
+**Lo que la demo deja para el MVP:** el esqueleto del monorepo, el compose, el login, la función `ArbolBalance`, la función de reparto con sus pruebas y los componentes `TarjetaKPI`, `NodoDesplegable` y `SubirFoto`. Se reaprovechan, pero **no se descuentan** de las 133,33 h: en la demo se escriben sin refresh, sin límites de intentos, sin cola sin señal y sin pruebas e2e, y todo eso se completa en el MVP.
