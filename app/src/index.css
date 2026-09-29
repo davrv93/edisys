@@ -7,10 +7,23 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
+    /* Base del lienzo: sin esto, entre pantalla y pantalla se ve el blanco del navegador. */
+    background-color: var(--color-fondo);
   }
   body {
     @apply bg-fondo font-sans text-cuerpo text-tinta antialiased;
     font-variant-numeric: tabular-nums;
+  }
+  /* Disolución entre pantallas (ClientRouter): la vieja funde rápido, la nueva entra 6 px, como aparecer. */
+  ::view-transition-old(root) {
+    animation-duration: 150ms;
+    animation-timing-function: ease-out;
+  }
+  ::view-transition-new(root) {
+    animation-name: aparecer;
+    animation-duration: var(--dur-media);
+    animation-timing-function: var(--ease-salida);
+    animation-fill-mode: both;
   }
   a {
     @apply text-acento transition-colors hover:text-acento-hover;

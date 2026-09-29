@@ -15,7 +15,7 @@ function useEscritorio() {
   useEffect(() => {
     const f = () => setAncho(window.innerWidth);
     window.addEventListener('resize', f);
-    return () => window.removeEventListener(f);
+    return () => window.removeEventListener('resize', f);
   }, []);
   return ancho >= 1024;
 }

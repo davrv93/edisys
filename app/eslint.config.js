@@ -7,7 +7,7 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 const VALORES_SUELTOS = '/(rounded(-[a-z]{1,2})?-\\[|shadow-\\[|duration-\\[|ease-\\[|delay-\\[|transition-all|animate-pulse)/';
 
 export default [
-  { ignores: ['dist', 'dev-dist', '.astro'] },
+  { ignores: ['dist', 'dev-dist', '.astro', 'eslint.config.js'] },
   {
     files: ['**/*.{js,jsx}'],
     languageOptions: {

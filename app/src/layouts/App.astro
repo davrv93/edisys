@@ -1,7 +1,9 @@
 ---
 // Layout común de las vistas de EDISYS. Astro sirve el HTML estático;
 // la isla React (client:only) hace la guarda de sesión (/api/v1/yo), el armazón por rol y la pantalla.
+// ClientRouter disuelve una pantalla en la otra sin recarga completa (sin flash blanco).
 import '../index.css';
+import { ClientRouter } from 'astro:transitions';
 import Isla from '../islas/Isla.jsx';
 
 interface Props {
@@ -30,6 +32,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
       href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <ClientRouter />
   </head>
   <body>
     <Isla client:only="react" pantalla={pantalla}>
