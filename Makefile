@@ -2,7 +2,7 @@
 COMPOSE := docker compose
 TEST_DB ?= postgres://edisys:edisys@localhost:4754/edisys_test?sslmode=disable
 
-.PHONY: up down logs seed seed-demo test test-unit ps smoke build api backup restore respaldos validar-ubl
+.PHONY: up down logs seed seed-demo test test-unit ps smoke build api backup restore respaldos validar-ubl validar-deploy
 
 up:            ## Construye y levanta todo (edge en http://localhost:4700)
 	$(COMPOSE) up -d --build
@@ -53,3 +53,9 @@ restore:       ## Restaura FECHA=AAAAMMDD-HHMM (o «ultimo») en una base tempor
 
 validar-ubl:   ## Valida boleta/factura/nota de crédito contra los XSD de UBL 2.1 y verifica la firma con xmlsec1
 	./scripts/validar-ubl.sh
+
+validar-deploy: ## Pre-vuelo del despliegue sin remoto: sintaxis, compose, workflows y aviso de lo que falta (EC2)
+	bash -n scripts/desplegar.sh && echo "desplegar.sh: sintaxis OK"
+	$(COMPOSE) config -q && echo "compose: config OK"
+	python3 -c "import yaml; [yaml.safe_load(open(f)) for f in ['.github/workflows/ci.yml', '.github/workflows/deploy.yml']]; print('workflows: YAML OK')"
+	test -z "$$(git remote)" && echo "sin remoto ni EC2: el deploy real espera EC2_HOST/EC2_USER/EC2_SSH_KEY y /opt/edisys con su .env" || git remote -v
