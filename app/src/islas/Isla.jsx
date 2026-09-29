@@ -20,6 +20,7 @@ const PANTALLAS = {
   whatsapp: { permiso: 'whatsapp.ver', C: lazy(() => import('../pantallas/12-whatsapp/WhatsApp.jsx')) },
   chatbot: { permiso: 'chatbot.probar', C: lazy(() => import('../pantallas/12-whatsapp/Chatbot.jsx')) },
   analitica: { permiso: 'analitica.ver', C: lazy(() => import('../pantallas/13-analitica/Analitica.jsx')) },
+  conciliacion: { permiso: 'balance.conciliar', C: lazy(() => import('../pantallas/14-conciliacion/Conciliacion.jsx')) },
 };
 
 function CargandoPantalla() {
