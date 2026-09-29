@@ -251,8 +251,3 @@ func estadoTrabajo(e string) string {
 	}
 	return strings.ReplaceAll(e, "_", " ")
 }
-
-// textoConciliacion: estado de la conciliación bancaria del periodo (bloque 4). "" si no hay extracto.
-func (s *Server) textoConciliacion(ctx context.Context, eid int64, periodo string) string {
-	return ""
-}

@@ -135,6 +135,8 @@ func Traducir(err error) error {
 				return Conflicto("CORREO_EXISTE", "Ya hay un usuario con ese correo.")
 			case "recibo_unidad_periodo_uq":
 				return Conflicto("YA_EMITIDO", "La unidad ya tiene recibo en ese periodo.")
+			case "movimiento_banco_pago_uq", "movimiento_banco_egreso_uq":
+				return Conflicto("YA_CONCILIADO", "Ese pago o egreso ya está conciliado con otro movimiento del banco.")
 			case "recibo_general_periodo_id_tipo_key":
 				return Conflicto("RECIBO_GENERAL_EXISTE", "Ya se registró el recibo general de ese periodo.")
 			}

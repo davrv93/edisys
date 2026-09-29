@@ -480,3 +480,118 @@ func TestCorreoRecibosYBalanceSimulado(t *testing.T) {
 		t.Errorf("propietario envía correos: %d", st)
 	}
 }
+
+// ---------- Bloque 4 · conciliación bancaria ----------
+
+func (e *entorno) conciliacion(tok string) map[string]any {
+	e.t.Helper()
+	st, d := e.pedir("GET", "/api/v1/edificios/1/conciliacion?periodo=2026-09", tok, nil)
+	if st != 200 {
+		e.t.Fatalf("conciliación: %d %v", st, d)
+	}
+	return d
+}
+
+func movPorDesc(d map[string]any, texto string) map[string]any {
+	for _, x := range d["banco"].([]any) {
+		if m := x.(map[string]any); strings.Contains(m["descripcion"].(string), texto) {
+			return m
+		}
+	}
+	return nil
+}
+
+// El extracto demo de setiembre cuadra con el banco del sistema salvo 2 movimientos sin pareja; al confirmar
+// las sugerencias y crear el egreso y el ingreso que faltan, la diferencia queda en cero y el balance lo dice.
+func TestConciliacionSetiembre(t *testing.T) {
+	e := nuevo(t)
+	tok := e.login("admin@demo.pe")
+	d := e.conciliacion(tok)
+	est := d["estado"].(map[string]any)
+	if num(est["sin_pareja"]) != 2 || num(est["saldo_sistema_cts"]) != 3412000 || num(est["diferencia_cts"]) != 74200 || num(est["conciliados"]) == 0 || num(est["sugeridos"]) == 0 {
+		t.Fatalf("estado inicial: %v", est)
+	}
+	// Reglas: los pagos con código se concilian solos; los egresos (sin código) quedan sugeridos por monto y fecha.
+	reglas := map[string]int{}
+	for _, x := range d["banco"].([]any) {
+		m := x.(map[string]any)
+		reglas[fmt.Sprint(m["estado"], "/", m["regla"])]++
+	}
+	if reglas["conciliado/codigo"] == 0 || reglas["sugerido/monto_fecha"] == 0 {
+		t.Errorf("reglas aplicadas: %v", reglas)
+	}
+	// No se puede conciliar dos veces el mismo pago.
+	var conPago, otro map[string]any
+	for _, x := range d["banco"].([]any) {
+		m := x.(map[string]any)
+		if m["estado"] == "conciliado" && m["pago_id"] != nil && conPago == nil {
+			conPago = m
+		}
+	}
+	otro = movPorDesc(d, "DEPOSITO VENTANILLA")
+	if st, r := e.pedir("POST", fmt.Sprintf("/api/v1/edificios/1/conciliacion/movimientos/%d/confirmar", num(otro["id"])), tok, map[string]any{"pago_id": num(conPago["pago_id"])}); st != 409 || codigo(r) != "YA_CONCILIADO" {
+		t.Errorf("conciliar dos veces el mismo pago: %d %v", st, r)
+	}
+	// Deshacer y volver a confirmar una pareja.
+	if st, r := e.pedir("POST", fmt.Sprintf("/api/v1/edificios/1/conciliacion/movimientos/%d/deshacer", num(conPago["id"])), tok, nil); st != 200 || r["estado"] != "sin_pareja" {
+		t.Errorf("deshacer: %d %v", st, r)
+	}
+	if st, r := e.pedir("POST", fmt.Sprintf("/api/v1/edificios/1/conciliacion/movimientos/%d/confirmar", num(conPago["id"])), tok, map[string]any{"pago_id": num(conPago["pago_id"])}); st != 200 {
+		t.Errorf("reconfirmar: %d %v", st, r)
+	}
+	if st, r := e.pedir("POST", "/api/v1/edificios/1/conciliacion/confirmar-sugeridos", tok, map[string]string{"periodo": "2026-09"}); st != 200 || num(r["confirmados"]) == 0 {
+		t.Errorf("confirmar sugeridos: %d %v", st, r)
+	}
+	com := movPorDesc(d, "COMISION")
+	if st, r := e.pedir("POST", fmt.Sprintf("/api/v1/edificios/1/conciliacion/movimientos/%d/crear-egreso", num(com["id"])), tok, map[string]any{"rubro": "servicios", "concepto": "Comisiones bancarias"}); st != 200 {
+		t.Fatalf("crear egreso: %d %v", st, r)
+	}
+	st, r := e.pedir("POST", fmt.Sprintf("/api/v1/edificios/1/conciliacion/movimientos/%d/crear-ingreso", num(otro["id"])), tok, map[string]any{"unidad_id": e.idUnidad("104")})
+	if st != 200 {
+		t.Fatalf("crear ingreso: %d %v", st, r)
+	}
+	est = r["estado_conciliacion"].(map[string]any)
+	if num(est["diferencia_cts"]) != 0 || est["conciliado"] != true || num(est["saldo_sistema_cts"]) != 3486200 {
+		t.Errorf("tras resolver todo: %v", est)
+	}
+	_, b := e.pedir("GET", "/api/v1/edificios/1/balance?periodo=2026-09", tok, nil)
+	if c := b["conciliacion"].(map[string]any); c["texto"] != "Conciliado con el banco al 30/09." {
+		t.Errorf("el balance no dice que está conciliado: %v", c)
+	}
+	// El junta no concilia.
+	if st, _ := e.pedir("GET", "/api/v1/edificios/1/conciliacion", e.login("junta@demo.pe"), nil); st != 403 {
+		t.Errorf("junta en conciliación: %d", st)
+	}
+}
+
+// Subir el extracto (CSV) con columnas propias: se guarda el mapeo del banco y se empareja igual.
+func TestSubirExtractoConMapeo(t *testing.T) {
+	e := nuevo(t)
+	tok := e.login("admin@demo.pe")
+	st, _, csv := e.bajar("/api/v1/edificios/1/conciliacion/extracto-demo.csv?periodo=2026-09", tok)
+	if st != 200 {
+		t.Fatalf("extracto demo: %d", st)
+	}
+	st, c := e.multipartPedir("POST", "/api/v1/edificios/1/conciliacion/columnas", tok, map[string]string{"banco": "SCOTIA"}, "archivo", "scotia.csv", csv)
+	if st != 200 || c["mapeo"].(map[string]any)["cargo"] != "Cargo" {
+		t.Fatalf("columnas: %d %v", st, c)
+	}
+	st, s := e.multipartPedir("POST", "/api/v1/edificios/1/conciliacion/extractos", tok, map[string]string{"banco": "BCP", "periodo": "2026-09",
+		"col_fecha": "Fecha", "col_descripcion": "Descripción", "col_cargo": "Cargo", "col_abono": "Abono", "col_codigo": "Nro. operación", "col_saldo": "Saldo"}, "archivo", "bcp.csv", csv)
+	if st != 201 {
+		t.Fatalf("subir: %d %v", st, s)
+	}
+	est := s["estado"].(map[string]any)
+	if num(est["sin_pareja"]) != 2 || num(est["diferencia_cts"]) != 74200 {
+		t.Errorf("tras subir: %v", est)
+	}
+	var mapeo string
+	_ = e.pool.QueryRow(context.Background(), `SELECT mapeo->>'codigo_operacion' FROM banco_mapeo WHERE banco='BCP'`).Scan(&mapeo)
+	if mapeo != "Nro. operación" {
+		t.Errorf("mapeo guardado: %q", mapeo)
+	}
+	// Un archivo que no es extracto: 422.
+	if st, _ := e.multipartPedir("POST", "/api/v1/edificios/1/conciliacion/extractos", tok, map[string]string{"banco": "BCP", "periodo": "2026-09"}, "archivo", "x.csv", []byte("hola")); st != 422 {
+		t.Errorf("archivo inválido: %d", st)
+	}
+}

@@ -209,6 +209,17 @@ func (s *Server) rutasEdificio(r chi.Router) {
 	r.With(q("balance.ver")).Get("/balance/{periodo}/informe-junta.pdf", s.pdfInformeJunta)
 	r.With(q("recibos.emitir")).Post("/balance/{periodo}/enviar-correo", s.enviarBalanceCorreo)
 	r.With(q("recibos.emitir")).Get("/correo/mensajes", s.listarCorreos)
+
+	// 14 · conciliación bancaria
+	r.With(q("balance.conciliar")).Get("/conciliacion", s.verConciliacion)
+	r.With(q("balance.conciliar")).Get("/conciliacion/extracto-demo.csv", s.extractoDemo)
+	r.With(q("balance.conciliar")).Post("/conciliacion/columnas", s.columnasExtracto)
+	r.With(q("balance.conciliar")).Post("/conciliacion/extractos", s.subirExtracto)
+	r.With(q("balance.conciliar")).Post("/conciliacion/confirmar-sugeridos", s.confirmarSugeridos)
+	r.With(q("balance.conciliar")).Post("/conciliacion/movimientos/{mid}/confirmar", s.confirmarMovimiento)
+	r.With(q("balance.conciliar")).Post("/conciliacion/movimientos/{mid}/deshacer", s.deshacerMovimiento)
+	r.With(q("balance.conciliar")).Post("/conciliacion/movimientos/{mid}/crear-egreso", s.crearEgresoDesdeMovimiento)
+	r.With(q("balance.conciliar")).Post("/conciliacion/movimientos/{mid}/crear-ingreso", s.crearIngresoDesdeMovimiento)
 	r.With(q("balance.ver")).Get("/rubros", s.listarRubros)
 	r.With(q("balance.ver")).Get("/egresos", s.listarEgresos)
 	r.With(q("egresos.registrar")).Post("/egresos", s.crearEgreso)

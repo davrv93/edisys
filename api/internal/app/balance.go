@@ -466,6 +466,7 @@ func (s *Server) balance(w http.ResponseWriter, r *http.Request) {
 		P.Fallo(w, r, err)
 		return
 	}
+	conc, _ := s.EstadoConciliacion(r.Context(), e.ID, periodo)
 	raiz := plano(a.Raiz)
 	for _, h := range a.Raiz.Hijos {
 		ph := plano(h)
@@ -475,7 +476,7 @@ func (s *Server) balance(w http.ResponseWriter, r *http.Request) {
 		raiz.Hijos = append(raiz.Hijos, ph)
 	}
 	P.JSON(w, http.StatusOK, map[string]any{
-		"periodo": periodo, "kpis": a.KPIs, "raiz": raiz, "hay_datos": a.HayDatos,
+		"periodo": periodo, "kpis": a.KPIs, "raiz": raiz, "hay_datos": a.HayDatos, "conciliacion": conc,
 		"nota_ingresos": "Los ingresos cuentan lo cobrado. Lo emitido y no cobrado es la morosidad.",
 	})
 }
