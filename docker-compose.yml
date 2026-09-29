@@ -237,7 +237,7 @@ services:
     container_name: edisys_llama
     <<: *logs
     command: >-
-      -m ${MODELO_RUTA:-/models/qwen2.5-1.5b-instruct-q4_k_m.gguf}
+      -m ${MODELO_RUTA:-/models/edisys-motor-v1.gguf}
       --host 0.0.0.0 --port 8080
       --ctx-size ${LLAMA_CTX:-2048}
       --threads ${LLAMA_THREADS:-2}

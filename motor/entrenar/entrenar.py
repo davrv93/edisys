@@ -32,26 +32,38 @@ def main():
     filas = [json.loads(l) for l in DATASET.read_text(encoding="utf-8").splitlines() if l.strip()]
     datos = []
     for f in filas:
-        texto = tok.apply_chat_template(f["messages"], tokenize=False, add_generation_prompt=False)
-        ids = tok(texto, truncation=True, max_length=1024)
-        datos.append({"input_ids": ids["input_ids"],
-                      "attention_mask": ids["attention_mask"],
-                      "labels": list(ids["input_ids"])})
+        # Máscara: el modelo solo aprende de la RESPUESTA; system+pregunta van en -100.
+        prompt = tok.apply_chat_template(f["messages"][:-1], tokenize=False, add_generation_prompt=True)
+        completo = tok.apply_chat_template(f["messages"], tokenize=False, add_generation_prompt=False)
+        p_ids = tok(prompt, truncation=True, max_length=1024)["input_ids"]
+        c_ids = tok(completo, truncation=True, max_length=1024)["input_ids"]
+        comun = 0  # prefijo común real (por si un token cruza la frontera prompt/respuesta)
+        for a, b in zip(p_ids, c_ids):
+            if a != b:
+                break
+            comun += 1
+        datos.append({"input_ids": c_ids,
+                      "attention_mask": [1] * len(c_ids),
+                      "labels": [-100] * comun + c_ids[comun:]})
     ds = Dataset.from_list(datos)
 
-    modelo = AutoModelForCausalLM.from_pretrained(BASE, torch_dtype=torch.float32)
+    # bf16: el base pesa ~3 GB en la memoria unificada (fp32 pedía el triple y rozaba OOM);
+    # los adaptadores LoRA los mantiene peft en fp32.
+    modelo = AutoModelForCausalLM.from_pretrained(BASE, torch_dtype=torch.bfloat16)
     modelo = get_peft_model(modelo, LoraConfig(
         r=R, lora_alpha=ALFA, lora_dropout=0.05, bias="none",
         task_type="CAUSAL_LM", target_modules=["q_proj", "k_proj", "v_proj", "o_proj"]))
     modelo.print_trainable_parameters()
 
-    def colador(batch):
-        ancho = max(len(x) for x in batch["input_ids"])
+    def colador(ejemplos):  # llega una LISTA de ejemplos; devuelve tensores
+        ancho = max(len(e["input_ids"]) for e in ejemplos)
         relleno = tok.pad_token_id
+        tensor = lambda xs, relleno=None: torch.tensor(
+            [x + ([relleno] * (ancho - len(x)) if relleno is not None else []) for x in xs], dtype=torch.long)
         return {
-            "input_ids": [x + [relleno] * (ancho - len(x)) for x in batch["input_ids"]],
-            "attention_mask": [x + [0] * (ancho - len(x)) for x in batch["attention_mask"]],
-            "labels": [x + [-100] * (ancho - len(x)) for x in batch["labels"]],
+            "input_ids": tensor([e["input_ids"] for e in ejemplos], relleno),
+            "attention_mask": tensor([e["attention_mask"] for e in ejemplos], 0),
+            "labels": tensor([e["labels"] for e in ejemplos], -100),
         }
 
     Trainer(

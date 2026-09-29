@@ -8,3 +8,4 @@ entrenar/adapters/
 entrenar/fusionado/
 entrenar/gguf/
 entrenar/.llama-cpp/
+.venv/
