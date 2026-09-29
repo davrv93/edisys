@@ -49,7 +49,7 @@ export default function Calendario({ dias, recursos, eventos, hoy, onEvento, onC
                       key={ev.id}
                       type="button"
                       onClick={() => onEvento?.(ev)}
-                      className={`flex flex-col gap-0.5 rounded-lg border px-2 py-1.5 text-left leading-tight ${TONO_EVENTO[ev.estado] || TONO_EVENTO.bloqueo}`}
+                      className={`flex flex-col gap-0.5 rounded-control border px-2 py-1.5 text-left leading-tight ${TONO_EVENTO[ev.estado] || TONO_EVENTO.bloqueo}`}
                     >
                       <b className="truncate">{ev.titulo}</b>
                       <span>{ev.desde}–{ev.hasta}</span>
@@ -60,7 +60,7 @@ export default function Calendario({ dias, recursos, eventos, hoy, onEvento, onC
                     <button
                       type="button"
                       onClick={() => onCelda(r, d)}
-                      className="group flex flex-1 items-center justify-center rounded-lg text-transparent hover:bg-acento-suave hover:text-acento focus-visible:text-acento"
+                      className="group flex flex-1 items-center justify-center rounded-control text-transparent hover:bg-acento-suave hover:text-acento focus-visible:text-acento"
                       aria-label={`Reservar ${r.nombre} el ${etiquetaDia(d)}`}
                     >
                       <Icono nombre="mas_signo" tam={16} />
@@ -83,7 +83,7 @@ export default function Calendario({ dias, recursos, eventos, hoy, onEvento, onC
               role="tab"
               aria-selected={d === dm}
               onClick={() => onDiaMovil?.(d)}
-              className={`flex h-14 w-13 shrink-0 flex-col items-center justify-center rounded-lg border ${d === dm ? 'border-acento bg-acento text-white' : 'border-borde-fuerte bg-superficie'}`}
+              className={`flex h-14 w-13 shrink-0 flex-col items-center justify-center rounded-control border ${d === dm ? 'border-acento bg-acento text-white' : 'border-borde-fuerte bg-superficie'}`}
             >
               <span className={`text-xs ${d === dm ? '' : 'text-texto-apoyo'}`}>{DIAS_CORTOS[diaSemana(d)]}</span>
               <b className="text-base">{Number(d.slice(8))}</b>
@@ -94,7 +94,7 @@ export default function Calendario({ dias, recursos, eventos, hoy, onEvento, onC
           {recursos.map((r) => {
             const evs = porCelda.get(`${r.id}|${dm}`) || [];
             return (
-              <li key={r.id} className="rounded-xl border border-borde bg-superficie p-3">
+              <li key={r.id} className="rounded-tarjeta border border-borde bg-superficie p-3">
                 <div className="flex items-baseline justify-between">
                   <span className="text-base font-semibold">{r.nombre}</span>
                   <span className="text-xs text-texto-apoyo">{r.detalle}</span>
@@ -104,7 +104,7 @@ export default function Calendario({ dias, recursos, eventos, hoy, onEvento, onC
                 ) : (
                   <div className="mt-2 flex flex-col gap-1.5">
                     {evs.map((ev) => (
-                      <button key={ev.id} type="button" onClick={() => onEvento?.(ev)} className={`flex min-h-[44px] items-center justify-between rounded-lg border px-3 py-2 text-left text-sm ${TONO_EVENTO[ev.estado] || TONO_EVENTO.bloqueo}`}>
+                      <button key={ev.id} type="button" onClick={() => onEvento?.(ev)} className={`flex min-h-[44px] items-center justify-between rounded-control border px-3 py-2 text-left text-sm ${TONO_EVENTO[ev.estado] || TONO_EVENTO.bloqueo}`}>
                         <b>{ev.titulo}</b>
                         <span>
                           {ev.desde}–{ev.hasta}

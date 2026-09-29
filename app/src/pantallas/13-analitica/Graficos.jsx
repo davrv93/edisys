@@ -6,7 +6,7 @@ import { useState } from 'react';
 function Tooltip({ t }) {
   if (!t) return null;
   return (
-    <div className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-lg bg-tinta px-3 py-2 text-xs text-white shadow-lg" style={{ left: t.x, top: t.y - 8 }} role="status">
+    <div className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-control bg-tinta px-3 py-2 text-xs text-white shadow-flotante" style={{ left: t.x, top: t.y - 8 }} role="status">
       {t.lineas.map((l, i) => (
         <div key={i} className={i === 0 ? 'font-semibold' : ''}>
           {l}

@@ -14,7 +14,7 @@ export default function Tabla({
   vacio, orden, onOrden, paginacion, etiqueta, densa = false, claseFila,
 }) {
   const valor = (c, f) => (c.render ? c.render(f) : f[c.clave]);
-  const pad = densa ? 'px-4 py-2.5' : 'px-4 py-3.5';
+  const pad = densa ? 'px-3 py-2' : 'px-4 py-2.5'; // filas de 40 px (tokens v2)
 
   if (error) return <ErrorCarga error={error} onReintentar={onReintentar} compacto />;
   if (cargando && !filas?.length) {
@@ -101,7 +101,7 @@ export default function Tabla({
               <Tag
                 type={onFila ? 'button' : undefined}
                 onClick={onFila ? () => onFila(f) : undefined}
-                className={`flex w-full flex-col gap-2 rounded-xl border bg-superficie p-4 text-left ${sel ? 'border-acento bg-acento-suave' : 'border-borde'} ${claseFila ? claseFila(f) : ''}`}
+                className={`flex w-full flex-col gap-2 rounded-tarjeta border bg-superficie p-4 text-left ${sel ? 'border-acento bg-acento-suave' : 'border-borde'} ${claseFila ? claseFila(f) : ''}`}
               >
                 <div className="flex w-full items-start justify-between gap-3">
                   <div className="min-w-0">

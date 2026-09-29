@@ -60,7 +60,7 @@ export default function Chatbot() {
           <Campo etiqueta="Teléfono" tipo="telefono" valor={telefono} onCambio={(v) => (setTelefono(v), setChat([]))} placeholder="900 000 201" />
         </div>
 
-        <div className="flex min-h-[360px] flex-1 flex-col overflow-hidden rounded-xl border border-borde bg-superficie">
+        <div className="flex min-h-[360px] flex-1 flex-col overflow-hidden rounded-tarjeta border border-borde bg-superficie">
           <div className="flex items-center gap-3 border-b border-borde bg-tinta px-4 py-3 text-white">
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-acento">
               <Icono nombre="robot" tam={18} />
@@ -74,7 +74,7 @@ export default function Chatbot() {
             {chat.length === 0 && <p className="m-auto max-w-xs text-center text-sm text-texto-apoyo">Escribe un mensaje o toca una sugerencia para empezar.</p>}
             {chat.map((m, i) => (
               <div key={i} className={`flex max-w-[85%] flex-col gap-1 ${m.de === 'yo' ? 'self-end items-end' : 'self-start'}`}>
-                <div className={`whitespace-pre-line rounded-2xl px-4 py-2 text-base ${m.de === 'yo' ? 'rounded-br-sm bg-acento text-white' : m.de === 'error' ? 'border border-alerta-borde bg-alerta-suave text-alerta-texto' : 'rounded-bl-sm border border-borde bg-superficie'}`}>{m.texto}</div>
+                <div className={`whitespace-pre-line rounded-tarjeta px-4 py-2 text-base ${m.de === 'yo' ? 'rounded-br-sm bg-acento text-white' : m.de === 'error' ? 'border border-alerta-borde bg-alerta-suave text-alerta-texto' : 'rounded-bl-sm border border-borde bg-superficie'}`}>{m.texto}</div>
                 <span className="flex flex-wrap items-center gap-2 text-[11px] text-texto-apoyo">
                   {formatearHora(m.hora)}
                   {m.intencion && <span className="rounded-full bg-superficie-2 px-2 py-0.5 font-semibold text-egreso">intención: {m.intencion}</span>}
@@ -88,7 +88,7 @@ export default function Chatbot() {
               </div>
             ))}
             {pensando && (
-              <div className="flex items-center gap-2 self-start rounded-2xl border border-borde bg-superficie px-4 py-2 text-sm text-texto-apoyo">
+              <div className="flex items-center gap-2 self-start rounded-tarjeta border border-borde bg-superficie px-4 py-2 text-sm text-texto-apoyo">
                 <Spinner /> escribiendo…
               </div>
             )}

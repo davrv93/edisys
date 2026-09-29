@@ -59,7 +59,7 @@ export default function WhatsApp() {
       </Encabezado>
       <Contenido>
         {config.datos && simulado && (
-          <div className="flex items-start gap-3 rounded-xl border-2 border-aviso-borde bg-aviso-suave p-4 text-aviso-texto" role="status">
+          <div className="flex items-start gap-3 rounded-tarjeta border-2 border-aviso-borde bg-aviso-suave p-4 text-aviso-texto" role="status">
             <Icono nombre="alerta" tam={22} className="mt-0.5 shrink-0 text-aviso" />
             <div className="flex flex-col gap-1">
               <b className="text-base">Modo SIMULADO</b>
@@ -102,7 +102,7 @@ function Bandeja() {
         <label className="relative lg:ml-auto lg:w-72">
           <span className="sr-only">Buscar por teléfono, unidad o texto</span>
           <Icono nombre="buscar" tam={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-texto-apoyo" />
-          <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Teléfono, unidad o texto" className="h-11 w-full rounded-lg border border-borde-fuerte bg-superficie pl-9 pr-3 text-base focus:outline-none focus:ring-2 focus:ring-acento sm:text-sm" />
+          <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Teléfono, unidad o texto" className="h-11 w-full rounded-control border border-borde-fuerte bg-superficie pl-9 pr-3 text-base focus:outline-none focus:ring-2 focus:ring-acento sm:text-sm" />
         </label>
       </div>
       {error ? (
@@ -114,7 +114,7 @@ function Bandeja() {
       ) : (
         <ul className="flex flex-col gap-2">
           {mensajes.map((m) => (
-            <li key={m.id} className={`flex flex-col gap-2 rounded-xl border p-4 ${m.direccion === 'entrante' ? 'border-acento-borde bg-acento-suave' : 'border-borde bg-superficie'}`}>
+            <li key={m.id} className={`flex flex-col gap-2 rounded-tarjeta border p-4 ${m.direccion === 'entrante' ? 'border-acento-borde bg-acento-suave' : 'border-borde bg-superficie'}`}>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="flex items-center gap-2 text-sm">
                   <Icono nombre={m.direccion === 'entrante' ? 'volver' : 'enviar'} tam={16} className={m.direccion === 'entrante' ? 'text-acento' : 'text-texto-apoyo'} />
@@ -263,7 +263,7 @@ function Configuracion({ inicial, onGuardado }) {
     }
   };
   const opcion = (valor, titulo, detalle) => (
-    <label className={`flex min-h-[56px] cursor-pointer items-start gap-3 rounded-xl border bg-superficie p-4 ${f.modo === valor ? 'border-acento ring-1 ring-acento' : 'border-borde'}`}>
+    <label className={`flex min-h-[56px] cursor-pointer items-start gap-3 rounded-tarjeta border bg-superficie p-4 ${f.modo === valor ? 'border-acento ring-1 ring-acento' : 'border-borde'}`}>
       <input type="radio" name="modo" checked={f.modo === valor} onChange={() => setF({ ...f, modo: valor })} className="mt-0.5 h-5 w-5 accent-[var(--color-acento)]" />
       <span className="flex flex-col">
         <b>{titulo}</b>

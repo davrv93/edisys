@@ -33,11 +33,11 @@ export default function Analitica() {
     <div className="flex flex-wrap items-end gap-2" role="group" aria-label="Rango de fechas">
       <label className="flex flex-col gap-1 text-xs font-semibold">
         Desde
-        <input type="month" value={desde} max={hasta} onChange={(e) => esPeriodo(e.target.value) && setQuery({ desde: e.target.value }, { reemplazar: true })} className="h-11 rounded-lg border border-borde-fuerte bg-superficie px-2 text-sm lg:h-10" />
+        <input type="month" value={desde} max={hasta} onChange={(e) => esPeriodo(e.target.value) && setQuery({ desde: e.target.value }, { reemplazar: true })} className="h-11 rounded-control border border-borde-fuerte bg-superficie px-2 text-sm lg:h-10" />
       </label>
       <label className="flex flex-col gap-1 text-xs font-semibold">
         Hasta
-        <input type="month" value={hasta} min={desde} onChange={(e) => esPeriodo(e.target.value) && setQuery({ hasta: e.target.value }, { reemplazar: true })} className="h-11 rounded-lg border border-borde-fuerte bg-superficie px-2 text-sm lg:h-10" />
+        <input type="month" value={hasta} min={desde} onChange={(e) => esPeriodo(e.target.value) && setQuery({ hasta: e.target.value }, { reemplazar: true })} className="h-11 rounded-control border border-borde-fuerte bg-superficie px-2 text-sm lg:h-10" />
       </label>
       {[3, 6, 12].map((n) => (
         <Boton key={n} variante="secundario" tamano="sm" onClick={() => rango(n)}>

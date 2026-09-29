@@ -9,11 +9,11 @@ const VARIANTES = {
   oscuro: 'bg-tinta text-white border border-transparent hover:bg-superficie-oscura',
 };
 
-// En móvil el área táctil mínima es de 44 px (h-11); en escritorio, 40 px como el lienzo.
+// En móvil el área táctil mínima es de 44 px (h-11); en escritorio, 36 px (tokens v2: --alto-control).
 const TAMANOS = {
-  sm: 'h-11 sm:h-9 px-3 text-sm',
-  md: 'h-11 lg:h-10 px-4 text-sm',
-  lg: 'h-13 px-5 text-base',
+  sm: 'h-11 lg:h-8 px-3 text-sm',
+  md: 'h-11 lg:h-9 px-3.5 text-sm',
+  lg: 'h-13 lg:h-11 px-5 text-base',
 };
 
 export function Spinner({ className = '' }) {
@@ -35,7 +35,7 @@ const Boton = forwardRef(function Boton(
   ref,
 ) {
   const clases = [
-    'inline-flex max-w-full items-center justify-center gap-2 rounded-lg font-semibold whitespace-nowrap transition-colors select-none',
+    'inline-flex max-w-full items-center justify-center gap-2 rounded-control font-semibold whitespace-nowrap transition-colors select-none',
     'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento',
     'disabled:opacity-50 disabled:cursor-not-allowed aria-disabled:opacity-50',
     VARIANTES[variante] || VARIANTES.primario,

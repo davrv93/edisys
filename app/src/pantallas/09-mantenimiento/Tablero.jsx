@@ -113,7 +113,7 @@ export default function Tablero() {
   };
 
   const barraFiltros = (
-    <div className={`flex-col gap-3 rounded-xl border border-borde bg-superficie p-4 lg:flex lg:flex-row lg:flex-wrap lg:items-end ${verFiltros ? 'flex' : 'hidden'}`} role="search" aria-label="Filtros del tablero">
+    <div className={`flex-col gap-3 rounded-tarjeta border border-borde bg-superficie p-4 lg:flex lg:flex-row lg:flex-wrap lg:items-end ${verFiltros ? 'flex' : 'hidden'}`} role="search" aria-label="Filtros del tablero">
       <Campo className="lg:w-40" etiqueta="Criticidad" tipo="select" valor={filtros.criticidad || ''} onCambio={(v) => setFiltro('criticidad', v)} opciones={[{ valor: '', etiqueta: 'Todas' }, ...CRITICIDADES]} />
       <Campo className="lg:w-48" etiqueta="Categoría" tipo="select" valor={filtros.categoria || ''} onCambio={(v) => setFiltro('categoria', v)} opciones={[{ valor: '', etiqueta: 'Todas' }, ...CATEGORIAS]} />
       <Campo className="lg:w-48" etiqueta="Responsable" tipo="select" valor={filtros.responsable_id || ''} onCambio={(v) => setFiltro('responsable_id', v)} opciones={[{ valor: '', etiqueta: 'Todos' }, ...responsables.map((r) => ({ valor: String(r.id), etiqueta: r.nombre }))]} />
@@ -141,7 +141,7 @@ export default function Tablero() {
           e.dataTransfer.setData('text/plain', String(inc.id));
         }}
         onDragEnd={() => (setArrastrando(null), setSobre(null))}
-        className={`flex flex-col gap-1.5 rounded-lg border p-3 text-xs ${c ? c.caja : 'bg-superficie border-borde'} ${acc.length ? 'cursor-grab active:cursor-grabbing' : ''} ${moviendo === inc.id ? 'opacity-60' : ''}`}
+        className={`flex flex-col gap-1.5 rounded-control border p-3 text-xs ${c ? c.caja : 'bg-superficie border-borde'} ${acc.length ? 'cursor-grab active:cursor-grabbing' : ''} ${moviendo === inc.id ? 'opacity-60' : ''}`}
       >
         <button type="button" onClick={() => setDetalle(inc)} className="flex flex-col gap-1 text-left">
           <span className="flex items-center justify-between gap-2">
@@ -172,7 +172,7 @@ export default function Tablero() {
                 type="button"
                 onClick={() => mover(inc, a)}
                 disabled={moviendo === inc.id}
-                className={`min-h-[36px] rounded-md border px-2 text-xs font-semibold ${esSalida(a) ? 'border-alerta-borde text-alerta hover:bg-alerta-suave' : 'border-acento-borde bg-acento-suave text-acento hover:bg-acento hover:text-white'}`}
+                className={`min-h-[36px] rounded-control border px-2 text-xs font-semibold ${esSalida(a) ? 'border-alerta-borde text-alerta hover:bg-alerta-suave' : 'border-acento-borde bg-acento-suave text-acento hover:bg-acento hover:text-white'}`}
               >
                 {ACCION_HACIA[a]}
                 {!esSalida(a) && ' →'}
@@ -203,14 +203,14 @@ export default function Tablero() {
           e.preventDefault();
           if (valida) soltar(col.estado);
         }}
-        className={`flex min-w-0 flex-col gap-2 rounded-xl p-2 transition-colors ${movil ? '' : 'min-w-[176px] flex-1 basis-0'} ${sobre === col.estado ? 'bg-acento-suave ring-2 ring-acento' : valida ? 'bg-acento-suave/50 ring-1 ring-acento-borde' : arrastrando ? 'opacity-60' : ''}`}
+        className={`flex min-w-0 flex-col gap-2 rounded-tarjeta p-2 transition-colors ${movil ? '' : 'min-w-[176px] flex-1 basis-0'} ${sobre === col.estado ? 'bg-acento-suave ring-2 ring-acento' : valida ? 'bg-acento-suave/50 ring-1 ring-acento-borde' : arrastrando ? 'opacity-60' : ''}`}
       >
         {!movil && (
           <h2 className="px-1 text-xs font-semibold text-texto-suave">
             {i + 1} · {col.etiqueta.toUpperCase()} ({items.length})
           </h2>
         )}
-        {items.length === 0 ? <p className="rounded-lg border border-dashed border-borde px-3 py-6 text-center text-xs text-texto-apoyo">{valida ? 'Suelta aquí' : 'Sin trabajos'}</p> : items.map(tarjeta)}
+        {items.length === 0 ? <p className="rounded-control border border-dashed border-borde px-3 py-6 text-center text-xs text-texto-apoyo">{valida ? 'Suelta aquí' : 'Sin trabajos'}</p> : items.map(tarjeta)}
       </section>
     );
   };
@@ -244,7 +244,7 @@ export default function Tablero() {
             ))}
           </div>
         ) : visibles.length === 0 && !hayFiltros(filtros) ? (
-          <div className="rounded-xl border border-borde bg-superficie p-10 text-center text-base text-texto-suave">Sin trabajos este mes. Así da gusto.</div>
+          <div className="rounded-tarjeta border border-borde bg-superficie p-10 text-center text-base text-texto-suave">Sin trabajos este mes. Así da gusto.</div>
         ) : (
           <>
             <p className="text-sm text-texto-apoyo" aria-live="polite">
@@ -314,7 +314,7 @@ function Detalle({ inc, onCerrar, acciones, onMover }) {
             );
           })}
         </ol>
-        {rechazado && <p className="rounded-lg border border-alerta-borde bg-alerta-suave p-3 text-alerta-texto">{inc.estado === 'descartado' ? 'Descartado' : 'Rechazado: queda como «pendiente no aprobado» en el informe del mes'}{inc.motivo ? ` · ${inc.motivo}` : ''}.</p>}
+        {rechazado && <p className="rounded-control border border-alerta-borde bg-alerta-suave p-3 text-alerta-texto">{inc.estado === 'descartado' ? 'Descartado' : 'Rechazado: queda como «pendiente no aprobado» en el informe del mes'}{inc.motivo ? ` · ${inc.motivo}` : ''}.</p>}
         <dl className="grid grid-cols-[120px_1fr] gap-x-3 gap-y-2">
           {inc.descripcion && inc.descripcion !== inc.titulo && (
             <>

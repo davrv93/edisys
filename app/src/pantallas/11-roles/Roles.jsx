@@ -137,7 +137,7 @@ export default function Roles() {
       <Contenido>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
           {listaRoles.map((r) => (
-            <div key={r.id} className="flex flex-col gap-0.5 rounded-xl border border-borde bg-superficie p-4">
+            <div key={r.id} className="flex flex-col gap-0.5 rounded-tarjeta border border-borde bg-superficie p-4">
               <span className="text-sm font-semibold">{r.nombre || NOMBRE_ROL[r.id]}</span>
               <span className="text-xs text-texto-apoyo">
                 {usuarios.datos ? conteo(r.id) : r.personas ?? '…'} {(usuarios.datos ? conteo(r.id) : r.personas) === 1 ? 'persona' : 'personas'}
@@ -147,20 +147,20 @@ export default function Roles() {
         </div>
 
         {tab === 'usuarios' && (
-          <div className="overflow-hidden rounded-xl border border-borde bg-superficie">
+          <div className="overflow-hidden rounded-tarjeta border border-borde bg-superficie">
             <Tabla etiqueta="Usuarios del edificio" columnas={columnas} filas={filas} cargando={usuarios.cargando} error={usuarios.error} onReintentar={usuarios.recargar} claseFila={(u) => (u.estado === 'inactivo' ? 'opacity-60' : '')} />
           </div>
         )}
 
         {tab === 'permisos' && (
           <>
-            <p className="flex items-start gap-2 rounded-xl border border-borde bg-superficie p-4 text-sm text-texto-suave">
+            <p className="flex items-start gap-2 rounded-tarjeta border border-borde bg-superficie p-4 text-sm text-texto-suave">
               <Icono nombre="candado" tam={18} className="mt-0.5 shrink-0" />
               En esta versión los permisos de cada rol son fijos. La matriz editable llega en la etapa 2; los permisos peligrosos (emitir recibos, administrar roles) nunca se podrán ajustar.
             </p>
             {roles.error && <ErrorCarga error={roles.error} onReintentar={roles.recargar} compacto />}
             {/* Escritorio: matriz */}
-            <div className="hidden overflow-hidden rounded-xl border border-borde bg-superficie md:block">
+            <div className="hidden overflow-hidden rounded-tarjeta border border-borde bg-superficie md:block">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-fondo text-left text-xs text-texto-apoyo">
@@ -194,7 +194,7 @@ export default function Roles() {
             {/* Móvil: un acordeón por rol */}
             <div className="flex flex-col gap-2 md:hidden">
               {ROLES_EDIFICIO.map((r) => (
-                <details key={r} className="rounded-xl border border-borde bg-superficie">
+                <details key={r} className="rounded-tarjeta border border-borde bg-superficie">
                   <summary className="flex min-h-[52px] cursor-pointer items-center justify-between px-4 text-base font-semibold">{NOMBRE_ROL[r]}</summary>
                   <ul className="flex flex-col gap-2 border-t border-borde p-4">
                     {matriz.map((m) => (
@@ -228,7 +228,7 @@ export default function Roles() {
         )}
 
         {tab === 'junta' && (
-          <section className="flex max-w-xl flex-col gap-3 rounded-xl border border-borde bg-superficie p-5">
+          <section className="flex max-w-xl flex-col gap-3 rounded-tarjeta border border-borde bg-superficie p-5">
             {junta.error ? (
               <ErrorCarga error={junta.error} onReintentar={junta.recargar} compacto />
             ) : !junta.datos ? (
@@ -320,7 +320,7 @@ function Invitar({ abierto, onCerrar, eid, onListo }) {
       {enlace ? (
         <div className="flex flex-col gap-3">
           <p className="text-base text-texto-suave">Invitación creada. Comparte este enlace con la persona (por ahora no se envía solo):</p>
-          <input readOnly value={enlace} className="h-11 w-full rounded-lg border border-borde-fuerte bg-fondo px-3 text-sm" onFocus={(e) => e.target.select()} aria-label="Enlace de invitación" />
+          <input readOnly value={enlace} className="h-11 w-full rounded-control border border-borde-fuerte bg-fondo px-3 text-sm" onFocus={(e) => e.target.select()} aria-label="Enlace de invitación" />
           <Boton variante="secundario" icono={copiado ? 'check' : 'documento'} onClick={copiar}>
             {copiado ? 'Copiado' : 'Copiar enlace'}
           </Boton>

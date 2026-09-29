@@ -195,7 +195,7 @@ export default function Balance() {
                     ))}
                   </nav>
                 )}
-                <div className="overflow-hidden rounded-xl border border-borde bg-superficie">
+                <div className="overflow-hidden rounded-tarjeta border border-borde bg-superficie">
                   <div className="hidden grid-cols-[1fr_96px_150px_72px] gap-x-3 bg-fondo py-3 pl-4 pr-4 text-xs font-semibold text-texto-apoyo sm:grid" aria-hidden="true">
                     <span>Nodo</span>
                     <span>Documentos</span>
@@ -230,7 +230,7 @@ export default function Balance() {
                   )}
                 </div>
                 {resumen.datos?.conciliacion && (
-                  <div className="flex items-start gap-2 rounded-xl border border-acento-borde bg-acento-suave p-4 text-sm text-acento-hover">
+                  <div className="flex items-start gap-2 rounded-tarjeta border border-acento-borde bg-acento-suave p-4 text-sm text-acento-hover">
                     <Icono nombre="check" tam={18} className="mt-0.5" />
                     {resumen.datos.conciliacion}
                   </div>
@@ -275,17 +275,17 @@ function VisorDocumento({ doc, onCerrar, sinCabecera = false }) {
   const d = doc.datos;
   const esImagen = d && (d.tipo === 'foto' || d.tipo === 'voucher' || /\.(jpe?g|png|webp)(\?|$)/i.test(d.url_firmada || ''));
   return (
-    <div className={`flex flex-col gap-4 ${sinCabecera ? '' : 'rounded-xl border border-borde bg-superficie p-5'}`}>
+    <div className={`flex flex-col gap-4 ${sinCabecera ? '' : 'rounded-tarjeta border border-borde bg-superficie p-5'}`}>
       {!sinCabecera && (
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold">Documento de sustento</h2>
-          <button type="button" onClick={onCerrar} aria-label="Cerrar" className="flex h-9 w-9 items-center justify-center rounded-lg bg-superficie-2 text-egreso hover:bg-borde">
+          <button type="button" onClick={onCerrar} aria-label="Cerrar" className="flex h-9 w-9 items-center justify-center rounded-control bg-superficie-2 text-egreso hover:bg-borde">
             <Icono nombre="cerrar" tam={18} />
           </button>
         </div>
       )}
       {doc.bloqueado ? (
-        <div className="flex flex-col items-center gap-2 rounded-lg bg-fondo p-6 text-center text-sm text-texto-suave">
+        <div className="flex flex-col items-center gap-2 rounded-control bg-fondo p-6 text-center text-sm text-texto-suave">
           <Icono nombre="candado" tam={28} />
           Documento disponible para la junta.
         </div>
@@ -295,7 +295,7 @@ function VisorDocumento({ doc, onCerrar, sinCabecera = false }) {
         <Esqueleto className="h-60 w-full" />
       ) : (
         <>
-          <div className="flex h-60 items-center justify-center overflow-hidden rounded-lg border border-borde bg-fondo text-sm text-texto-apoyo">
+          <div className="flex h-60 items-center justify-center overflow-hidden rounded-control border border-borde bg-fondo text-sm text-texto-apoyo">
             {d.url_firmada ? (
               esImagen ? (
                 <img src={d.url_firmada} alt={d.nombre} className="h-full w-full object-contain" />
@@ -416,7 +416,7 @@ function RegistrarEgreso({ abierto, onCerrar, eid, periodo, rubros, onListo }) {
           <Campo etiqueta="Fecha" tipo="fecha" valor={f.fecha} onCambio={(v) => setF({ ...f, fecha: v })} />
         </div>
         <SubirArchivo etiqueta="Documento de sustento" archivo={f.documento} onArchivo={(a) => setF({ ...f, documento: a })} />
-        {!f.documento && <p className="rounded-lg border border-aviso-borde bg-aviso-suave p-3 text-sm text-aviso-texto">Sin documento se guarda, pero sale marcado «sin sustento» en el balance.</p>}
+        {!f.documento && <p className="rounded-control border border-aviso-borde bg-aviso-suave p-3 text-sm text-aviso-texto">Sin documento se guarda, pero sale marcado «sin sustento» en el balance.</p>}
         {errores.general && (
           <p className="text-sm text-alerta" role="alert">
             {errores.general}

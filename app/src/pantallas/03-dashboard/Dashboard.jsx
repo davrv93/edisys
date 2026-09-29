@@ -138,7 +138,7 @@ export default function Dashboard() {
                   <ul className="flex flex-col gap-3">
                     {pendientes.map((p, i) => (
                       <li key={i}>
-                        <a href={ruta(p.ruta || 'inicio')} className={`flex flex-col gap-1 rounded-lg border p-3 text-tinta hover:text-tinta hover:shadow-sm ${TONO_PENDIENTE[p.tono] || TONO_PENDIENTE.neutro}`}>
+                        <a href={ruta(p.ruta || 'inicio')} className={`flex flex-col gap-1 rounded-control border p-3 text-tinta hover:text-tinta hover:shadow-flotante ${TONO_PENDIENTE[p.tono] || TONO_PENDIENTE.neutro}`}>
                           <span className={`text-xs font-bold ${TONO_ETIQUETA[p.tono] || TONO_ETIQUETA.neutro}`}>{p.etiqueta}</span>
                           <span className="text-sm font-semibold">{p.titulo}</span>
                           {p.detalle && <span className="text-xs text-texto-suave">{p.detalle}</span>}

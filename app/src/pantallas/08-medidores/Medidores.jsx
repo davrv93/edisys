@@ -37,11 +37,11 @@ function Ronda() {
   const actual = medidores.find((m) => String(m.medidor_id) === idSel);
 
   const cabecera = (
-    <header className="flex flex-col gap-3 bg-tinta p-4 text-white lg:rounded-xl">
+    <header className="flex flex-col gap-3 bg-tinta p-4 text-white lg:rounded-tarjeta">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
           {actual && (
-            <button type="button" onClick={() => setQuery({ medidor: null })} className="-ml-2 flex h-11 w-11 items-center justify-center rounded-lg hover:bg-superficie-oscura" aria-label="Volver a la lista">
+            <button type="button" onClick={() => setQuery({ medidor: null })} className="-ml-2 flex h-11 w-11 items-center justify-center rounded-control hover:bg-superficie-oscura" aria-label="Volver a la lista">
               <Icono nombre="volver" />
             </button>
           )}
@@ -57,7 +57,7 @@ function Ronda() {
         </span>
       </div>
       <div className="h-1.5 rounded-full bg-superficie-oscura-2" role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label="Avance de la ronda">
-        <div className="h-1.5 rounded-full bg-acento-oscuro transition-all" style={{ width: `${pct}%` }} />
+        <div className="h-1.5 rounded-full bg-acento-oscuro transition-[width] duration-media" style={{ width: `${pct}%` }} />
       </div>
     </header>
   );
@@ -106,7 +106,7 @@ function Ronda() {
         </div>
       </Guarda>
       {terminado && (
-        <div className="flex flex-col items-center gap-2 rounded-xl border border-acento-borde bg-acento-suave p-6 text-center text-acento-hover">
+        <div className="flex flex-col items-center gap-2 rounded-tarjeta border border-acento-borde bg-acento-suave p-6 text-center text-acento-hover">
           <Icono nombre="check" tam={32} />
           <span className="font-titulo text-2xl font-semibold">¡Listo! {avance.leidas} de {avance.total} leídas</span>
           <span className="text-base">La ronda de este periodo está completa.</span>
@@ -115,7 +115,7 @@ function Ronda() {
       <ul className="flex flex-col gap-2" aria-label="Unidades en el orden de la ronda">
         {medidores.map((m) => (
           <li key={m.medidor_id}>
-            <button type="button" onClick={() => setQuery({ medidor: m.medidor_id })} className="flex min-h-[64px] w-full items-center justify-between gap-3 rounded-xl border border-borde bg-superficie px-4 py-3 text-left hover:border-acento">
+            <button type="button" onClick={() => setQuery({ medidor: m.medidor_id })} className="flex min-h-[64px] w-full items-center justify-between gap-3 rounded-tarjeta border border-borde bg-superficie px-4 py-3 text-left hover:border-acento">
               <span className="flex flex-col">
                 <span className="text-base font-semibold">{m.unidad}</span>
                 <span className="text-sm text-texto-apoyo">
@@ -214,12 +214,12 @@ function Captura({ eid, periodo, datos, medidor: m, medidores, cabecera, onGuard
                 value={texto}
                 onChange={(e) => setTexto(e.target.value)}
                 aria-invalid={texto && valor == null ? 'true' : undefined}
-                className={`h-16 w-full rounded-lg border-2 bg-superficie px-4 font-titulo text-3xl tabular-nums focus:outline-none focus:ring-2 focus:ring-acento ${alerta ? 'border-aviso bg-aviso-suave' : texto && valor == null ? 'border-alerta' : 'border-borde-fuerte'}`}
+                className={`h-16 w-full rounded-control border-2 bg-superficie px-4 font-titulo text-3xl tabular-nums focus:outline-none focus:ring-2 focus:ring-acento ${alerta ? 'border-aviso bg-aviso-suave' : texto && valor == null ? 'border-alerta' : 'border-borde-fuerte'}`}
               />
             </div>
             <div className="flex w-[120px] flex-col gap-1.5">
               <span className="text-sm text-texto-apoyo">Anterior</span>
-              <span className="flex h-16 items-center rounded-lg bg-superficie-2 px-3 text-2xl tabular-nums text-texto-suave">{formatearNumero(m.lectura_anterior, m.lectura_anterior % 1 ? 3 : 0)}</span>
+              <span className="flex h-16 items-center rounded-control bg-superficie-2 px-3 text-2xl tabular-nums text-texto-suave">{formatearNumero(m.lectura_anterior, m.lectura_anterior % 1 ? 3 : 0)}</span>
             </div>
           </div>
           {texto && valor == null && (
@@ -228,7 +228,7 @@ function Captura({ eid, periodo, datos, medidor: m, medidores, cabecera, onGuard
             </p>
           )}
           {consumo != null && (
-            <div className={`flex items-center justify-between rounded-lg border p-3 text-sm ${alerta ? 'border-aviso-borde bg-aviso-suave text-aviso-texto' : 'border-borde bg-superficie'}`} role={alerta ? 'status' : undefined}>
+            <div className={`flex items-center justify-between rounded-control border p-3 text-sm ${alerta ? 'border-aviso-borde bg-aviso-suave text-aviso-texto' : 'border-borde bg-superficie'}`} role={alerta ? 'status' : undefined}>
               <span>
                 Consumo <b className="tabular-nums">{formatearNumero(consumo, consumo % 1 ? 3 : 0)} m³</b>
                 {tarifa ? ` × ${formatearSoles(tarifa)}` : ''}
@@ -239,13 +239,13 @@ function Captura({ eid, periodo, datos, medidor: m, medidores, cabecera, onGuard
             </div>
           )}
           {observacion && (
-            <p className="rounded-lg bg-superficie-2 p-3 text-sm">
+            <p className="rounded-control bg-superficie-2 p-3 text-sm">
               <b>Observación:</b> {observacion}
             </p>
           )}
           {datos.recibo_general_cts && datos.tarifa_cts ? <CajaReparto datos={datos} medidor={m} /> : null}
           {fallo && (
-            <div className="flex flex-col gap-2 rounded-lg border border-alerta-borde bg-alerta-suave p-3 text-sm text-alerta-texto" role="alert">
+            <div className="flex flex-col gap-2 rounded-control border border-alerta-borde bg-alerta-suave p-3 text-sm text-alerta-texto" role="alert">
               {fallo}
               <Boton variante="secundario" onClick={guardar} className="self-start">
                 Reintentar
@@ -274,7 +274,7 @@ function CajaReparto({ datos, medidor }) {
   const comun = datos.recibo_general_cts - deptos;
   const pct = medidor.participacion_pct;
   return (
-    <section className="flex flex-col gap-2 rounded-xl border border-acento-borde bg-acento-suave p-4 text-sm text-acento-hover">
+    <section className="flex flex-col gap-2 rounded-tarjeta border border-acento-borde bg-acento-suave p-4 text-sm text-acento-hover">
       <span className="text-xs font-bold">REPARTO AL CERRAR EL PERIODO</span>
       <div className="flex justify-between">
         <span>Recibo general del edificio</span>

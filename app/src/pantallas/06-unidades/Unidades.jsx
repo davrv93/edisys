@@ -88,9 +88,9 @@ export default function Unidades() {
             <label className="relative max-w-md">
               <span className="sr-only">Buscar unidad o propietario</span>
               <Icono nombre="buscar" tam={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-texto-apoyo" />
-              <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Buscar unidad o propietario" className="h-11 w-full rounded-lg border border-borde-fuerte bg-superficie pl-9 pr-3 text-base focus:outline-none focus:ring-2 focus:ring-acento sm:text-sm" />
+              <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Buscar unidad o propietario" className="h-11 w-full rounded-control border border-borde-fuerte bg-superficie pl-9 pr-3 text-base focus:outline-none focus:ring-2 focus:ring-acento sm:text-sm" />
             </label>
-            <div className="overflow-hidden rounded-xl border border-borde bg-superficie">
+            <div className="overflow-hidden rounded-tarjeta border border-borde bg-superficie">
               <Tabla
                 etiqueta="Unidades"
                 columnas={columnas}
@@ -145,7 +145,7 @@ function DetalleUnidad({ eid, id, onCerrar }) {
           <section className="flex flex-col gap-2">
             <h3 className="font-semibold">Personas</h3>
             {(u.personas || []).map((p, i) => (
-              <div key={i} className="rounded-lg border border-borde p-3">
+              <div key={i} className="rounded-control border border-borde p-3">
                 <div className="flex items-center justify-between gap-2">
                   <b>{p.nombre}</b>
                   <Insignia estado="activo" texto={p.rol === 'inquilino' ? 'Inquilino' : 'Propietario'} />

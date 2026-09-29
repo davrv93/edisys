@@ -68,8 +68,8 @@ export default function Modal({ abierto, onCerrar, titulo, children, pie, ancho 
     ? 'items-end sm:items-stretch sm:justify-end'
     : 'items-end sm:items-center justify-center';
   const caja = lateral
-    ? `w-full sm:max-w-md sm:h-full rounded-t-2xl sm:rounded-none max-h-[92vh] sm:max-h-none`
-    : `w-full ${ancho} rounded-t-2xl sm:rounded-xl max-h-[92vh]`;
+    ? `w-full sm:max-w-md sm:h-full rounded-t-tarjeta sm:rounded-none max-h-[92vh] sm:max-h-none`
+    : `w-full ${ancho} rounded-t-tarjeta sm:rounded-tarjeta max-h-[92vh]`;
 
   return createPortal(
     <div className={`fixed inset-0 flex ${posicion} sm:p-4 ${lateral ? 'sm:p-0' : ''}`} style={{ zIndex: nivel }}>
@@ -80,7 +80,7 @@ export default function Modal({ abierto, onCerrar, titulo, children, pie, ancho 
         aria-modal="true"
         aria-labelledby={titulo ? idTitulo : undefined}
         tabIndex={-1}
-        className={`relative flex flex-col bg-superficie shadow-xl focus:outline-none ${caja}`}
+        className={`relative flex flex-col bg-superficie shadow-flotante focus:outline-none ${caja}`}
       >
         {titulo && (
           <div className="flex items-start justify-between gap-4 border-b border-borde px-5 py-4">
@@ -92,7 +92,7 @@ export default function Modal({ abierto, onCerrar, titulo, children, pie, ancho 
                 type="button"
                 onClick={onCerrar}
                 aria-label="Cerrar"
-                className="-mr-2 -mt-1 flex h-11 w-11 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-superficie-2 text-egreso hover:bg-borde"
+                className="-mr-2 -mt-1 flex h-11 w-11 sm:h-9 sm:w-9 items-center justify-center rounded-control bg-superficie-2 text-egreso hover:bg-borde"
               >
                 <Icono nombre="cerrar" tam={18} />
               </button>

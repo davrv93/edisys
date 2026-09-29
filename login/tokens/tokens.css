@@ -1,14 +1,18 @@
 /*
- * EDISYS — tokens de diseño.
- * Fuente: design/DISENO.md y docs/PASO_A_PASO_INTERFACES.md §2.1.
+ * EDISYS — tokens de diseño (v2, segunda pasada de interfaz).
+ * Fuente: design/DISENO.md, docs/PASO_A_PASO_INTERFACES.md §2.1 y docs/PLAN_SEGUNDA_PASADA_UI.md (bloques A y B).
  * Todo sale de la paleta por defecto de Tailwind (sin colores a medida).
  * «Pagado / correcto» usa el acento petróleo, nunca verde.
  * Si un valor cambia en DISENO.md, se cambia aquí en el mismo commit.
+ * Las pantallas NO usan valores sueltos de radio, sombra o duración: usan estos tokens
+ * a través del preset (rounded-tarjeta, shadow-flotante, duration-media…). El lint lo vigila.
  */
 :root {
   color-scheme: light;
 
-  /* Acento petróleo */
+  /* ---------- Color ---------- */
+
+  /* Acción / cobrado: petróleo */
   --color-acento: #155e75;          /* cyan-800 */
   --color-acento-hover: #164e63;    /* cyan-900 */
   --color-acento-suave: #ecfeff;    /* cyan-50 */
@@ -20,8 +24,8 @@
   --color-superficie-oscura: #1e293b;   /* slate-800 */
   --color-superficie-oscura-2: #334155; /* slate-700 */
   --color-texto-suave: #475569;         /* slate-600 */
-  --color-texto-apoyo: #64748b;         /* slate-500 */
-  --color-texto-tenue: #94a3b8;         /* slate-400: apoyo sobre fondo oscuro, deshabilitado */
+  --color-texto-apoyo: #64748b;         /* slate-500 (4,8:1 sobre blanco) */
+  --color-texto-tenue: #94a3b8;         /* slate-400: SOLO sobre fondo oscuro, o deshabilitado */
   --color-texto-claro: #cbd5e1;         /* slate-300: texto sobre fondo oscuro */
   --color-borde: #e2e8f0;               /* slate-200 */
   --color-borde-fuerte: #cbd5e1;        /* slate-300 */
@@ -29,26 +33,91 @@
   --color-superficie: #ffffff;          /* white */
   --color-superficie-2: #f1f5f9;        /* slate-100: separadores, chips neutros */
 
-  /* Alerta (morosidad, crítico, vencido) */
+  /* Crítico / deuda (morosidad, vencido, crítico) */
   --color-alerta: #b91c1c;         /* red-700 */
   --color-alerta-suave: #fef2f2;   /* red-50 */
   --color-alerta-borde: #fecaca;   /* red-200 */
   --color-alerta-texto: #991b1b;   /* red-800: texto sobre fondo alerta-suave */
   --color-alerta-pista: #fee2e2;   /* red-100: pista de barras de cobranza */
 
-  /* Aviso (medio, pendiente, retenido) */
-  --color-aviso: #b45309;          /* amber-700 */
+  /* Pendiente (por validar, esperando a la junta, retenido) */
+  --color-aviso: #b45309;          /* amber-700 (4,8:1 sobre amber-50) */
   --color-aviso-suave: #fffbeb;    /* amber-50 */
   --color-aviso-borde: #fde68a;    /* amber-200 */
   --color-aviso-texto: #92400e;    /* amber-800: texto sobre fondo aviso-suave */
 
+  /* En curso (en ejecución, reserva de hoy) — nuevo en v2 */
+  --color-curso: #4f46e5;          /* indigo-600 (5,6:1 sobre indigo-50) */
+  --color-curso-suave: #eef2ff;    /* indigo-50 */
+  --color-curso-borde: #c7d2fe;    /* indigo-200 */
+  --color-curso-texto: #3730a3;    /* indigo-800 */
+
+  /* Hecho / neutro (terminado, archivado) — nuevo en v2.
+     El plan pide slate 500/100; el TEXTO va en slate-600 porque slate-500 sobre slate-100 da 4,3:1 (no llega a AA). */
+  --color-hecho: #64748b;          /* slate-500: punto e icono */
+  --color-hecho-texto: #475569;    /* slate-600: texto */
+  --color-hecho-suave: #f1f5f9;    /* slate-100 */
+  --color-hecho-borde: #e2e8f0;    /* slate-200 */
+
   /* Balance */
   --color-ingreso: var(--color-acento);
   --color-egreso: #334155;         /* slate-700: gastar no es un error */
+
+  /* Series de gráfico: siempre en este orden; se distinguen también por luminosidad */
+  --color-serie-1: #0e7490;        /* cyan-700 (petróleo) */
+  --color-serie-2: #22d3ee;        /* cyan-400 */
+  --color-serie-3: #818cf8;        /* indigo-400 */
+  --color-serie-4: #f59e0b;        /* amber-500 */
+  --color-serie-5: #94a3b8;        /* slate-400 */
+
+  /* ---------- Densidad ---------- */
+  --alto-control: 36px;            /* escritorio */
+  --alto-control-tactil: 44px;     /* móvil: objetivo táctil */
+  --alto-fila: 40px;               /* filas de tabla */
+  --pad-tarjeta: 16px;
+  --alto-encabezado: 56px;
+  --ancho-lateral: 220px;
+  --ancho-lateral-iconos: 64px;
+
+  /* ---------- Forma: un radio por nivel ---------- */
+  --radio-mini: 4px;               /* marcas de gráfico, etiquetas de 11 px */
+  --radio-control: 8px;            /* botones, campos */
+  --radio-tarjeta: 10px;           /* tarjetas, paneles, diálogos */
+  --radio-chip: 999px;             /* chips y pastillas */
+
+  /* ---------- Sombra: una sola, para lo que flota ---------- */
+  --sombra-flotante: 0 12px 32px -8px rgb(15 23 42 / 0.22), 0 2px 6px -1px rgb(15 23 42 / 0.08);
+
+  /* ---------- Movimiento ---------- */
+  --dur-rapida: 120ms;             /* hover, presión */
+  --dur-media: 200ms;              /* entradas, despliegues */
+  --dur-lenta: 320ms;              /* diálogos, cambio de columna */
+  --ease-salida: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-entrada: cubic-bezier(0.4, 0, 1, 1);
+
+  /* ---------- Tipografía compacta ---------- */
+  --texto-cuerpo: 15px;            /* móvil */
+  --texto-kpi: 26px;
+  --texto-titulo-pantalla: 22px;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --texto-cuerpo: 14px;          /* escritorio */
+  }
+}
+
+/* Movimiento reducido: se ve igual, pero sin moverse. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-rapida: 0ms;
+    --dur-media: 0ms;
+    --dur-lenta: 0ms;
+  }
 }
 
 /*
- * Modo oscuro: preparado, NO activo en el MVP (§2.1, punto 2).
+ * Modo oscuro: variables preparadas, NO activo en esta pasada (§4 del plan).
  * Para activarlo, diseño debe aprobarlo; entonces se añade el bloque
  * @media (prefers-color-scheme: dark) con los mismos valores.
  */
@@ -66,4 +135,21 @@
   --color-acento-hover: #a5f3fc;
   --color-acento-suave: #164e63;
   --color-acento-borde: #155e75;
+  --color-alerta: #fca5a5;
+  --color-alerta-suave: #450a0a;
+  --color-alerta-borde: #7f1d1d;
+  --color-alerta-texto: #fecaca;
+  --color-aviso: #fcd34d;
+  --color-aviso-suave: #451a03;
+  --color-aviso-borde: #78350f;
+  --color-aviso-texto: #fde68a;
+  --color-curso: #a5b4fc;
+  --color-curso-suave: #1e1b4b;
+  --color-curso-borde: #3730a3;
+  --color-curso-texto: #c7d2fe;
+  --color-hecho: #94a3b8;
+  --color-hecho-texto: #cbd5e1;
+  --color-hecho-suave: #1e293b;
+  --color-hecho-borde: #334155;
+  --sombra-flotante: 0 12px 32px -8px rgb(0 0 0 / 0.6), 0 2px 6px -1px rgb(0 0 0 / 0.4);
 }

@@ -78,7 +78,7 @@ export default function Reportar() {
       <div className="flex min-h-screen flex-col bg-fondo">
         <CabeceraTarea titulo="Reporte enviado" subtitulo={subtitulo} volver={volver} />
         <div className="mx-auto flex w-full max-w-xl flex-col gap-4 p-4">
-          <div className="flex flex-col gap-2 rounded-xl border border-acento-borde bg-acento-suave p-5 text-acento-hover">
+          <div className="flex flex-col gap-2 rounded-tarjeta border border-acento-borde bg-acento-suave p-5 text-acento-hover">
             <Icono nombre="check" tam={28} />
             <span className="font-titulo text-2xl font-semibold">{enviado.codigo || 'Reporte recibido'}</span>
             <span className="text-base">La administración lo revisará y fijará la urgencia. Verás aquí cada cambio de estado.</span>
@@ -113,7 +113,7 @@ export default function Reportar() {
           <input ref={input} type="file" accept="image/*" capture="environment" multiple className="sr-only" onChange={agregar} aria-label="Tomar foto" />
           <div className="grid grid-cols-3 gap-2">
             {fotos.map((f, i) => (
-              <div key={f.url} className="relative aspect-square overflow-hidden rounded-lg bg-superficie-oscura">
+              <div key={f.url} className="relative aspect-square overflow-hidden rounded-control bg-superficie-oscura">
                 <img src={f.url} alt={`Foto ${i + 1}`} className="h-full w-full object-cover" />
                 <button type="button" onClick={() => quitar(i)} aria-label={`Quitar foto ${i + 1}`} className="absolute right-1 top-1 flex h-8 w-8 items-center justify-center rounded-full bg-tinta/70 text-white">
                   <Icono nombre="cerrar" tam={14} />
@@ -121,7 +121,7 @@ export default function Reportar() {
               </div>
             ))}
             {fotos.length < MAX_FOTOS && (
-              <button type="button" onClick={() => input.current?.click()} disabled={procesando} aria-label="Tomar otra foto" className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-acento-borde bg-acento-suave text-xs font-semibold text-acento">
+              <button type="button" onClick={() => input.current?.click()} disabled={procesando} aria-label="Tomar otra foto" className="flex aspect-square flex-col items-center justify-center gap-1 rounded-control border-2 border-dashed border-acento-borde bg-acento-suave text-xs font-semibold text-acento">
                 {procesando ? <Spinner /> : <Icono nombre="camara" tam={24} />}
                 {fotos.length ? 'Agregar' : 'Tomar foto'}
               </button>
@@ -148,10 +148,10 @@ export default function Reportar() {
           ))}
         </datalist>
         <Campo etiqueta="¿Qué pasa?" tipo="textarea" valor={que} onCambio={setQue} rows={3} placeholder="Cuenta en pocas palabras qué viste." />
-        <p className="rounded-lg bg-superficie-2 p-3 text-sm text-egreso">La administración valida el reporte y fija la urgencia. Verás aquí el informe, el costo y cada cambio de estado.</p>
+        <p className="rounded-control bg-superficie-2 p-3 text-sm text-egreso">La administración valida el reporte y fija la urgencia. Verás aquí el informe, el costo y cada cambio de estado.</p>
         {progreso != null && (
           <div className="h-2 rounded-full bg-superficie-2" role="progressbar" aria-valuenow={progreso} aria-valuemin={0} aria-valuemax={100} aria-label="Enviando reporte">
-            <div className="h-2 rounded-full bg-acento transition-all" style={{ width: `${progreso}%` }} />
+            <div className="h-2 rounded-full bg-acento transition-[width] duration-media" style={{ width: `${progreso}%` }} />
           </div>
         )}
       </form>

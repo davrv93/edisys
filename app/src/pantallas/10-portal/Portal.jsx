@@ -49,7 +49,7 @@ export default function Portal() {
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col lg:gap-6 lg:p-8">
-      <header className="flex flex-col gap-4 bg-tinta px-4 pb-4 pt-5 text-white lg:rounded-xl lg:p-6">
+      <header className="flex flex-col gap-4 bg-tinta px-4 pb-4 pt-5 text-white lg:rounded-tarjeta lg:p-6">
         <div className="flex items-center justify-between gap-3">
           <div className="flex flex-col">
             <span className="text-xs text-texto-tenue">
@@ -61,7 +61,7 @@ export default function Portal() {
           <span className="flex h-10 w-10 items-center justify-center rounded-full bg-superficie-oscura-2 text-sm font-semibold">{s.usuario.iniciales}</span>
         </div>
         {verRecibos && (
-          <div className="flex items-center justify-between gap-3 rounded-xl bg-superficie-oscura p-4">
+          <div className="flex items-center justify-between gap-3 rounded-tarjeta bg-superficie-oscura p-4">
             {!estadoCuenta ? (
               <Esqueleto className="h-14 w-2/3 bg-superficie-oscura-2" />
             ) : (
@@ -72,7 +72,7 @@ export default function Portal() {
               </div>
             )}
             {r && (
-              <a href={ruta('recibos', deuda > 0 ? { id: r.id, pagar: 1 } : { id: r.id })} className="flex h-11 shrink-0 items-center rounded-lg bg-superficie px-4 text-sm font-semibold text-tinta hover:text-tinta">
+              <a href={ruta('recibos', deuda > 0 ? { id: r.id, pagar: 1 } : { id: r.id })} className="flex h-11 shrink-0 items-center rounded-control bg-superficie px-4 text-sm font-semibold text-tinta hover:text-tinta">
                 {deuda > 0 ? 'Pagar' : 'Ver recibo'}
               </a>
             )}
@@ -84,7 +84,7 @@ export default function Portal() {
         {error && <ErrorCarga error={error} onReintentar={recargar} compacto />}
 
         {reservaPendiente && (
-          <a href={ruta('reservas', { nueva: 1 })} className="flex items-center justify-between gap-3 rounded-xl border border-aviso-borde bg-aviso-suave p-4 text-sm text-aviso-texto hover:text-aviso-texto">
+          <a href={ruta('reservas', { nueva: 1 })} className="flex items-center justify-between gap-3 rounded-tarjeta border border-aviso-borde bg-aviso-suave p-4 text-sm text-aviso-texto hover:text-aviso-texto">
             <span className="flex flex-col">
               <b>
                 {reservaPendiente.recurso || 'Reserva'} · {etiquetaDia(diaLima(reservaPendiente.inicio))}, {formatearHora(reservaPendiente.inicio)}
@@ -96,7 +96,7 @@ export default function Portal() {
         )}
 
         {deuda > 0 && (d?.deuda?.meses?.length > 0 || d?.deuda?.por_unidad?.length > 0) && (
-          <section className="flex flex-col gap-2 rounded-xl border border-alerta-borde bg-alerta-suave p-4 text-alerta-texto">
+          <section className="flex flex-col gap-2 rounded-tarjeta border border-alerta-borde bg-alerta-suave p-4 text-alerta-texto">
             <h2 className="text-base font-semibold">Detalle de tu deuda</h2>
             {(d.deuda.meses || []).map((m) => (
               <div key={m.periodo} className="flex justify-between text-base">
@@ -161,7 +161,7 @@ export default function Portal() {
         {d?.mis_incidencias?.map((inc) => {
           const i = PASOS.indexOf(inc.estado);
           return (
-            <section key={inc.id} className="flex flex-col gap-2 rounded-xl border border-borde bg-superficie p-4">
+            <section key={inc.id} className="flex flex-col gap-2 rounded-tarjeta border border-borde bg-superficie p-4">
               <span className="text-xs text-texto-apoyo">Tu reporte {inc.codigo}</span>
               <b className="text-base">{inc.titulo}</b>
               <div className="flex gap-1" aria-label={`Estado: ${TEXTO_PASO[inc.estado]}`}>
@@ -175,7 +175,7 @@ export default function Portal() {
         })}
 
         {d?.proximas_reservas?.length > 0 && (
-          <section className="flex flex-col gap-2 rounded-xl border border-borde bg-superficie p-4">
+          <section className="flex flex-col gap-2 rounded-tarjeta border border-borde bg-superficie p-4">
             <h2 className="text-base font-semibold">Mis reservas</h2>
             {d.proximas_reservas.map((x) => (
               <div key={x.id} className="flex items-center justify-between gap-2 border-t border-superficie-2 pt-2 text-sm first:border-0 first:pt-0">
@@ -189,7 +189,7 @@ export default function Portal() {
         )}
 
         {d?.trabajos_mes?.length > 0 && (
-          <section className="flex flex-col gap-2 rounded-xl border border-borde bg-superficie p-4">
+          <section className="flex flex-col gap-2 rounded-tarjeta border border-borde bg-superficie p-4">
             <h2 className="text-base font-semibold">Mantenimiento del mes</h2>
             {d.trabajos_mes.map((t) => (
               <div key={t.id} className="flex items-center justify-between gap-2 text-sm">
@@ -202,7 +202,7 @@ export default function Portal() {
           </section>
         )}
 
-        <section className="flex items-center justify-between gap-3 rounded-xl border border-borde bg-superficie p-4">
+        <section className="flex items-center justify-between gap-3 rounded-tarjeta border border-borde bg-superficie p-4">
           <span className="flex items-center gap-3">
             <Icono nombre="documento" className="text-acento" />
             <span className="flex flex-col">
@@ -229,7 +229,7 @@ function MiniKpi({ titulo, valor, tono }) {
   const titulos = { acento: 'text-acento-hover', alerta: 'text-alerta-texto' };
   const valores = { acento: 'text-acento', alerta: 'text-alerta' };
   return (
-    <div className={`flex flex-col gap-1 rounded-xl border p-4 ${cajas[tono] || 'bg-superficie border-borde'}`}>
+    <div className={`flex flex-col gap-1 rounded-tarjeta border p-4 ${cajas[tono] || 'bg-superficie border-borde'}`}>
       <span className={`text-xs ${titulos[tono] || 'text-texto-apoyo'}`}>{titulo}</span>
       <span className={`font-titulo text-2xl font-semibold tabular-nums ${valores[tono] || ''}`}>{valor}</span>
     </div>

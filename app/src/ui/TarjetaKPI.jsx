@@ -40,10 +40,10 @@ export default function TarjetaKPI({ titulo, valor, nota, tono = 'neutro', varia
       {to && verDetalle && <span className="text-xs font-semibold text-acento">{verDetalle} →</span>}
     </>
   );
-  const clases = `flex min-w-0 flex-col gap-2 rounded-xl border p-4 sm:p-5 ${t.caja}`;
+  const clases = `flex min-w-0 flex-col gap-2 rounded-tarjeta border p-4 sm:p-5 ${t.caja}`;
   if (to) {
     return (
-      <a href={to} className={`${clases} transition-shadow hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-acento`}>
+      <a href={to} className={`${clases} transition-shadow hover:shadow-flotante focus-visible:outline focus-visible:outline-2 focus-visible:outline-acento`}>
         {cuerpo}
       </a>
     );

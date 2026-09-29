@@ -20,7 +20,7 @@ function Contenido() {
   const [archivo, setArchivo] = useState(null);
   const [abierto, setAbierto] = useState(false);
   const bloque = (t, c) => (
-    <section className="flex flex-col gap-3 rounded-xl border border-borde bg-superficie p-5">
+    <section className="flex flex-col gap-3 rounded-tarjeta border border-borde bg-superficie p-5">
       <h2 className="font-titulo text-xl font-semibold">{t}</h2>
       {c}
     </section>
@@ -78,7 +78,7 @@ function Contenido() {
       )}
       {bloque(
         'NodoDesplegable',
-        <div role="tree" className="rounded-xl border border-borde">
+        <div role="tree" className="rounded-tarjeta border border-borde">
           <NodoDesplegable raiz nivel={0} abierto nodo={{ id: 'r', nombre: 'Edificio Demo · saldo del mes', total_cts: 51000, documentos: 66, tiene_hijos: true }} />
           <NodoDesplegable nivel={1} abierto={abierto} onAlternar={() => setAbierto(!abierto)} nodo={{ id: 'egr', nombre: 'Egresos', total_cts: 1895000, pct_padre: 100, documentos: 42, tiene_hijos: true }} />
           {abierto && <NodoDesplegable nivel={2} nodo={{ id: 'f', nombre: 'Fondo de contingencia', total_cts: 70000, pct_padre: 3.7, sin_sustento: true }} />}
@@ -110,7 +110,7 @@ function Contenido() {
       )}
       {bloque(
         'Calendario',
-        <div className="overflow-hidden rounded-xl border border-borde">
+        <div className="overflow-hidden rounded-tarjeta border border-borde">
           <Calendario
             dias={['2026-09-28', '2026-09-29', '2026-09-30', '2026-10-01', '2026-10-02', '2026-10-03', '2026-10-04']}
             hoy="2026-09-28"

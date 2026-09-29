@@ -2,7 +2,7 @@ import { useEffect, useId, useState } from 'react';
 import { ctsATexto, parsearSoles } from '../lib/dinero.js';
 
 const BASE_INPUT =
-  'w-full rounded-lg border bg-superficie px-3 text-base sm:text-sm text-tinta placeholder:text-texto-tenue ' +
+  'w-full rounded-control border bg-superficie px-3 text-base sm:text-sm text-tinta placeholder:text-texto-tenue ' +
   'focus:outline-none focus:ring-2 focus:ring-acento focus:border-acento disabled:bg-superficie-2 disabled:text-texto-apoyo';
 
 /**
@@ -13,7 +13,7 @@ const BASE_INPUT =
  */
 export default function Campo({
   etiqueta, ayuda, error, tipo = 'texto', valor, onCambio, opciones = [], id, className = '',
-  inputClassName = '', alto = 'h-11 lg:h-10', ocultarEtiqueta = false, ...resto
+  inputClassName = '', alto = 'h-11 lg:h-9', ocultarEtiqueta = false, ...resto
 }) {
   const auto = useId();
   const idCampo = id || `campo-${auto}`;

@@ -160,7 +160,7 @@ export default function Recibos() {
     const activo = estado === valor;
     const base = tono === 'alerta' && !activo ? 'bg-alerta-suave text-alerta border-alerta-borde' : activo ? 'bg-tinta text-white border-tinta' : 'bg-superficie border-borde-fuerte text-tinta';
     return (
-      <button type="button" aria-pressed={activo} onClick={() => setQuery({ estado: valor || null, pagina: null }, { reemplazar: true })} className={`h-11 rounded-lg border px-3 text-sm font-semibold sm:h-10 ${base}`}>
+      <button type="button" aria-pressed={activo} onClick={() => setQuery({ estado: valor || null, pagina: null }, { reemplazar: true })} className={`h-11 rounded-control border px-3 text-sm font-semibold sm:h-10 ${base}`}>
         {etiqueta}
         {n != null ? ` · ${n}` : ''}
       </button>
@@ -177,11 +177,11 @@ export default function Recibos() {
           <label className="relative min-w-[160px] flex-1">
             <span className="sr-only">Buscar unidad o propietario</span>
             <Icono nombre="buscar" tam={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-texto-apoyo" />
-            <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Buscar unidad" className="h-11 w-full rounded-lg border border-borde-fuerte bg-superficie pl-9 pr-3 text-base focus:outline-none focus:ring-2 focus:ring-acento sm:h-10 sm:text-sm" />
+            <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Buscar unidad" className="h-11 w-full rounded-control border border-borde-fuerte bg-superficie pl-9 pr-3 text-base focus:outline-none focus:ring-2 focus:ring-acento sm:h-10 sm:text-sm" />
           </label>
         </div>
       )}
-      <div className="overflow-hidden rounded-xl border border-borde bg-superficie">
+      <div className="overflow-hidden rounded-tarjeta border border-borde bg-superficie">
         <Tabla
           etiqueta="Recibos"
           columnas={columnas}
@@ -210,7 +210,7 @@ export default function Recibos() {
   );
 
   const vistaDetalle = idSel && (
-    <section className="flex min-w-0 flex-1 flex-col gap-4 rounded-xl border border-borde bg-superficie p-4 lg:p-8">
+    <section className="flex min-w-0 flex-1 flex-col gap-4 rounded-tarjeta border border-borde bg-superficie p-4 lg:p-8">
       <button type="button" onClick={() => setQuery({ id: null })} className="-ml-1 flex h-11 items-center gap-1 self-start text-sm font-semibold text-acento lg:hidden">
         <Icono nombre="volver" tam={18} /> Volver a la lista
       </button>
@@ -269,7 +269,7 @@ export default function Recibos() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
           {vistaLista}
           {vistaDetalle || (
-            <div className="hidden flex-1 rounded-xl border border-dashed border-borde-fuerte lg:block">
+            <div className="hidden flex-1 rounded-tarjeta border border-dashed border-borde-fuerte lg:block">
               <Vacio titulo="Elige un recibo" texto="Verás su desglose, la foto del medidor y sus pagos." icono="recibo" />
             </div>
           )}
@@ -349,7 +349,7 @@ export function DetalleRecibo({ r, edificio, acciones }) {
         </table>
         {foto && (
           <figure className="flex w-full flex-col gap-2 sm:max-w-[260px] 2xl:w-[220px] 2xl:shrink-0">
-            <div className="flex h-40 flex-col items-center justify-center gap-1 overflow-hidden rounded-xl bg-superficie-oscura text-xs text-texto-claro">
+            <div className="flex h-40 flex-col items-center justify-center gap-1 overflow-hidden rounded-tarjeta bg-superficie-oscura text-xs text-texto-claro">
               {foto.url ? (
                 <img src={foto.url} alt={`Foto del medidor ${foto.medidor || ''}`} className="h-full w-full object-cover" />
               ) : (
@@ -373,7 +373,7 @@ export function DetalleRecibo({ r, edificio, acciones }) {
           <h3 className="text-sm font-semibold">Pagos</h3>
           <ul className="flex flex-col gap-2">
             {r.pagos.map((p) => (
-              <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-borde px-3 py-2 text-sm">
+              <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-borde px-3 py-2 text-sm">
                 <span>
                   {formatearFecha(p.fecha)} · {MEDIO[p.medio] || p.medio}
                   {p.codigo_operacion ? ` · Op. ${p.codigo_operacion}` : ''}
@@ -388,7 +388,7 @@ export function DetalleRecibo({ r, edificio, acciones }) {
         </div>
       )}
 
-      <p className="rounded-lg bg-fondo p-3 text-xs text-texto-apoyo">Recibo interno de mantenimiento; no es un comprobante SUNAT.</p>
+      <p className="rounded-control bg-fondo p-3 text-xs text-texto-apoyo">Recibo interno de mantenimiento; no es un comprobante SUNAT.</p>
       {acciones && <div className="flex flex-col gap-2 border-t border-borde pt-4 sm:flex-row sm:flex-wrap sm:justify-end">{acciones}</div>}
     </>
   );

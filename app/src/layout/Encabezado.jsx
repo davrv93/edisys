@@ -10,7 +10,7 @@ export default function Encabezado({ titulo, subtitulo, acciones, volver, childr
       <div className="flex flex-col gap-3 px-4 py-4 lg:min-h-topbar lg:flex-row lg:items-center lg:justify-between lg:px-8 lg:py-3">
         <div className="flex min-w-0 items-center gap-2">
           {volver && (
-            <a href={volver} className="-ml-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg hover:bg-fondo" aria-label="Volver">
+            <a href={volver} className="-ml-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-control hover:bg-fondo" aria-label="Volver">
               <Icono nombre="volver" />
             </a>
           )}
@@ -30,7 +30,7 @@ export default function Encabezado({ titulo, subtitulo, acciones, volver, childr
 export function CabeceraTarea({ titulo, subtitulo, volver }) {
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-1 border-b border-borde bg-superficie px-2">
-      <a href={volver} className="flex h-11 w-11 items-center justify-center rounded-lg hover:bg-fondo" aria-label="Volver">
+      <a href={volver} className="flex h-11 w-11 items-center justify-center rounded-control hover:bg-fondo" aria-label="Volver">
         <Icono nombre="volver" />
       </a>
       <div className="flex min-w-0 flex-col">
@@ -47,9 +47,9 @@ export function Contenido({ children, className = '' }) {
 }
 
 /** Tarjeta de sección con título y enlace opcional, como en el lienzo. */
-export function Seccion({ titulo, extra, children, className = '', padding = 'p-4 lg:p-6' }) {
+export function Seccion({ titulo, extra, children, className = '', padding = 'p-tarjeta' }) {
   return (
-    <section className={`flex min-w-0 flex-col gap-4 rounded-xl border border-borde bg-superficie ${padding} ${className}`}>
+    <section className={`flex min-w-0 flex-col gap-4 rounded-tarjeta border border-borde bg-superficie ${padding} ${className}`}>
       {(titulo || extra) && (
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           {titulo && <h2 className="text-lg font-semibold">{titulo}</h2>}

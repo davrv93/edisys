@@ -72,7 +72,7 @@ export default function PagoModal({ abierto, onCerrar, eid, recibo, esAdmin, yap
     >
       <div className="flex flex-col gap-4">
         {!esAdmin && yape && (
-          <div className="flex flex-col gap-1 rounded-xl border border-acento-borde bg-acento-suave p-4 text-sm text-acento-hover">
+          <div className="flex flex-col gap-1 rounded-tarjeta border border-acento-borde bg-acento-suave p-4 text-sm text-acento-hover">
             <span className="text-xs font-bold">PAGA CON YAPE</span>
             <span className="font-titulo text-2xl font-semibold text-acento">{yape.numero}</span>
             <span>{yape.titular}</span>

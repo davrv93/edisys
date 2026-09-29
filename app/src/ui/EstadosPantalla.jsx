@@ -58,14 +58,14 @@ export function SinPermiso({ permiso, rol = 'administrador' }) {
 
 /** Bloque gris animado para estados de carga. */
 export function Esqueleto({ className = 'h-4 w-full' }) {
-  return <div className={`animate-pulse rounded-lg bg-superficie-2 ${className}`} aria-hidden="true" />;
+  return <div className={`esqueleto rounded-control ${className}`} aria-hidden="true" />;
 }
 
 /** Pantalla de carga con el logo (arranque de la sesión). */
 export function CargandoApp({ texto = 'Cargando EDISYS…' }) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-fondo" role="status">
-      <div className="animate-pulse">
+      <div className="animate-latido-suave">
         <Isotipo tam={48} />
       </div>
       <p className="text-sm text-texto-apoyo">{texto}</p>

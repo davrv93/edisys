@@ -4,7 +4,7 @@ import { nombrePeriodo, sumarMeses } from '../lib/fechas.js';
 /** Mes y año («2026-09») con flechas. */
 export function SelectorPeriodo({ periodo, onCambio, max, oscuro = false }) {
   const puedeSiguiente = !max || periodo < max;
-  const btn = `flex h-11 w-11 lg:h-10 lg:w-10 items-center justify-center rounded-lg border ${oscuro ? 'border-superficie-oscura-2 text-white hover:bg-superficie-oscura' : 'border-borde-fuerte bg-superficie hover:bg-fondo'} disabled:opacity-40`;
+  const btn = `flex h-11 w-11 lg:h-10 lg:w-10 items-center justify-center rounded-control border ${oscuro ? 'border-superficie-oscura-2 text-white hover:bg-superficie-oscura' : 'border-borde-fuerte bg-superficie hover:bg-fondo'} disabled:opacity-40`;
   return (
     <div className="flex items-center gap-2" role="group" aria-label="Periodo">
       <button type="button" className={btn} onClick={() => onCambio(sumarMeses(periodo, -1))} aria-label="Mes anterior">
@@ -27,14 +27,14 @@ export function SelectorEdificio({ edificios = [], actual, onCambio, oscuro = tr
   const unidades = edif.unidades ?? edif.n_unidades;
   if (edificios.length <= 1) {
     return (
-      <div className={`flex flex-col gap-0.5 rounded-lg border p-3 ${oscuro ? 'border-superficie-oscura-2 bg-superficie-oscura text-white' : 'border-borde bg-superficie'}`}>
+      <div className={`flex flex-col gap-0.5 rounded-control border p-3 ${oscuro ? 'border-superficie-oscura-2 bg-superficie-oscura text-white' : 'border-borde bg-superficie'}`}>
         <span className="text-sm font-semibold">{edif.nombre}</span>
         {unidades != null && <span className={`text-xs ${oscuro ? 'text-texto-tenue' : 'text-texto-apoyo'}`}>{unidades} unidades</span>}
       </div>
     );
   }
   return (
-    <label className={`relative flex flex-col gap-0.5 rounded-lg border p-3 ${oscuro ? 'border-superficie-oscura-2 bg-superficie-oscura text-white' : 'border-borde bg-superficie'}`}>
+    <label className={`relative flex flex-col gap-0.5 rounded-control border p-3 ${oscuro ? 'border-superficie-oscura-2 bg-superficie-oscura text-white' : 'border-borde bg-superficie'}`}>
       <span className="text-sm font-semibold">{edif.nombre}</span>
       <span className={`text-xs ${oscuro ? 'text-texto-tenue' : 'text-texto-apoyo'}`}>
         {unidades != null ? `${unidades} unidades · ` : ''}cambiar edificio

@@ -9,13 +9,86 @@
     -webkit-text-size-adjust: 100%;
   }
   body {
-    @apply bg-fondo font-sans text-tinta antialiased;
+    @apply bg-fondo font-sans text-cuerpo text-tinta antialiased;
     font-variant-numeric: tabular-nums;
   }
   a {
-    @apply text-acento hover:text-acento-hover;
+    @apply text-acento transition-colors hover:text-acento-hover;
   }
+  /* Foco de teclado: anillo petróleo de 2 px con separación, sin animación. */
   :focus-visible {
-    outline-color: var(--color-acento);
+    outline: 2px solid var(--color-acento);
+    outline-offset: 2px;
+  }
+  /* Movimiento reducido: todo se ve igual, pero sin moverse (también lo infinito). */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      animation-delay: 0ms !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Entrada escalonada del contenido de una pantalla: 30 ms entre tarjetas, máximo 6. */
+  .escalonado > * {
+    animation: aparecer var(--dur-media) var(--ease-salida) both;
+  }
+  .escalonado > *:nth-child(2) { animation-delay: 30ms; }
+  .escalonado > *:nth-child(3) { animation-delay: 60ms; }
+  .escalonado > *:nth-child(4) { animation-delay: 90ms; }
+  .escalonado > *:nth-child(5) { animation-delay: 120ms; }
+  .escalonado > *:nth-child(n + 6) { animation-delay: 150ms; }
+
+  /* Esqueleto con barrido (reemplaza al pulse). */
+  .esqueleto {
+    background-color: var(--color-superficie-2);
+    background-image: linear-gradient(90deg, transparent 0%, rgb(255 255 255 / 0.65) 50%, transparent 100%);
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    animation: brillo 1.4s linear infinite;
+  }
+
+  /* Marcas de gráfico que crecen desde la base (SVG). */
+  .crece-y {
+    transform-box: fill-box;
+    transform-origin: bottom;
+    animation: crecer-y var(--dur-lenta) var(--ease-salida) both;
+  }
+  .crece-x {
+    transform-origin: left;
+    animation: crecer-x var(--dur-lenta) var(--ease-salida) both;
+  }
+
+  /* Desplegable de alto variable: grid-template-rows 0fr → 1fr. */
+  .desplegable {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows var(--dur-media) var(--ease-salida);
+  }
+  .desplegable[data-abierto='true'] {
+    grid-template-rows: 1fr;
+  }
+  .desplegable > * {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* Carrusel horizontal con imán por elemento. */
+  .carrusel {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 16px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+  .carrusel > * {
+    scroll-snap-align: start;
   }
 }

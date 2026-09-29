@@ -32,7 +32,7 @@ export default function SubirArchivo({ etiqueta = 'Adjuntar archivo', ayuda = 'P
           e.preventDefault();
           elegir(e.dataTransfer.files?.[0]);
         }}
-        className={`flex min-h-[56px] cursor-pointer items-center gap-3 rounded-lg border border-dashed px-3 py-3 ${err ? 'border-alerta' : 'border-borde-fuerte'} bg-superficie hover:bg-fondo`}
+        className={`flex min-h-[56px] cursor-pointer items-center gap-3 rounded-control border border-dashed px-3 py-3 ${err ? 'border-alerta' : 'border-borde-fuerte'} bg-superficie hover:bg-fondo`}
       >
         <Icono nombre={archivo ? 'documento' : 'subir'} className="text-acento" />
         <span className="min-w-0 flex-1 text-sm">
@@ -52,7 +52,7 @@ export default function SubirArchivo({ etiqueta = 'Adjuntar archivo', ayuda = 'P
           <button
             type="button"
             aria-label="Quitar archivo"
-            className="flex h-11 w-11 items-center justify-center rounded-lg hover:bg-superficie-2"
+            className="flex h-11 w-11 items-center justify-center rounded-control hover:bg-superficie-2"
             onClick={(e) => {
               e.preventDefault();
               onArchivo?.(null);

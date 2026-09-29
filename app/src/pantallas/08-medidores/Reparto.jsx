@@ -74,14 +74,14 @@ export default function Reparto() {
               <TarjetaKPI cargando={!d} tono={d?.diferencia_cts < 0 ? 'alerta' : 'acento'} titulo="Áreas comunes" valor={formatearSoles(d?.diferencia_cts)} nota="se reparte por participación" />
             </div>
             {d?.alertas?.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-aviso-borde bg-aviso-suave p-3 text-sm text-aviso-texto">
+              <div className="flex flex-wrap items-center gap-2 rounded-tarjeta border border-aviso-borde bg-aviso-suave p-3 text-sm text-aviso-texto">
                 Revisa antes de aprobar:
                 {d.alertas.map((a) => (
                   <Insignia key={a.unidad} estado={a.alerta} texto={`${a.unidad} · ${a.alerta === 'PICO' ? 'pico' : 'negativo'}`} />
                 ))}
               </div>
             )}
-            <div className="overflow-hidden rounded-xl border border-borde bg-superficie">
+            <div className="overflow-hidden rounded-tarjeta border border-borde bg-superficie">
               {!d ? <Esqueleto className="m-4 h-64" /> : <Tabla etiqueta="Reparto por unidad" columnas={columnas} filas={d.lineas || []} claveFila="unidad" densa />}
               {d && (
                 <div className="flex justify-between border-t border-borde px-4 py-3 text-sm font-semibold">

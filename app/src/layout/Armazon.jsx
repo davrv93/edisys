@@ -65,7 +65,7 @@ export default function Armazon({ pagina, children }) {
                   key={it.id}
                   href={ruta(it.pagina, it.query)}
                   aria-current={activo ? 'page' : undefined}
-                  className={`flex h-10 items-center gap-3 rounded-lg px-3 text-sm ${activo ? 'bg-acento font-semibold text-white hover:text-white' : 'text-texto-claro hover:bg-superficie-oscura hover:text-white'}`}
+                  className={`flex h-10 items-center gap-3 rounded-control px-3 text-sm ${activo ? 'bg-acento font-semibold text-white hover:text-white' : 'text-texto-claro hover:bg-superficie-oscura hover:text-white'}`}
                 >
                   <Icono nombre={it.icono} tam={18} />
                   {it.etiqueta}
@@ -81,7 +81,7 @@ export default function Armazon({ pagina, children }) {
                 <span className="truncate text-sm font-semibold text-white">{s.usuario.nombre}</span>
                 <span className="text-xs text-texto-tenue">{NOMBRE_ROL[s.rol]}</span>
               </span>
-              <button type="button" onClick={s.salir} className="flex h-9 w-9 items-center justify-center rounded-lg text-texto-claro hover:bg-superficie-oscura hover:text-white" aria-label="Cerrar sesión" title="Cerrar sesión">
+              <button type="button" onClick={s.salir} className="flex h-9 w-9 items-center justify-center rounded-control text-texto-claro hover:bg-superficie-oscura hover:text-white" aria-label="Cerrar sesión" title="Cerrar sesión">
                 <Icono nombre="salir" tam={18} />
               </button>
             </div>
@@ -95,7 +95,7 @@ export default function Armazon({ pagina, children }) {
               <a href={ruta('inicio')} className="flex min-w-0 items-center gap-2" aria-label="Inicio">
                 <Logo tam={28} />
               </a>
-              <button type="button" onClick={() => setMasAbierto(true)} className="flex min-w-0 items-center gap-2 rounded-lg px-2 py-1 hover:bg-fondo" aria-label="Menú de usuario y edificio">
+              <button type="button" onClick={() => setMasAbierto(true)} className="flex min-w-0 items-center gap-2 rounded-control px-2 py-1 hover:bg-fondo" aria-label="Menú de usuario y edificio">
                 <span className="flex min-w-0 flex-col items-end">
                   <span className="max-w-[160px] truncate text-sm font-semibold">{s.edificio.nombre}</span>
                   <span className="text-xs text-texto-apoyo">{NOMBRE_ROL[s.rol]}</span>
@@ -151,7 +151,7 @@ export default function Armazon({ pagina, children }) {
                 <a
                   key={it.id}
                   href={ruta(it.pagina, it.query)}
-                  className={`flex min-h-[48px] items-center gap-3 rounded-lg px-3 text-base ${it.id === idMovil ? 'bg-acento-suave font-semibold text-acento' : 'text-tinta hover:bg-fondo'}`}
+                  className={`flex min-h-[48px] items-center gap-3 rounded-control px-3 text-base ${it.id === idMovil ? 'bg-acento-suave font-semibold text-acento' : 'text-tinta hover:bg-fondo'}`}
                 >
                   <Icono nombre={it.icono} tam={20} />
                   {it.etiqueta}
@@ -167,7 +167,7 @@ export default function Armazon({ pagina, children }) {
               <span className="text-sm text-texto-apoyo">{s.usuario.correo || NOMBRE_ROL[s.rol]}</span>
             </span>
           </div>
-          <button type="button" onClick={s.salir} className="flex min-h-[48px] items-center gap-3 rounded-lg px-3 text-base text-alerta hover:bg-alerta-suave">
+          <button type="button" onClick={s.salir} className="flex min-h-[48px] items-center gap-3 rounded-control px-3 text-base text-alerta hover:bg-alerta-suave">
             <Icono nombre="salir" tam={20} /> Cerrar sesión
           </button>
         </div>
@@ -188,7 +188,7 @@ function CambiarRolMock({ claro = false }) {
     window.location.assign(ruta('inicio'));
   };
   return (
-    <label className={`flex flex-col gap-1 rounded-lg border border-dashed p-2 text-xs ${claro ? 'border-aviso-borde bg-aviso-suave text-aviso-texto' : 'border-superficie-oscura-2 text-texto-tenue'}`}>
+    <label className={`flex flex-col gap-1 rounded-control border border-dashed p-2 text-xs ${claro ? 'border-aviso-borde bg-aviso-suave text-aviso-texto' : 'border-superficie-oscura-2 text-texto-tenue'}`}>
       Modo demostración (mock): ver como
       <select className="h-9 rounded bg-superficie px-2 text-sm text-tinta" value={s.rol} onChange={(e) => cambiar(e.target.value)}>
         {ROLES.filter((r) => r !== 'superadmin').map((r) => (

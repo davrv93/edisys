@@ -115,7 +115,7 @@ export default function NuevaReserva() {
       <div className="flex min-h-screen flex-col bg-fondo">
         <CabeceraTarea titulo="No puedes reservar por ahora" subtitulo={subtitulo} volver={volver} />
         <div className="flex flex-1 flex-col gap-4 p-4">
-          <div className="flex flex-col gap-2 rounded-xl border border-alerta-borde bg-alerta-suave p-5 text-alerta-texto">
+          <div className="flex flex-col gap-2 rounded-tarjeta border border-alerta-borde bg-alerta-suave p-5 text-alerta-texto">
             <span className="text-xs font-bold">RECIBO VENCIDO</span>
             <span className="font-titulo text-3xl font-semibold text-alerta">{formatearSoles(moroso.monto_cts)}</span>
             <span className="text-base">
@@ -189,7 +189,7 @@ export default function NuevaReserva() {
                     type="button"
                     aria-pressed={d === dia}
                     onClick={() => setDia(d)}
-                    className={`flex h-16 w-13 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg border ${d === dia ? 'border-acento bg-acento text-white' : 'border-borde-fuerte bg-superficie'}`}
+                    className={`flex h-16 w-13 shrink-0 flex-col items-center justify-center gap-0.5 rounded-control border ${d === dia ? 'border-acento bg-acento text-white' : 'border-borde-fuerte bg-superficie'}`}
                   >
                     <span className={`text-xs ${d === dia ? '' : 'text-texto-apoyo'}`}>{DIAS_CORTOS[diaSemana(d)]}</span>
                     <b className="text-base">{Number(d.slice(8))}</b>
@@ -220,7 +220,7 @@ export default function NuevaReserva() {
                           disabled={!libre}
                           aria-pressed={sel}
                           onClick={() => setFranja(f)}
-                          className={`flex h-13 flex-col items-center justify-center rounded-lg border text-sm font-semibold ${
+                          className={`flex h-13 flex-col items-center justify-center rounded-control border text-sm font-semibold ${
                             sel ? 'border-acento bg-acento-suave text-acento-hover ring-2 ring-acento' : libre ? 'border-borde-fuerte bg-superficie' : 'cursor-not-allowed border-borde bg-superficie-2 text-texto-tenue'
                           }`}
                         >
@@ -241,7 +241,7 @@ export default function NuevaReserva() {
             </section>
 
             {tarifa > 0 && modoEdificio && (
-              <p className="rounded-xl border border-borde bg-superficie p-4 text-sm text-texto-suave">
+              <p className="rounded-tarjeta border border-borde bg-superficie p-4 text-sm text-texto-suave">
                 {modoEdificio === 'pago_inmediato' ? 'Se paga al reservar con Yape: guardamos tu turno 15 minutos mientras subes el voucher.' : `Se carga a tu recibo de ${mesRecibo}.`}
               </p>
             )}
@@ -250,7 +250,7 @@ export default function NuevaReserva() {
                 <span className="text-sm font-semibold">Forma de pago</span>
                 <OpcionPago valor="yape" medio={medio} setMedio={setMedio} titulo="Yape" detalle="QR y código de operación · guardamos tu turno 15 min" />
                 <OpcionPago valor="recibo" medio={medio} setMedio={setMedio} titulo={`Cargo al recibo de ${mesRecibo}`} detalle="Se suma a tu próximo recibo" />
-                <div className="flex min-h-[56px] items-center gap-3 rounded-xl border border-borde bg-superficie-2 px-4 text-sm text-texto-apoyo">
+                <div className="flex min-h-[56px] items-center gap-3 rounded-tarjeta border border-borde bg-superficie-2 px-4 text-sm text-texto-apoyo">
                   <Icono nombre="candado" tam={18} /> Tarjeta: disponible más adelante
                 </div>
               </section>
@@ -291,7 +291,7 @@ function Chip({ activo, onClick, children, suave = false }) {
 
 function OpcionPago({ valor, medio, setMedio, titulo, detalle }) {
   return (
-    <label className={`flex min-h-[56px] cursor-pointer items-center gap-3 rounded-xl border bg-superficie px-4 py-2 text-sm ${medio === valor ? 'border-acento ring-1 ring-acento' : 'border-borde'}`}>
+    <label className={`flex min-h-[56px] cursor-pointer items-center gap-3 rounded-tarjeta border bg-superficie px-4 py-2 text-sm ${medio === valor ? 'border-acento ring-1 ring-acento' : 'border-borde'}`}>
       <input type="radio" name="medio" checked={medio === valor} onChange={() => setMedio(valor)} className="h-5 w-5 accent-[var(--color-acento)]" />
       <span className="flex flex-col">
         <b>{titulo}</b>
@@ -338,7 +338,7 @@ function Creada({ creada, eid, volver, subtitulo, dialog, dialogEl }) {
       {dialogEl}
       <CabeceraTarea titulo={`Reserva ${creada.codigo}`} subtitulo={subtitulo} volver={volver} />
       <div className="mx-auto flex w-full max-w-xl flex-col gap-4 p-4">
-        <div className={`flex flex-col gap-1 rounded-xl border p-5 ${pendiente ? 'border-aviso-borde bg-aviso-suave text-aviso-texto' : 'border-acento-borde bg-acento-suave text-acento-hover'}`}>
+        <div className={`flex flex-col gap-1 rounded-tarjeta border p-5 ${pendiente ? 'border-aviso-borde bg-aviso-suave text-aviso-texto' : 'border-acento-borde bg-acento-suave text-acento-hover'}`}>
           <span className="text-xs font-bold">{pendiente ? 'RETENIDA MIENTRAS PAGAS' : enviado ? 'PAGO ENVIADO, EN REVISIÓN' : 'RESERVA CONFIRMADA'}</span>
           <span className="font-titulo text-3xl font-semibold">{creada.codigo}</span>
           <span className="text-base">
@@ -348,7 +348,7 @@ function Creada({ creada, eid, volver, subtitulo, dialog, dialogEl }) {
           {pendiente && mmss && <span className="text-sm">Tiempo para pagar: {resta > 0 ? mmss : 'se liberó la franja porque no llegó el pago'}</span>}
         </div>
         {pendiente && resta !== 0 && (
-          <div className="flex flex-col gap-4 rounded-xl border border-borde bg-superficie p-4">
+          <div className="flex flex-col gap-4 rounded-tarjeta border border-borde bg-superficie p-4">
             <div className="flex flex-col gap-1 text-sm">
               <span className="text-xs font-bold text-texto-apoyo">YAPE DEL EDIFICIO</span>
               <span className="font-titulo text-2xl font-semibold text-acento">{s.edificio.yape?.numero || 'Consulta el número con la administración'}</span>

@@ -40,7 +40,7 @@ export default function SubirFoto({ foto, onFoto, etiqueta = 'Tomar foto', oblig
     <div className="flex flex-col gap-2">
       <input ref={input} id={id} type="file" accept="image/*" capture="environment" className="sr-only" onChange={alElegir} aria-label={etiqueta} />
       {foto ? (
-        <div className={`relative overflow-hidden rounded-xl ${oscuro ? 'bg-superficie-oscura' : 'bg-superficie-2'} ${alto}`}>
+        <div className={`relative overflow-hidden rounded-tarjeta ${oscuro ? 'bg-superficie-oscura' : 'bg-superficie-2'} ${alto}`}>
           <img src={foto.url} alt="Foto tomada" className="h-full w-full object-cover" />
           {children}
           <span className="absolute left-3 top-3 rounded-full bg-acento px-2.5 py-1 text-xs font-semibold text-white">
@@ -52,13 +52,13 @@ export default function SubirFoto({ foto, onFoto, etiqueta = 'Tomar foto', oblig
           <button
             type="button"
             onClick={() => input.current?.click()}
-            className="absolute bottom-3 right-3 h-11 rounded-lg bg-superficie px-3 text-sm font-semibold text-tinta shadow"
+            className="absolute bottom-3 right-3 h-11 rounded-control bg-superficie px-3 text-sm font-semibold text-tinta shadow"
           >
             Repetir foto
           </button>
           {progreso != null && progreso < 100 && (
             <div className="absolute inset-x-0 bottom-0 h-1.5 bg-tinta/40" role="progressbar" aria-valuenow={progreso} aria-valuemin={0} aria-valuemax={100} aria-label="Subiendo foto">
-              <div className="h-full bg-acento-oscuro transition-all" style={{ width: `${progreso}%` }} />
+              <div className="h-full bg-acento-oscuro transition-[width] duration-media" style={{ width: `${progreso}%` }} />
             </div>
           )}
         </div>
@@ -67,7 +67,7 @@ export default function SubirFoto({ foto, onFoto, etiqueta = 'Tomar foto', oblig
           type="button"
           onClick={() => input.current?.click()}
           disabled={procesando}
-          className={`flex ${alto} w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-acento-borde bg-acento-suave text-acento hover:border-acento focus-visible:outline focus-visible:outline-2 focus-visible:outline-acento`}
+          className={`flex ${alto} w-full flex-col items-center justify-center gap-3 rounded-tarjeta border-2 border-dashed border-acento-borde bg-acento-suave text-acento hover:border-acento focus-visible:outline focus-visible:outline-2 focus-visible:outline-acento`}
         >
           {procesando ? <Spinner className="h-8 w-8" /> : <Icono nombre="camara" tam={40} grosor={1.6} />}
           <span className="text-lg font-semibold">{procesando ? 'Preparando la foto…' : etiqueta}</span>

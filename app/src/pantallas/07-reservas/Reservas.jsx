@@ -102,13 +102,13 @@ function CalendarioAdmin() {
   const acciones = (
     <>
       <div className="flex items-center gap-2">
-        <button type="button" onClick={() => semana(-1)} className="flex h-11 w-11 items-center justify-center rounded-lg border border-borde-fuerte bg-superficie lg:h-10 lg:w-10" aria-label="Semana anterior">
+        <button type="button" onClick={() => semana(-1)} className="flex h-11 w-11 items-center justify-center rounded-control border border-borde-fuerte bg-superficie lg:h-10 lg:w-10" aria-label="Semana anterior">
           <Icono nombre="izq" tam={18} />
         </button>
         <span className="min-w-[150px] text-center text-base font-semibold" aria-live="polite">
           {rangoSemana(lunes)}
         </span>
-        <button type="button" onClick={() => semana(1)} className="flex h-11 w-11 items-center justify-center rounded-lg border border-borde-fuerte bg-superficie lg:h-10 lg:w-10" aria-label="Semana siguiente">
+        <button type="button" onClick={() => semana(1)} className="flex h-11 w-11 items-center justify-center rounded-control border border-borde-fuerte bg-superficie lg:h-10 lg:w-10" aria-label="Semana siguiente">
           <Icono nombre="der" tam={18} />
         </button>
       </div>
@@ -133,7 +133,7 @@ function CalendarioAdmin() {
           <Vacio titulo="Configura tu primera área" texto="Parrillas, SUM, piscina… con su tarifa, horario, aforo y normas." icono="calendario" />
         ) : (
           <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:gap-6">
-            <section className="min-w-0 flex-1 overflow-hidden rounded-xl border border-borde bg-superficie">
+            <section className="min-w-0 flex-1 overflow-hidden rounded-tarjeta border border-borde bg-superficie">
               {!areas.datos || !reservas.datos ? (
                 <div className="flex flex-col gap-2 p-4">
                   {Array.from({ length: 5 }, (_, i) => (
@@ -156,7 +156,7 @@ function CalendarioAdmin() {
             </section>
 
             <aside className="flex w-full flex-col gap-4 xl:w-[300px] xl:shrink-0">
-              <section className="flex flex-col gap-3 rounded-xl border border-borde bg-superficie p-5">
+              <section className="flex flex-col gap-3 rounded-tarjeta border border-borde bg-superficie p-5">
                 <h2 className="text-base font-semibold">Esta semana</h2>
                 {[
                   ['Reservas', resumen.cantidad],
@@ -175,7 +175,7 @@ function CalendarioAdmin() {
                 <span className="text-xs text-texto-apoyo">Cada pago validado entra solo a Ingresos › Reservas de áreas con su código de reserva.</span>
               </section>
               {area0 && (
-                <section className="flex flex-col gap-2 rounded-xl border border-borde bg-superficie p-5 text-sm">
+                <section className="flex flex-col gap-2 rounded-tarjeta border border-borde bg-superficie p-5 text-sm">
                   <h2 className="text-base font-semibold">Reglas de {area0.nombre}</h2>
                   <span className="text-texto-suave">
                     Turnos: {area0.horario || (area0.franjas || []).map((f) => `${f.inicio}–${f.fin}`).join(' · ') || '—'}

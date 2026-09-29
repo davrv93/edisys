@@ -32,7 +32,7 @@ export function ToastProvider({ children }) {
       {children}
       <div className="pointer-events-none fixed inset-x-0 bottom-20 z-[90] flex flex-col items-center gap-2 px-4 lg:bottom-6 lg:items-end lg:pr-6" aria-live="polite">
         {lista.map((t) => (
-          <div key={t.id} role={t.tipo === 'error' ? 'alert' : 'status'} className={`pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl px-4 py-3 text-sm shadow-lg ${TONOS[t.tipo]}`}>
+          <div key={t.id} role={t.tipo === 'error' ? 'alert' : 'status'} className={`pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-tarjeta px-4 py-3 text-sm shadow-flotante ${TONOS[t.tipo]}`}>
             <Icono nombre={ICONOS[t.tipo]} tam={18} className="mt-0.5" />
             <span className="flex-1">{t.mensaje}</span>
             {t.accion && (

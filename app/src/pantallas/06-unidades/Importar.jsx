@@ -85,7 +85,7 @@ export default function Importar({ eid, onVerUnidades }) {
       </ol>
 
       {hecho ? (
-        <div className="rounded-xl border border-acento-borde bg-acento-suave">
+        <div className="rounded-tarjeta border border-acento-borde bg-acento-suave">
           <Vacio titulo="Padrón importado" icono="check" texto={`${hecho.unidades_creadas ?? 0} unidades creadas, ${hecho.unidades_actualizadas ?? 0} actualizadas, ${hecho.personas_creadas ?? 0} personas y ${hecho.deudas_cargadas ?? 0} deudas iniciales.`}>
             <Boton onClick={onVerUnidades}>Ver las unidades</Boton>
             <Boton variante="secundario" onClick={reiniciar}>
@@ -94,7 +94,7 @@ export default function Importar({ eid, onVerUnidades }) {
           </Vacio>
         </div>
       ) : !res ? (
-        <div className="flex max-w-xl flex-col gap-4 rounded-xl border border-borde bg-superficie p-4 lg:p-6">
+        <div className="flex max-w-xl flex-col gap-4 rounded-tarjeta border border-borde bg-superficie p-4 lg:p-6">
           <p className="text-base text-texto-suave">
             Usa la plantilla (hoja <b>Padron</b>, y opcional <b>Deuda</b>). Reimportar el mismo archivo no duplica: cada unidad se identifica por su código.
           </p>
@@ -104,7 +104,7 @@ export default function Importar({ eid, onVerUnidades }) {
           <SubirArchivo etiqueta="Excel del padrón" ayuda=".xlsx, hasta 10 MB" aceptar=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" tipos={TIPOS_XLSX} extensiones={['.xlsx', '.xls']} archivo={archivo} onArchivo={setArchivo} />
           {progreso != null && (
             <div className="h-2 rounded-full bg-superficie-2" role="progressbar" aria-valuenow={progreso} aria-valuemin={0} aria-valuemax={100} aria-label="Subiendo y validando">
-              <div className="h-2 rounded-full bg-acento transition-all" style={{ width: `${progreso}%` }} />
+              <div className="h-2 rounded-full bg-acento transition-[width] duration-media" style={{ width: `${progreso}%` }} />
             </div>
           )}
           <Boton onClick={validar} disabled={!archivo} cargando={progreso != null} icono="subir" className="self-start">
@@ -120,7 +120,7 @@ export default function Importar({ eid, onVerUnidades }) {
             <TarjetaKPI tono={errores.length ? 'alerta' : 'neutro'} titulo="Errores que bloquean" valor={errores.length} nota={errores.length ? 'Corrige y vuelve a subir' : 'Correo, celular y DNI con formato válido'} tamValor="text-3xl" />
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-borde bg-superficie">
+          <div className="overflow-hidden rounded-tarjeta border border-borde bg-superficie">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[720px] text-sm">
                 <thead>
@@ -159,7 +159,7 @@ export default function Importar({ eid, onVerUnidades }) {
             </div>
           </div>
 
-          <div className="flex flex-col gap-4 rounded-xl border border-borde bg-superficie p-4 lg:flex-row lg:items-center lg:justify-between lg:p-5">
+          <div className="flex flex-col gap-4 rounded-tarjeta border border-borde bg-superficie p-4 lg:flex-row lg:items-center lg:justify-between lg:p-5">
             {advertencias.length > 0 ? (
               <label className="flex min-h-[44px] items-center gap-3 text-sm">
                 <input type="checkbox" checked={revisado} onChange={(e) => setRevisado(e.target.checked)} className="h-5 w-5 accent-[var(--color-acento)]" />
