@@ -479,10 +479,14 @@ func (s *Server) CrearReserva(ctx context.Context, e *Edificio, usuarioID, recur
 	if forzar != "" {
 		forz = &forzar
 	}
+	var usuario *int64 // el chatbot puede reservar por una persona sin usuario en la app
+	if usuarioID > 0 {
+		usuario = &usuarioID
+	}
 	res, err := db.Fila(ctx, s.DB, `INSERT INTO reserva (edificio_id, recurso_id, unidad_id, usuario_id, codigo, inicio, fin, estado, total_cts, modo_cobro, acepta_normas, vence_retencion, forzado_motivo)
 		VALUES ($1,$2,$3,$4,'R-' || lpad(nextval('reserva_codigo_seq')::text, 4, '0'),$5,$6,$7,$8,$9,true,$10,$11)
 		RETURNING id, codigo, estado, total_cts, modo_cobro, vence_retencion, inicio, fin, unidad_id, recurso_id`,
-		e.ID, recursoID, unidadID, usuarioID, inicio, fin, estado, ri.Tarifa, modo, vence, forz)
+		e.ID, recursoID, unidadID, usuario, inicio, fin, estado, ri.Tarifa, modo, vence, forz)
 	if err != nil {
 		return nil, P.Traducir(err)
 	}

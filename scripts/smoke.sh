@@ -37,6 +37,8 @@ st=$(pedir GET '/api/v1/edificios/1/conciliacion?periodo=2026-09'); revisar "con
 st=$(pedir GET '/api/v1/edificios/1/facturacion/config'); revisar "facturación electrónica (sin secretos)" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"tiene_certificado"'
 st=$(pedir GET '/api/v1/analitica/resumen?desde=2026-04&hasta=2026-09'); revisar "analítica" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"cobranza_mensual"'
 st=$(pedir POST /api/v1/chatbot/mensaje '{"telefono":"51900000201","texto":"¿cuánto debo?"}'); revisar "chatbot «cuánto debo» (201)" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"intencion":"saldo"'
+st=$(pedir POST /api/v1/chatbot/mensaje '{"telefono":"51900000201","texto":"quiero reservar la parrilla el sábado"}'); revisar "chatbot reserva: franjas numeradas" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"paso":"elegir_franja"'
+st=$(pedir POST /api/v1/chatbot/mensaje '{"telefono":"51900000201","texto":"cancelar"}'); revisar "chatbot «cancelar» vuelve al menú" 200 "$st" "$(cat /tmp/edisys_smoke_body)" 'cancelé'
 st=$(pedir POST /api/v1/whatsapp/enviar '{"telefono":"51900000201","plantilla":"libre","variables":{"texto":"Prueba de humo"}}'); revisar "whatsapp simulado" 201 "$st" "$(cat /tmp/edisys_smoke_body)" '"estado":"simulado"'
 st=$(pedir GET /api/v1/whatsapp/config); revisar "whatsapp config sin apikey" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"tiene_apikey"'
 st=$(curl -s -o /dev/null -w '%{http_code}' "$BASE/login/"); [ "$st" = 200 ] && ok "login Qwik /login/" || mal "login Qwik" "$st"

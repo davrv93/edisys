@@ -101,6 +101,13 @@ func (s *Server) Responder(ctx context.Context, eid int64, tel, texto string) (*
 	res.Datos = map[string]any{"identificado": true, "nombre": q.nombre, "edificio": q.edificio, "unidades": q.codigos, "rol": q.rol}
 	base := fmt.Sprintf("%s/app/e/%d", s.Cfg.URLPublica, q.edificioID)
 
+	// Reserva en curso (conversación con estado) o «cancelar»/«salir».
+	if manejado, err := s.conversacionReserva(ctx, q, tel, texto, cl, res, hoy); err != nil {
+		return nil, err
+	} else if manejado {
+		return res, nil
+	}
+
 	switch cl.Intencion {
 	case chatbot.Saludo:
 		res.Respuesta = fmt.Sprintf("¡Hola, %s! Soy el asistente de %s. %s", nombre, q.edificio, menuBot)
@@ -190,71 +197,9 @@ func (s *Server) Responder(ctx context.Context, eid int64, tel, texto string) (*
 		res.Datos["yape"] = yape
 
 	case chatbot.Reservar:
-		var deuda int64
-		if len(q.unidades) > 0 {
-			_ = s.DB.QueryRow(ctx, `SELECT deuda_vencida_cts($1)`, q.unidades[0]).Scan(&deuda)
-		}
-		if deuda > 0 {
-			res.Respuesta = fmt.Sprintf("%s, por ahora no puedes reservar porque tu %s tiene una deuda vencida de %s. Cuando la regularices te ayudo con la reserva. Escribe «pagar» para ver cómo.", nombre, dptos(q.codigos), P.Soles(deuda))
-			res.Datos["moroso"] = true
-			res.Datos["deuda_vencida_cts"] = deuda
-			break
-		}
-		areas, _ := db.Filas(ctx, s.DB, `SELECT id, nombre, slug, tarifa_cts FROM area WHERE edificio_id=$1 AND activo ORDER BY id`, q.edificioID)
-		if len(areas) == 0 {
-			res.Respuesta = "Tu edificio aún no tiene áreas reservables."
-			break
-		}
-		var area map[string]any
-		for _, a := range areas {
-			if cl.Area != "" && (a["slug"] == cl.Area || strings.Contains(a["slug"].(string), cl.Area)) {
-				area = a
-			}
-		}
-		if area == nil {
-			var ns []string
-			for _, a := range areas {
-				ns = append(ns, fmt.Sprintf("%s (%s)", a["nombre"], P.Soles(a["tarifa_cts"].(int64))))
-			}
-			res.Respuesta = "¿Qué área quieres reservar? Tenemos: " + strings.Join(ns, ", ") + ". Escríbeme, por ejemplo, «parrilla el sábado»."
-			res.Datos["areas"] = areas
-			break
-		}
-		if cl.Fecha == nil {
-			res.Respuesta = fmt.Sprintf("¿Para qué día quieres %s? Escríbeme, por ejemplo, «mañana», «el sábado» o «5/10».", strings.ToLower(area["nombre"].(string)))
-			res.Datos["area"] = area
-			break
-		}
-		franjas, err := s.calcularDisponibilidad(ctx, q.edificioID, "", fmt.Sprint(area["id"]), *cl.Fecha, *cl.Fecha, false)
-		if err != nil {
+		if err := s.flujoReserva(ctx, q, tel, cl, hoy, res); err != nil {
 			return nil, err
 		}
-		libres := map[string][]string{}
-		var orden []string
-		for _, f := range franjas {
-			if f["estado"] != "libre" {
-				continue
-			}
-			rec := f["recurso"].(string)
-			if _, ok := libres[rec]; !ok {
-				orden = append(orden, rec)
-			}
-			libres[rec] = append(libres[rec], fmt.Sprintf("%s a %s", f["hora_inicio"], f["hora_fin"]))
-		}
-		dia := diaTexto(*cl.Fecha, hoy)
-		if len(orden) == 0 {
-			res.Respuesta = fmt.Sprintf("Lo siento, %s no hay franjas libres en %s. ¿Probamos otro día?", dia, strings.ToLower(area["nombre"].(string)))
-		} else {
-			var partes []string
-			for _, rec := range orden {
-				partes = append(partes, fmt.Sprintf("%s: de %s", rec, strings.Join(libres[rec], " y de ")))
-			}
-			res.Respuesta = fmt.Sprintf("%s tienes libre en %s → %s. La tarifa es %s. Para reservar entra a %s/reservas/nueva y elige la franja.",
-				mayus(dia), strings.ToLower(area["nombre"].(string)), strings.Join(partes, "; "), P.Soles(area["tarifa_cts"].(int64)), base)
-		}
-		res.Datos["area"] = area
-		res.Datos["fecha"] = cl.Fecha.Format("2006-01-02")
-		res.Datos["libres"] = libres
 
 	case chatbot.Reportar:
 		tx, err := s.DB.Begin(ctx)

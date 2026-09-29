@@ -757,3 +757,129 @@ func TestEnviarUnReciboPorCorreo(t *testing.T) {
 		t.Errorf("destinatario %q", para)
 	}
 }
+
+// ---------- Bloque 6 · reservar desde el chatbot ----------
+
+func (e *entorno) bot(tok, tel, texto string) map[string]any {
+	e.t.Helper()
+	st, c := e.pedir("POST", "/api/v1/chatbot/mensaje", tok, map[string]string{"telefono": tel, "texto": texto})
+	if st != 200 {
+		e.t.Fatalf("chatbot %q: %d %v", texto, st, c)
+	}
+	return c
+}
+
+func paso(c map[string]any) any { return c["datos"].(map[string]any)["paso"] }
+
+func TestChatbotReservaCompleta(t *testing.T) {
+	e := nuevo(t)
+	tok := e.login("admin@demo.pe")
+	c := e.bot(tok, "51900000201", "quiero reservar la parrilla el sábado")
+	if c["intencion"] != "reservar" || paso(c) != "elegir_franja" || !strings.Contains(c["respuesta"].(string), "1. Parrilla") {
+		t.Fatalf("franjas: %v", c)
+	}
+	c = e.bot(tok, "51900000201", "7") // fuera de rango
+	if !strings.Contains(c["respuesta"].(string), "Elige un número del 1 al") {
+		t.Errorf("fuera de rango: %v", c["respuesta"])
+	}
+	c = e.bot(tok, "51900000201", "1")
+	if paso(c) != "confirmar" || !strings.Contains(c["respuesta"].(string), "¿Confirmo?") || !strings.Contains(c["respuesta"].(string), "S/ 80,00") {
+		t.Fatalf("resumen: %v", c)
+	}
+	c = e.bot(tok, "51900000201", "sí")
+	r, ok := c["datos"].(map[string]any)["reserva"].(map[string]any)
+	if !ok || r["estado"] != "confirmada" || !strings.Contains(c["respuesta"].(string), "¡Reservado!") || !strings.Contains(c["respuesta"].(string), "recibo") {
+		t.Fatalf("reserva: %v", c)
+	}
+	var unidad string
+	_ = e.pool.QueryRow(context.Background(), `SELECT u.codigo FROM reserva rv JOIN unidad u ON u.id=rv.unidad_id WHERE rv.codigo=$1`, r["codigo"]).Scan(&unidad)
+	if unidad != "201" {
+		t.Errorf("la reserva quedó en %q", unidad)
+	}
+	// Pasos con «cancelar»: vuelve al menú en cualquier paso.
+	e.bot(tok, "51900000201", "quiero reservar")
+	c = e.bot(tok, "51900000201", "piscina")
+	if paso(c) != "elegir_fecha" {
+		t.Errorf("pide la fecha: %v", c)
+	}
+	c = e.bot(tok, "51900000201", "cancelar")
+	if !strings.Contains(c["respuesta"].(string), "cancelé") || !strings.Contains(c["respuesta"].(string), "1. Cuánto debo") {
+		t.Errorf("cancelar: %v", c)
+	}
+	var n int
+	_ = e.pool.QueryRow(context.Background(), `SELECT count(*) FROM chatbot_sesion`).Scan(&n)
+	if n != 0 {
+		t.Errorf("quedó una sesión abierta")
+	}
+}
+
+// Con pago inmediato la reserva queda retenida 15 minutos y el bot explica cómo pagar.
+func TestChatbotReservaPagoInmediato(t *testing.T) {
+	e := nuevo(t)
+	tok := e.login("admin@demo.pe")
+	_, _ = e.pool.Exec(context.Background(), `UPDATE edificio SET modo_cobro_reservas='pago_inmediato'`)
+	e.bot(tok, "51900000201", "reservar el sum mañana")
+	e.bot(tok, "51900000201", "1")
+	c := e.bot(tok, "51900000201", "si")
+	r := c["datos"].(map[string]any)["reserva"].(map[string]any)
+	if r["estado"] != "pendiente_pago" || !strings.Contains(c["respuesta"].(string), "15 minutos") || !strings.Contains(c["respuesta"].(string), "Yape") {
+		t.Errorf("retención: %v", c)
+	}
+}
+
+func TestChatbotReservaMorosoYSesionCaducada(t *testing.T) {
+	e := nuevo(t)
+	tok := e.login("admin@demo.pe")
+	c := e.bot(tok, "51900000402", "quiero reservar la parrilla el sábado")
+	if c["datos"].(map[string]any)["moroso"] != true || !strings.Contains(c["respuesta"].(string), "S/ 1.420,00") {
+		t.Errorf("moroso: %v", c)
+	}
+	// Sesión caducada: el «1» ya no reserva nada.
+	e.bot(tok, "51900000201", "quiero reservar la parrilla el sábado")
+	_, _ = e.pool.Exec(context.Background(), `UPDATE chatbot_sesion SET vence_en = now() - interval '1 minute'`)
+	c = e.bot(tok, "51900000201", "1")
+	if c["datos"].(map[string]any)["sesion_caducada"] != true || !strings.Contains(c["respuesta"].(string), "caducó") {
+		t.Errorf("caducada: %v", c)
+	}
+	var n int
+	_ = e.pool.QueryRow(context.Background(), `SELECT count(*) FROM reserva WHERE creado_en > now() - interval '1 minute'`).Scan(&n)
+	if n != 0 {
+		t.Errorf("reservó con la sesión caducada")
+	}
+}
+
+// Dos vecinos piden la misma franja a la vez por el bot: uno gana y al otro le ofrece las que quedan.
+func TestChatbotReservaConcurrente(t *testing.T) {
+	e := nuevo(t)
+	tok := e.login("admin@demo.pe")
+	tels := []string{"51900000101", "51900000102"}
+	for _, tel := range tels {
+		e.bot(tok, tel, "quiero reservar la parrilla el sábado")
+		if c := e.bot(tok, tel, "1"); paso(c) != "confirmar" {
+			t.Fatalf("%s: %v", tel, c)
+		}
+	}
+	var wg sync.WaitGroup
+	resp := make([]map[string]any, 2)
+	for i, tel := range tels {
+		wg.Add(1)
+		go func(i int, tel string) {
+			defer wg.Done()
+			resp[i] = e.bot(tok, tel, "sí")
+		}(i, tel)
+	}
+	wg.Wait()
+	ganan, otras := 0, 0
+	for _, c := range resp {
+		d := c["datos"].(map[string]any)
+		if _, ok := d["reserva"]; ok {
+			ganan++
+		}
+		if d["franja_ocupada"] == true && d["paso"] == "elegir_franja" && strings.Contains(c["respuesta"].(string), "Alguien acaba de reservar") {
+			otras++
+		}
+	}
+	if ganan != 1 || otras != 1 {
+		t.Errorf("ganan %d, reciben otras franjas %d: %v", ganan, otras, resp)
+	}
+}

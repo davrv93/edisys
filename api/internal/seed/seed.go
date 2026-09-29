@@ -138,7 +138,7 @@ func Sembrar(ctx context.Context, pool *pgxpool.Pool, alm archivo.Almacen, op Op
 	s := &sembrador{ctx: ctx, tx: tx, alm: alm, unidades: map[string]int64{}, medidor: map[string]int64{}, usuarios: map[string]int64{},
 		rubros: map[string]int64{}, concepto: map[string]int64{}, recurso: map[string]int64{}, periodo: map[string]int64{}}
 
-	s.exec(`TRUNCATE comprobante, comprobante_serie, facturacion_config, movimiento_banco, extracto, banco_mapeo, correo_adjunto, correo_mensaje, ajuste, whatsapp_mensaje, whatsapp_config, voto, incidencia_evidencia, incidencia_evento, incidencia, junta_miembro,
+	s.exec(`TRUNCATE chatbot_sesion, comprobante, comprobante_serie, facturacion_config, movimiento_banco, extracto, banco_mapeo, correo_adjunto, correo_mensaje, ajuste, whatsapp_mensaje, whatsapp_config, voto, incidencia_evidencia, incidencia_evento, incidencia, junta_miembro,
 		reparto_medidor, recibo_general, lectura, medidor, reserva, recurso, area, egreso, pago, recibo_linea, recibo, presupuesto, periodo,
 		concepto, rubro, importacion, deuda_inicial, unidad_persona, persona, unidad, auditoria, invitacion, sesion_refresh,
 		usuario_edificio_rol, rol_permiso_edificio, usuario, edificio, archivo, administradora, contacto RESTART IDENTITY CASCADE`)
