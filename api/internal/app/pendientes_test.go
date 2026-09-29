@@ -179,6 +179,43 @@ func TestDeudaInicialEnMorosidad(t *testing.T) {
 	}
 }
 
+// «Solo morosos» se filtra en el API (deuda vencida, la misma que bloquea reservas),
+// no en la página cargada: el total y la paginación ya vienen filtrados.
+func TestUnidadesFiltroMorosos(t *testing.T) {
+	e := nuevo(t)
+	tok := e.login("admin@demo.pe")
+	_, todas := e.pedir("GET", "/api/v1/edificios/1/unidades?por_pagina=200", tok, nil)
+	if num(todas["total"]) != 24 {
+		t.Fatalf("total sin filtro: %v", todas["total"])
+	}
+	st, m := e.pedir("GET", "/api/v1/edificios/1/unidades?morosos=1&por_pagina=200", tok, nil)
+	if st != 200 {
+		t.Fatalf("filtro morosos: %d %v", st, m)
+	}
+	if num(m["total"]) != 3 {
+		t.Fatalf("morosos de la semilla: %v", m["total"])
+	}
+	cods := map[string]bool{}
+	for _, x := range m["datos"].([]any) {
+		u := x.(map[string]any)
+		if u["moroso"] != true {
+			t.Errorf("no moroso en el filtro: %v", u["codigo"])
+		}
+		cods[u["codigo"].(string)] = true
+	}
+	for _, c := range []string{"402", "503", "104"} {
+		if !cods[c] {
+			t.Errorf("falta el moroso %s: %v", c, cods)
+		}
+	}
+	// Con deuda inicial, el 201 también sale.
+	e.importarConDeuda(tok, [][3]any{{"201", "2023-05", 700}})
+	_, m2 := e.pedir("GET", "/api/v1/edificios/1/unidades?morosos=1&por_pagina=200", tok, nil)
+	if num(m2["total"]) != 4 {
+		t.Errorf("con deuda inicial: %v", m2["total"])
+	}
+}
+
 // ---------- utilidades multipart ----------
 
 func pngChico() []byte {

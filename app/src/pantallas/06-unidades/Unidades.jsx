@@ -31,10 +31,9 @@ export default function Unidades() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [texto]);
 
-  const lista = useCarga(() => api.get(`/edificios/${eid}/unidades`, { buscar, pagina, por_pagina: POR_PAGINA }), [eid, buscar, pagina], { activo: tab === 'unidades' });
-  const todas = lista.datos?.datos || [];
-  // «Solo morosos»: el API no tiene ese filtro; se aplica sobre la página cargada.
-  const filas = soloMorosos ? todas.filter((u) => u.deuda_cts > 0) : todas;
+  const lista = useCarga(() => api.get(`/edificios/${eid}/unidades`, { buscar, pagina, por_pagina: POR_PAGINA, morosos: soloMorosos ? 1 : undefined }), [eid, buscar, pagina, soloMorosos], { activo: tab === 'unidades' });
+  // «Solo morosos» lo filtra el API (deuda vencida, igual que la morosidad); aquí ya viene filtrado.
+  const filas = lista.datos?.datos || [];
   const total = lista.datos?.total ?? filas.length;
 
   const pestanas = (
@@ -106,7 +105,7 @@ export default function Unidades() {
                 <Icono nombre="buscar" tam={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-texto-apoyo" />
                 <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Buscar unidad o propietario" className="h-11 w-full rounded-control border border-borde-fuerte bg-superficie pl-9 pr-3 text-base transition-colors duration-rapida focus:border-acento focus:outline-none focus:ring-2 focus:ring-acento lg:h-8 lg:text-sm" />
               </label>
-              <Chip activo={soloMorosos} tono="alerta" onClick={() => setQuery({ morosos: soloMorosos ? null : 1 }, { reemplazar: true })}>
+              <Chip activo={soloMorosos} tono="alerta" onClick={() => setQuery({ morosos: soloMorosos ? null : 1, pagina: null }, { reemplazar: true })}>
                 Solo morosos
               </Chip>
             </div>
@@ -121,7 +120,7 @@ export default function Unidades() {
                 onFila={(u) => setDetalleId(u.id)}
                 vacio={
                   buscar || soloMorosos ? (
-                    <Vacio titulo={soloMorosos && !buscar ? 'Ninguna unidad morosa en esta página' : 'Ninguna unidad coincide'} texto="Prueba con otro filtro." icono="buscar" compacto />
+                    <Vacio titulo={soloMorosos && !buscar ? 'Ninguna unidad morosa' : 'Ninguna unidad coincide'} texto="Prueba con otro filtro." icono="buscar" compacto />
                   ) : (
                     <Vacio titulo="Tu edificio aún no tiene unidades" texto="Cárgalas todas desde el Excel del padrón, sin registrar a nadie a mano." icono="edificio">
                       <Guarda permiso="unidades.importar">

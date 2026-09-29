@@ -197,18 +197,23 @@ en('POST', '/edificios/:eid/periodos/:p/recibos/emitir', () => {
 // --- 06 Unidades ---
 en('GET', '/edificios/:eid', () => EDIFICIO);
 en('GET', '/edificios/:eid/unidades', ({ query }) => {
-  let l = UNIDADES;
+  let l = UNIDADES.map((u) => ({
+    ...u,
+    deuda_cts: db.recibos.find((r) => r.unidad_id === u.id)?.saldo_cts || 0,
+  }));
   if (query.buscar) {
     const q = String(query.buscar).toLowerCase();
     l = l.filter((u) => u.codigo.includes(q) || u.propietario.toLowerCase().includes(q));
   }
+  // «Solo morosos»: igual que el API real (deuda vencida).
+  if (String(query.morosos) === '1') l = l.filter((u) => u.deuda_cts > 0);
   const pagina = Number(query.pagina || 1);
   const por = Number(query.por_pagina || 25);
   return {
     datos: l.slice((pagina - 1) * por, pagina * por).map((u) => ({
       id: u.id, codigo: u.codigo, tipo: u.tipo, piso: u.piso, participacion_pct: u.participacion_pct,
       propietario: u.propietario, propietario_dni: u.propietario_dni.slice(0, 4) + '****', celular: u.celular, inquilino: u.inquilino,
-      deuda_cts: db.recibos.find((r) => r.unidad_id === u.id)?.saldo_cts || 0,
+      deuda_cts: u.deuda_cts, moroso: u.deuda_cts > 0,
     })),
     total: l.length,
     pagina,

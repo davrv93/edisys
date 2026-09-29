@@ -96,6 +96,10 @@ func (s *Server) listarUnidades(w http.ResponseWriter, r *http.Request) {
 	var total int64
 	cond := `u.edificio_id=$1 AND (u.codigo ILIKE $2 OR EXISTS (SELECT 1 FROM unidad_persona up JOIN persona pe ON pe.id=up.persona_id
 		WHERE up.unidad_id=u.id AND up.hasta IS NULL AND (pe.nombre ILIKE $2 OR pe.dni_ruc ILIKE $2)))`
+	// «Solo morosos»: deuda vencida (la misma función que bloquea reservas y alimenta la morosidad).
+	if r.URL.Query().Get("morosos") == "1" {
+		cond += ` AND es_moroso(u.id)`
+	}
 	if err := s.DB.QueryRow(ctx, `SELECT count(*) FROM unidad u WHERE `+cond, e.ID, buscar).Scan(&total); err != nil {
 		P.Fallo(w, r, err)
 		return
