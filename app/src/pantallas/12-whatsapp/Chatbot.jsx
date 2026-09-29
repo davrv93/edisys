@@ -13,7 +13,10 @@ const SUGERENCIAS = ['Hola', '¿Cuánto debo?', 'Mi recibo', 'Quiero reservar la
 export default function Chatbot() {
   const eid = useEid();
   const unidades = useCarga(() => api.get(`/edificios/${eid}/unidades`, { por_pagina: 500 }), [eid]);
-  const conCelular = lista(unidades.datos).filter((u) => u.celular);
+  // El API anida el contacto en propietario {celular, nombre}: se aplana para el selector.
+  const conCelular = lista(unidades.datos)
+    .map((u) => ({ ...u, celular: u.celular || u.propietario?.celular || '', propietario: u.propietario?.nombre || u.propietario }))
+    .filter((u) => u.celular);
   const [telefono, setTelefono] = useState('');
   const [texto, setTexto] = useState('');
   const [chat, setChat] = useState([]);
