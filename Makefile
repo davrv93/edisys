@@ -2,7 +2,10 @@
 COMPOSE := docker compose
 TEST_DB ?= postgres://edisys:edisys@localhost:4754/edisys_test?sslmode=disable
 
-.PHONY: up down logs seed seed-demo test test-unit ps smoke build api backup restore respaldos validar-ubl validar-deploy
+.PHONY: up down logs seed seed-demo test test-unit ps smoke build api backup restore respaldos validar-ubl validar-deploy deploy-local peso
+
+# Tope recomendado del dist en bytes: base 528950 (4e1acab) +30 %.
+PESO_TOPE ?= 688000
 
 up:            ## Construye y levanta todo (edge en http://localhost:4700)
 	$(COMPOSE) up -d --build
@@ -58,4 +61,16 @@ validar-deploy: ## Pre-vuelo del despliegue sin remoto: sintaxis, compose, workf
 	bash -n scripts/desplegar.sh && echo "desplegar.sh: sintaxis OK"
 	$(COMPOSE) config -q && echo "compose: config OK"
 	python3 -c "import yaml; [yaml.safe_load(open(f)) for f in ['.github/workflows/ci.yml', '.github/workflows/deploy.yml']]; print('workflows: YAML OK')"
-	test -z "$$(git remote)" && echo "sin remoto ni EC2: el deploy real espera EC2_HOST/EC2_USER/EC2_SSH_KEY y /opt/edisys con su .env" || git remote -v
+	test -z "$$(git remote)" && echo "sin remoto ni EC2: la vía real es make deploy-local; el EC2 espera EC2_HOST/EC2_USER/EC2_SSH_KEY" || git remote -v
+
+deploy-local:   ## Despliegue local: construye, respalda, migra (sin sembrar) y levanta con espera de salud
+	$(COMPOSE) build
+	$(COMPOSE) run --rm --no-deps backup respaldar.sh "predespliegue-$$(date +%Y%m%d-%H%M)"
+	SEMBRAR=no $(COMPOSE) run --rm migrate preparar
+	$(COMPOSE) up -d --remove-orphans
+	for i in $$(seq 1 40); do curl -fs http://localhost:4700/api/health >/dev/null && break; sleep 3; done
+	curl -fs http://localhost:4700/api/health && echo "deploy local: OK"
+
+peso:           ## Construye la app y verifica que el dist no pase el tope recomendado
+	cd app && npm run build
+	test $$(find app/dist -type f -exec cat {} + | wc -c) -le $(PESO_TOPE) && echo "peso OK: dentro de $(PESO_TOPE) bytes"

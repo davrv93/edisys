@@ -58,8 +58,10 @@ make validar-ubl # comprobantes SUNAT contra los XSD de UBL 2.1 y firma verifica
 - **Despliegue** (`.github/workflows/deploy.yml` + `scripts/desplegar.sh`): solo con disparo manual y escribiendo
   «desplegar». Publica `api`, `login`, `edge` y `backup` en GHCR (`ghcr.io/<dueño>/edisys/*:<sha>`) y por `ssh` al EC2
   (secretos `EC2_HOST`, `EC2_USER`, `EC2_SSH_KEY`) corre `desplegar.sh`: `pull`, respaldo previo, migraciones
-   (`SEMBRAR=no`) y `up -d`. **No se ha ejecutado**: todavía no hay remoto ni EC2. Pre-vuelo local
-   sin remoto: `make validar-deploy`. Las imágenes toman `EDISYS_REGISTRO`/`EDISYS_TAG` (por defecto `edisys/*:local`).
+   (`SEMBRAR=no`) y `up -d`. La vía real es en local: `make deploy-local` (construye, respalda,
+   migra sin sembrar, levanta y espera salud). El EC2 **no se ha usado**: todavía no hay remoto ni
+   máquina; pre-vuelo sin remoto: `make validar-deploy`. Las imágenes toman `EDISYS_REGISTRO`/`EDISYS_TAG`
+   (por defecto `edisys/*:local`).
 
 Binario: `edisys serve | migrate | seed [--pendientes=N] | preparar | salud`.
 
