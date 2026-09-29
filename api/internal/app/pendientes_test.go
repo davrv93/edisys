@@ -8,13 +8,16 @@ import (
 	"fmt"
 	"image"
 	"image/png"
+	"io"
 	"mime/multipart"
 	"net/http"
+	"os/exec"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/xuri/excelize/v2"
+	"golang.org/x/text/encoding/charmap"
 
 	"edisys/api/internal/app"
 	P "edisys/api/internal/plataforma"
@@ -378,5 +381,102 @@ func TestLecturaEnCascadaConBorradores(t *testing.T) {
 	_ = e.pool.QueryRow(context.Background(), `SELECT count(*) FROM recibo r WHERE r.total_cts <> (SELECT COALESCE(sum(monto_cts),0) FROM recibo_linea WHERE recibo_id=r.id)`).Scan(&descuadre)
 	if descuadre != 0 {
 		t.Errorf("%d recibos no cuadran con sus líneas", descuadre)
+	}
+}
+
+// ---------- Bloque 3 · PDF del balance y correo ----------
+
+func (e *entorno) bajar(ruta, tok string) (int, string, []byte) {
+	e.t.Helper()
+	req, _ := http.NewRequest("GET", e.srv.URL+ruta, nil)
+	req.Header.Set("Authorization", "Bearer "+tok)
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		e.t.Fatal(err)
+	}
+	defer res.Body.Close()
+	b, _ := io.ReadAll(res.Body)
+	return res.StatusCode, res.Header.Get("Content-Type"), b
+}
+
+// textoPDF: el texto del PDF con pdftotext si está instalado; si no, los bytes crudos (los flujos van sin comprimir).
+func textoPDF(t *testing.T, b []byte) string {
+	if ruta, err := exec.LookPath("pdftotext"); err == nil {
+		cmd := exec.Command(ruta, "-layout", "-", "-")
+		cmd.Stdin = bytes.NewReader(b)
+		out, err := cmd.Output()
+		if err != nil {
+			t.Fatalf("pdftotext no pudo abrir el PDF: %v", err)
+		}
+		return string(out)
+	}
+	s, _ := charmap.Windows1252.NewDecoder().Bytes(b)
+	return string(s)
+}
+
+func TestPDFBalanceEInformeJunta(t *testing.T) {
+	e := nuevo(t)
+	tok := e.login("admin@demo.pe")
+	st, tipo, b := e.bajar("/api/v1/edificios/1/balance/2026-09.pdf", tok)
+	if st != 200 || tipo != "application/pdf" || !bytes.HasPrefix(b, []byte("%PDF-")) {
+		t.Fatalf("balance PDF: %d %s", st, tipo)
+	}
+	txt := textoPDF(t, b)
+	for _, quiero := range []string{"S/ 19.460,00", "S/ 18.950,00", "S/ 510,00", "13,1 %", "S/ 34.120,00", "Morosidad por unidad", "Dpto 402", "S/ 1.420,00", "Trabajos del mes", "INC-014", "Conserjería"} {
+		if !strings.Contains(txt, quiero) {
+			t.Errorf("el PDF del balance no dice %q", quiero)
+		}
+	}
+	st, _, b = e.bajar("/api/v1/edificios/1/balance/2026-09/informe-junta.pdf", tok)
+	txt = textoPDF(t, b)
+	if st != 200 || !strings.Contains(txt, "Pendientes por criticidad") || !strings.Contains(txt, "Aprobaciones del mes") || !strings.Contains(txt, "2 a favor") {
+		t.Errorf("informe a la junta: %d\n%s", st, txt)
+	}
+	// El propietario también baja el balance; el formato de periodo se valida.
+	if st, _, _ := e.bajar("/api/v1/edificios/1/balance/2026-09.pdf", e.login("propietario201@demo.pe")); st != 200 {
+		t.Errorf("propietario baja el balance: %d", st)
+	}
+	if st, _, _ := e.bajar("/api/v1/edificios/1/balance/setiembre.pdf", tok); st != 422 {
+		t.Errorf("periodo inválido: %d", st)
+	}
+}
+
+func TestCorreoRecibosYBalanceSimulado(t *testing.T) {
+	e := nuevo(t)
+	tok := e.login("admin@demo.pe")
+	st, d := e.pedir("POST", "/api/v1/edificios/1/recibos/2026-09/enviar-correo", tok, nil)
+	if st != 202 || num(d["encolados"]) != 24 || num(d["simulados"]) != 24 || len(d["sin_correo"].([]any)) != 0 {
+		t.Fatalf("recibos por correo: %d %v", st, d)
+	}
+	var conPDF int
+	_ = e.pool.QueryRow(context.Background(), `SELECT count(DISTINCT m.id) FROM correo_mensaje m JOIN correo_adjunto a ON a.mensaje_id=m.id
+		WHERE m.origen='recibo' AND a.tipo_mime='application/pdf' AND substr(a.datos,1,5)='%PDF-'::bytea`).Scan(&conPDF)
+	if conPDF != 24 {
+		t.Errorf("correos con PDF: %d", conPDF)
+	}
+	// El PDF del 201 cuadra con el API (S/ 990,00) y el correo va a su propietaria.
+	var pdf201 []byte
+	var para, html string
+	_ = e.pool.QueryRow(context.Background(), `SELECT a.datos, m.para, m.html FROM correo_mensaje m JOIN correo_adjunto a ON a.mensaje_id=m.id JOIN unidad u ON u.id=m.unidad_id
+		WHERE m.origen='recibo' AND u.codigo='201'`).Scan(&pdf201, &para, &html)
+	if para != "propietario201@demo.pe" || !strings.Contains(textoPDF(t, pdf201), "S/ 990,00") || !strings.Contains(html, "S/ 990,00") {
+		t.Errorf("correo del 201: %s", para)
+	}
+	st, d = e.pedir("POST", "/api/v1/edificios/1/balance/2026-09/enviar-correo", tok, map[string]string{"destinatarios": "todos"})
+	if st != 202 || num(d["encolados"]) != 29 {
+		t.Fatalf("balance por correo (5 de la junta + 24 propietarios): %d %v", st, d)
+	}
+	var adjJunta int
+	_ = e.pool.QueryRow(context.Background(), `SELECT count(*) FROM correo_adjunto a JOIN correo_mensaje m ON m.id=a.mensaje_id WHERE m.origen='balance' AND m.para='junta@demo.pe'`).Scan(&adjJunta)
+	if adjJunta != 2 {
+		t.Errorf("la junta recibe balance + informe: %d adjuntos", adjJunta)
+	}
+	_, l := e.pedir("GET", "/api/v1/edificios/1/correo/mensajes?origen=balance", tok, nil)
+	if num(l["total"]) != 53 || l["modo"] != "simulado" {
+		t.Errorf("bandeja de correo: %v %v", l["total"], l["modo"])
+	}
+	// El propietario no puede enviar.
+	if st, _ := e.pedir("POST", "/api/v1/edificios/1/recibos/2026-09/enviar-correo", e.login("propietario201@demo.pe"), nil); st != 403 {
+		t.Errorf("propietario envía correos: %d", st)
 	}
 }

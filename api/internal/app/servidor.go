@@ -205,6 +205,10 @@ func (s *Server) rutasEdificio(r chi.Router) {
 	r.With(q("balance.ver")).Get("/balance", s.balance)
 	r.With(q("balance.ver")).Get("/balance/nodos/{nodo}", s.balanceNodo)
 	r.With(q("balance.ver")).Get("/balance/documentos/{doc}", s.balanceDocumento)
+	r.With(q("balance.ver")).Get("/balance/{periodo}.pdf", s.pdfBalance)
+	r.With(q("balance.ver")).Get("/balance/{periodo}/informe-junta.pdf", s.pdfInformeJunta)
+	r.With(q("recibos.emitir")).Post("/balance/{periodo}/enviar-correo", s.enviarBalanceCorreo)
+	r.With(q("recibos.emitir")).Get("/correo/mensajes", s.listarCorreos)
 	r.With(q("balance.ver")).Get("/rubros", s.listarRubros)
 	r.With(q("balance.ver")).Get("/egresos", s.listarEgresos)
 	r.With(q("egresos.registrar")).Post("/egresos", s.crearEgreso)
@@ -222,6 +226,7 @@ func (s *Server) rutasEdificio(r chi.Router) {
 	r.With(q("recibos.emitir")).Post("/recibos/enviar", s.enviarRecibos)
 	r.Post("/recibos/{rid}/pagos", s.registrarPago) // pagos.registrar o pagos.informar (se valida dentro)
 	r.With(q("recibos.emitir")).Post("/recibos/{rid}/anular", s.anularRecibo)
+	r.With(q("recibos.emitir")).Post("/recibos/{rid}/enviar-correo", s.enviarRecibosCorreo) // {rid} = periodo AAAA-MM
 	r.With(q("pagos.validar")).Get("/pagos", s.listarPagos)
 	r.With(q("pagos.validar")).Patch("/pagos/{pid}", s.validarPago)
 	r.With(q("morosidad.ver")).Get("/morosidad", s.morosidad)
@@ -656,5 +661,5 @@ func (s *Server) salud(w http.ResponseWriter, r *http.Request) {
 	if !dbOK {
 		estado = http.StatusServiceUnavailable
 	}
-	P.JSON(w, estado, map[string]any{"ok": dbOK && s3OK, "version": s.Cfg.Version, "db": dbOK, "s3": s3OK, "whatsapp_modo": s.Cfg.WhatsAppModo})
+	P.JSON(w, estado, map[string]any{"ok": dbOK && s3OK, "version": s.Cfg.Version, "db": dbOK, "s3": s3OK, "whatsapp_modo": s.Cfg.WhatsAppModo, "correo_modo": s.Cfg.CorreoModo})
 }

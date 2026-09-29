@@ -557,10 +557,21 @@ func (s *Server) pdfRecibo(w http.ResponseWriter, r *http.Request) {
 		P.Fallo(w, r, err)
 		return
 	}
-	lineas, err := db.Filas(ctx, s.DB, `SELECT descripcion, monto_cts FROM recibo_linea WHERE recibo_id=$1 ORDER BY orden, id`, rid)
+	datos, err := s.reciboPDF(ctx, rc, rid)
 	if err != nil {
 		P.Fallo(w, r, err)
 		return
+	}
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=\"recibo-%v.pdf\"", val(rc["numero"])))
+	_, _ = w.Write(datos)
+}
+
+// reciboPDF dibuja el recibo (cargado con reciboVisible) en una hoja A4.
+func (s *Server) reciboPDF(ctx context.Context, rc map[string]any, rid int64) ([]byte, error) {
+	lineas, err := db.Filas(ctx, s.DB, `SELECT descripcion, monto_cts FROM recibo_linea WHERE recibo_id=$1 ORDER BY orden, id`, rid)
+	if err != nil {
+		return nil, err
 	}
 	d := pdf.Nuevo()
 	d.Rect(0, 770, 595, 72, 0.082, 0.369, 0.459)
@@ -595,9 +606,7 @@ func (s *Server) pdfRecibo(w http.ResponseWriter, r *http.Request) {
 		d.Texto(40, y, 10, false, "Paga por Yape al "+yp+" con el concepto «Dpto "+rc["unidad"].(string)+" "+rc["periodo"].(string)+"» y sube tu voucher en la app.")
 	}
 	d.Texto(40, 40, 8, false, "Recibo interno de mantenimiento (no es comprobante SUNAT). Generado por EDISYS el "+time.Now().In(P.Lima).Format("02/01/2006 15:04")+".")
-	w.Header().Set("Content-Type", "application/pdf")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=\"recibo-%v.pdf\"", val(rc["numero"])))
-	_, _ = w.Write(d.Bytes())
+	return d.Bytes(), nil
 }
 
 func val(v any) string {

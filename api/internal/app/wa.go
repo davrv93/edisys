@@ -473,6 +473,7 @@ func (s *Server) procesoBandeja(ctx context.Context) {
 			return
 		case <-t.C:
 			s.despacharPendientes(ctx)
+			s.despacharCorreos(ctx)
 		}
 	}
 }

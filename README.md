@@ -23,6 +23,7 @@ Usuarios de demostración (clave **`Demo2026!`**): `admin@demo.pe` (administrado
 | postgres | `edisys_postgres` | 4754 | PostgreSQL 16 |
 | s3 | `edisys_s3` | 4790 (S3) · 4791 (admin) | Garage v2 de un nodo |
 | migrate | `edisys_migrate` | — | `edisys preparar`: migra y siembra si la base está vacía; termina |
+| mailpit | `edisys_mailpit` | 4725 (SMTP) · **4726** (web) | Buzón local: atrapa todo el correo del API |
 
 S3: MinIO ya no publica imágenes libres, así que en local se usa **Garage** (lo mismo que el EC2). El API lo inicializa solo
 (layout, clave y cubo privado) por el API de administración de Garage. Los archivos se sirven con URL firmada de 10 min en
@@ -46,6 +47,18 @@ Binario: `edisys serve | migrate | seed [--pendientes=N] | preparar | salud`.
 Solo con `WHATSAPP_MODO=evolution` en el servidor **y** el edificio configurado en `evolution` se envía de verdad
 (`POST {EVOLUTION_URL}/message/sendText/{instancia}` con `apikey`). La clave nunca se devuelve por el API.
 Webhook de entrada: `POST /api/v1/whatsapp/webhook` (con `?token=` si defines `WHATSAPP_WEBHOOK_TOKEN`).
+
+## Correo
+
+`CORREO_MODO=smtp` en el compose local: el API entrega a **Mailpit** (`SMTP_HOST=mailpit`, puerto 1025 interno / 4725 en el host)
+y los correos se ven en **http://localhost:4726**. Nada sale a terceros. Con `CORREO_MODO=simulado` (por defecto fuera del compose)
+no se envía nada: los mensajes quedan en la bandeja `correo_mensaje` con estado `simulado`. `SMTP_USUARIO`/`SMTP_CLAVE` solo
+para un SMTP real; la clave nunca se registra ni se devuelve.
+
+- `GET /edificios/{eid}/balance/{AAAA-MM}.pdf` y `…/balance/{AAAA-MM}/informe-junta.pdf`
+- `POST /edificios/{eid}/recibos/{AAAA-MM}/enviar-correo`: cada propietario recibe su recibo en PDF.
+- `POST /edificios/{eid}/balance/{AAAA-MM}/enviar-correo {destinatarios: todos|junta|propietarios}`: la junta recibe balance e informe; los propietarios, el balance.
+- `GET /edificios/{eid}/correo/mensajes`: la bandeja.
 
 ## API
 
