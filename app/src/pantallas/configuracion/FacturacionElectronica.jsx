@@ -37,6 +37,25 @@ export function rucValido(ruc) {
   return d === Number(r[10]);
 }
 
+/** Lo que le falta al modo beta para emitir: certificado, usuario y clave (los dos últimos valen los del edificio o los de prueba del servidor). */
+function ListaBeta({ cfg }) {
+  const servidor = !!cfg?.tiene_beta_servidor;
+  const filas = [
+    { listo: !!cfg?.tiene_certificado, texto: 'Certificado digital cargado' },
+    { listo: !!(cfg?.ose_usuario || servidor), texto: 'Usuario SOL de pruebas' },
+    { listo: !!(cfg?.tiene_ose_clave || servidor), texto: 'Clave SOL de pruebas' },
+  ];
+  if (filas.every((x) => x.listo)) return null;
+  return (
+    <ul className="flex flex-col gap-1 text-sm" aria-label="Lo que falta para el modo beta">
+      {filas.filter((x) => !x.listo).map((x) => (
+        <li key={x.texto} className="text-aviso-texto">Falta: {x.texto.toLowerCase()}.</li>
+      ))}
+      {servidor && <li className="text-xs text-texto-apoyo">El servidor ya tiene usuario y clave de pruebas: basta subir el certificado.</li>}
+    </ul>
+  );
+}
+
 /** Configuración › Facturación electrónica: emisor, series, modo, OSE y certificado (.pfx). Las claves nunca se muestran. */
 export default function FacturacionElectronica({ eid }) {
   const { toast } = useToast();
@@ -119,6 +138,7 @@ export default function FacturacionElectronica({ eid }) {
         </div>
       </Seccion>
       <Seccion titulo="Proveedor OSE / SUNAT beta">
+        {f.modo === 'beta' && <ListaBeta cfg={cfg.datos} />}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Campo etiqueta="URL del servicio" valor={f.ose_url} onCambio={cambiar('ose_url')} ayuda="Vacío en beta: se usa el servicio de pruebas de SUNAT." className="sm:col-span-2" />
           <Campo etiqueta="Usuario (RUC + usuario SOL)" valor={f.ose_usuario} onCambio={cambiar('ose_usuario')} />

@@ -3,14 +3,18 @@ package app_test
 // Pruebas de los pendientes funcionales (docs/PLAN_PENDIENTES_FUNCIONALES.md), bloque por bloque.
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"image"
 	"image/png"
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"os/exec"
 	"strings"
@@ -745,6 +749,61 @@ func TestSunatBoletaFacturaYAnulacion(t *testing.T) {
 	_, _ = e.pedir("PUT", "/api/v1/edificios/1/facturacion/config", tok, map[string]any{"ruc": "20600000005", "razon_social": "Junta", "modo": "beta"})
 	if st, d := e.pedir("POST", fmt.Sprintf("/api/v1/edificios/1/recibos/%d/comprobante", e.reciboDe("603", "2026-09")), tok, nil); st != 422 || codigo(d) != "SIN_CREDENCIALES_BETA" {
 		t.Errorf("beta sin credenciales: %d %v", st, d)
+	}
+}
+
+// Beta con las credenciales de prueba del servidor (SUNAT_BETA_*): el edificio sin
+// usuario ni clave emite igual; las claves nunca vuelven por el API.
+func TestSunatBetaConCredencialesDelServidor(t *testing.T) {
+	if _, err := exec.LookPath("openssl"); err != nil {
+		t.Skip("sin openssl")
+	}
+	var sobre string
+	falso := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		sobre = string(b)
+		var zb bytes.Buffer
+		z := zip.NewWriter(&zb)
+		f, _ := z.Create("R-20600000005-03-B001-1.xml")
+		_, _ = f.Write([]byte(sunat.CDRSimulado("20600000005", sunat.Boleta, "B001-1", "x", time.Now()).XML))
+		_ = z.Close()
+		_, _ = w.Write([]byte(`<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><br:sendBillResponse xmlns:br="http://service.sunat.gob.pe"><applicationResponse>` +
+			base64.StdEncoding.EncodeToString(zb.Bytes()) + `</applicationResponse></br:sendBillResponse></soap:Body></soap:Envelope>`))
+	}))
+	defer falso.Close()
+	t.Setenv("SUNAT_BETA_URL", falso.URL)
+	t.Setenv("SUNAT_BETA_USUARIO", "20600000005MODDATOS")
+	t.Setenv("SUNAT_BETA_CLAVE", "moddatos")
+	e := nuevo(t)
+	tok := e.login("admin@demo.pe")
+	_, cfg := e.pedir("GET", "/api/v1/edificios/1/facturacion/config", tok, nil)
+	if cfg["tiene_beta_servidor"] != true {
+		t.Fatalf("sin respaldo del servidor: %v", cfg)
+	}
+	ifTodo, _ := json.Marshal(cfg)
+	if strings.Contains(string(ifTodo), "moddatos") {
+		t.Fatalf("la clave del servidor vuelve por el API: %v", cfg)
+	}
+	// Certificado del edificio (beta lo exige): se genera y se sube.
+	dir := t.TempDir()
+	cmd := exec.Command("sh", "-c", `openssl req -x509 -newkey rsa:2048 -nodes -keyout k.pem -out c.pem -days 30 -subj "/CN=Prueba EDISYS" 2>/dev/null &&
+		openssl pkcs12 -export -legacy -inkey k.pem -in c.pem -out c.pfx -passout pass:clave123 2>/dev/null || openssl pkcs12 -export -inkey k.pem -in c.pem -out c.pfx -passout pass:clave123`)
+	cmd.Dir = dir
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Skipf("openssl: %v %s", err, out)
+	}
+	pfx, _ := os.ReadFile(dir + "/c.pfx")
+	if st, d := e.multipartPedir("POST", "/api/v1/edificios/1/facturacion/certificado", tok, map[string]string{"clave": "clave123"}, "certificado", "c.pfx", pfx); st != 201 {
+		t.Fatalf("subir pfx: %d %v", st, d)
+	}
+	// Sin usuario ni clave en el edificio: igual emite, con las del servidor.
+	_, _ = e.pedir("PUT", "/api/v1/edificios/1/facturacion/config", tok, map[string]any{"ruc": "20600000005", "razon_social": "Junta", "modo": "beta"})
+	st, b := e.pedir("POST", fmt.Sprintf("/api/v1/edificios/1/recibos/%d/comprobante", e.reciboDe("201", "2026-09")), tok, nil)
+	if st != 201 || b["modo"] != "beta" || b["estado"] != "aceptado" || b["numero_completo"] != "B001-1" {
+		t.Fatalf("beta con respaldo: %d %v", st, b)
+	}
+	if !strings.Contains(sobre, "<wsse:Username>20600000005MODDATOS</wsse:Username>") {
+		t.Errorf("no usó el usuario del servidor: %s", sobre)
 	}
 }
 

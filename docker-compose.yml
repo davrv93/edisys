@@ -37,6 +37,10 @@ x-api-env: &api-env
   SMTP_PUERTO: ${SMTP_PUERTO:-1025}
   SMTP_USUARIO: ${SMTP_USUARIO:-}
   SMTP_CLAVE: ${SMTP_CLAVE:-}
+  # SUNAT beta: credenciales de prueba del servidor (respaldan al edificio sin las suyas).
+  SUNAT_BETA_URL: ${SUNAT_BETA_URL:-}
+  SUNAT_BETA_USUARIO: ${SUNAT_BETA_USUARIO:-}
+  SUNAT_BETA_CLAVE: ${SUNAT_BETA_CLAVE:-}
 
 services:
   postgres:

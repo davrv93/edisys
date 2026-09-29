@@ -89,8 +89,10 @@ series `B001`/`F001`, modo `off | simulado | beta | produccion`, afectación al 
 en `POST …/facturacion/certificado` (se guarda en el cubo privado; ni el archivo ni las claves vuelven por el API).
 
 - **simulado** (la semilla lo deja así): firma con el `.pfx` cargado o con un certificado de prueba de EDISYS y devuelve un CDR
-  aceptado sin salir a la red. **beta**: SOAP `sendBill` al entorno de pruebas de SUNAT, solo con usuario, clave y certificado.
-  **produccion**: deshabilitado en esta entrega.
+  aceptado sin salir a la red. **beta**: SOAP `sendBill` al entorno de pruebas de SUNAT, con usuario, clave y certificado:
+  primero valen los del edificio y, si faltan, los de prueba del servidor (`SUNAT_BETA_URL/USUARIO/CLAVE` en el `.env`;
+  el certificado `.pfx` siempre se sube por edificio). La pantalla avisa qué falta. **produccion**: deshabilitado
+  en esta entrega (el API responde `PRODUCCION_DESHABILITADA`).
 - Boleta a persona (DNI o sin documento), factura a empresa (RUC válido). XML UBL 2.1 firmado (XMLDSig RSA-SHA256, firma
   envuelta); correlativo por serie sin huecos (se reserva en la misma transacción de la emisión).
 - `POST /recibos/{rid}/comprobante`, `GET /comprobantes/{cid}/xml|pdf|cdr` (PDF con QR), `POST /comprobantes/{cid}/anular`

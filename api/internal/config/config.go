@@ -34,6 +34,11 @@ type Config struct {
 	SMTPPuerto  string
 	SMTPUsuario string
 	SMTPClave   string // nunca se registra ni se devuelve
+	// SUNAT beta: credenciales de prueba del servidor. Respaldan al edificio que no
+	// tiene las suyas; el certificado .pfx sigue siendo por edificio (se sube en la app).
+	SUNATBetaURL     string
+	SUNATBetaUsuario string
+	SUNATBetaClave   string // nunca se registra ni se devuelve
 }
 
 func env(k, def string) string {
@@ -78,5 +83,8 @@ func Cargar() Config {
 		SMTPPuerto:    env("SMTP_PUERTO", "25"),
 		SMTPUsuario:   env("SMTP_USUARIO", ""),
 		SMTPClave:     env("SMTP_CLAVE", ""),
+		SUNATBetaURL:     env("SUNAT_BETA_URL", ""),
+		SUNATBetaUsuario: env("SUNAT_BETA_USUARIO", ""),
+		SUNATBetaClave:   env("SUNAT_BETA_CLAVE", ""),
 	}
 }

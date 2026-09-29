@@ -71,8 +71,9 @@ func (s *Server) verConfigFacturacion(w http.ResponseWriter, r *http.Request) {
 	P.JSON(w, http.StatusOK, map[string]any{"ruc": c.RUC, "razon_social": c.RazonSocial, "direccion": c.Direccion, "ubigeo": c.Ubigeo,
 		"serie_boleta": c.SerieBoleta, "serie_factura": c.SerieFactura, "modo": c.Modo, "ose_url": c.OSEURL, "ose_usuario": c.OSEUsuario,
 		"tiene_ose_clave": c.OSEClave != "", "tiene_certificado": c.CertArchivo != nil, "certificado_vence": vence, "afectacion": c.Afectacion,
+		"tiene_beta_servidor": s.Cfg.SUNATBetaUsuario != "" && s.Cfg.SUNATBetaClave != "",
 		"modos": []string{"off", "simulado", "beta", "produccion"}, "produccion_habilitada": false,
-		"aviso": "Producción está deshabilitada en esta entrega. «Simulado» no envía nada a SUNAT; «beta» usa el entorno de pruebas y necesita usuario, clave y certificado."})
+		"aviso": "Producción está deshabilitada en esta entrega. «Simulado» no envía nada a SUNAT; «beta» usa el entorno de pruebas y necesita usuario, clave y certificado (los del edificio, o los de prueba del servidor)."})
 }
 
 var reSerie = map[string]*regexp.Regexp{"B": regexp.MustCompile(`^B[A-Z0-9]{3}$`), "F": regexp.MustCompile(`^F[A-Z0-9]{3}$`)}
@@ -155,9 +156,8 @@ func (s *Server) guardarConfigFacturacion(w http.ResponseWriter, r *http.Request
 	if cambiaClave {
 		clave = *in.OSEClave
 	}
-	if in.OSEURL == "" && in.Modo == "beta" {
-		in.OSEURL = URLBetaSUNAT
-	}
+	// La URL vacía en beta se guarda vacía a propósito: oseBeta la resuelve al enviar
+	// (primero SUNAT_BETA_URL del servidor, si no, el beta de SUNAT).
 	if _, err := s.DB.Exec(ctx, `INSERT INTO facturacion_config (edificio_id, ruc, razon_social, direccion, ubigeo, serie_boleta, serie_factura, modo, ose_url, ose_usuario, ose_clave, afectacion, actualizado_por)
 		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,COALESCE(NULLIF($12,'null')::jsonb, '{}'::jsonb),$13)
 		ON CONFLICT (edificio_id) DO UPDATE SET ruc=EXCLUDED.ruc, razon_social=EXCLUDED.razon_social, direccion=EXCLUDED.direccion, ubigeo=EXCLUDED.ubigeo,
@@ -261,6 +261,25 @@ func siguienteNumero(ctx context.Context, tx pgx.Tx, eid int64, serie string) (i
 	return n, err
 }
 
+// oseBeta: cliente OSE del modo beta. Manda lo del edificio; si falta, lo del servidor
+// (credenciales de prueba SUNAT_BETA_*); la URL cae al servicio beta de SUNAT.
+func (s *Server) oseBeta(c *configFE) sunat.OSE {
+	o := sunat.OSE{URL: c.OSEURL, Usuario: c.OSEUsuario, Clave: c.OSEClave, HTTP: s.HTTP}
+	if o.URL == "" {
+		o.URL = s.Cfg.SUNATBetaURL
+	}
+	if o.URL == "" {
+		o.URL = URLBetaSUNAT
+	}
+	if o.Usuario == "" {
+		o.Usuario = s.Cfg.SUNATBetaUsuario
+	}
+	if o.Clave == "" {
+		o.Clave = s.Cfg.SUNATBetaClave
+	}
+	return o
+}
+
 // enviar firma y obtiene el CDR según el modo. nombre = RUC-TIPO-SERIE-NUMERO.
 func (s *Server) enviar(ctx context.Context, c *configFE, cert *sunat.Certificado, doc, tipo, id string) (firmado, hash string, cdr sunat.CDR, err error) {
 	firmado, hash, err = sunat.Firmar(doc, cert)
@@ -268,12 +287,9 @@ func (s *Server) enviar(ctx context.Context, c *configFE, cert *sunat.Certificad
 		return
 	}
 	if c.Modo == "beta" {
-		o := sunat.OSE{URL: c.OSEURL, Usuario: c.OSEUsuario, Clave: c.OSEClave, HTTP: s.HTTP}
-		if o.URL == "" {
-			o.URL = URLBetaSUNAT
-		}
+		o := s.oseBeta(c)
 		if o.Usuario == "" || o.Clave == "" {
-			err = P.Err(http.StatusUnprocessableEntity, "SIN_CREDENCIALES_BETA", "Para el modo beta configura el usuario y la clave SOL de pruebas.")
+			err = P.Err(http.StatusUnprocessableEntity, "SIN_CREDENCIALES_BETA", "Para el modo beta configura el usuario y la clave SOL de pruebas (o SUNAT_BETA_* en el servidor).")
 			return
 		}
 		cdr, err = o.EnviarComprobante(ctx, c.RUC+"-"+tipo+"-"+id, []byte(firmado))
@@ -725,8 +741,7 @@ func (s *Server) anularComprobante(w http.ResponseWriter, r *http.Request) {
 		}
 		ticket := "SIM-" + strconv.FormatInt(time.Now().UnixNano(), 10)
 		if c.Modo == "beta" {
-			o := sunat.OSE{URL: c.OSEURL, Usuario: c.OSEUsuario, Clave: c.OSEClave, HTTP: s.HTTP}
-			if ticket, err = o.EnviarResumen(ctx, c.RUC+"-"+id, []byte(firmado)); err != nil {
+			if ticket, err = s.oseBeta(c).EnviarResumen(ctx, c.RUC+"-"+id, []byte(firmado)); err != nil {
 				P.Fallo(w, r, P.Err(http.StatusBadGateway, "SUNAT_ERROR", err.Error()))
 				return
 			}
