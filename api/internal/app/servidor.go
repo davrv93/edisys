@@ -244,6 +244,7 @@ func (s *Server) rutasEdificio(r chi.Router) {
 	r.With(q("lecturas.ver")).Get("/lecturas", s.listarLecturas)
 	r.With(q("lecturas.registrar")).Post("/medidores/{mid}/lecturas", s.registrarLectura)
 	r.With(q("lecturas.corregir")).Put("/lecturas/{lid}", s.corregirLectura)
+	r.With(q("recibos.emitir")).Get("/ajustes", s.listarAjustes)
 	r.With(q("lecturas.aprobar_reparto")).Post("/periodos/{p}/recibo-general", s.registrarReciboGeneral)
 	r.With(q("lecturas.aprobar_reparto")).Get("/periodos/{p}/recibo-general", s.verReciboGeneral)
 	r.With(q("lecturas.aprobar_reparto")).Post("/periodos/{p}/reparto-medidores/calcular", s.calcularReparto)

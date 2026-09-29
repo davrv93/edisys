@@ -2,13 +2,20 @@
 COMPOSE := docker compose
 TEST_DB ?= postgres://edisys:edisys@localhost:4754/edisys_test?sslmode=disable
 
-.PHONY: up down logs seed seed-demo test test-unit ps smoke build
+.PHONY: up down logs seed seed-demo test test-unit ps smoke build api
 
 up:            ## Construye y levanta todo (edge en http://localhost:4700)
 	$(COMPOSE) up -d --build
 
 build:
 	$(COMPOSE) build
+
+api:           ## Reconstruye el API, aplica migraciones y recrea solo migrate + api (el resto sigue arriba)
+	$(COMPOSE) build migrate
+	$(COMPOSE) up -d --no-deps --force-recreate migrate
+	@until [ "$$(docker inspect -f '{{.State.Status}}' edisys_migrate)" = exited ]; do sleep 1; done
+	@test "$$(docker inspect -f '{{.State.ExitCode}}' edisys_migrate)" = 0 || (docker logs --tail 20 edisys_migrate; exit 1)
+	$(COMPOSE) up -d --no-deps --force-recreate api
 
 down:          ## Apaga (los volúmenes se conservan)
 	$(COMPOSE) down

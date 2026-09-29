@@ -164,6 +164,7 @@ type lineaRecibo struct {
 	MontoCts    int64  `json:"monto_cts"`
 	ReservaID   *int64 `json:"reserva_id,omitempty"`
 	LecturaID   *int64 `json:"lectura_id,omitempty"`
+	AjusteID    *int64 `json:"ajuste_id,omitempty"`
 }
 
 // Generar arma los borradores del periodo con el motor de reparto (mayor residuo).
@@ -274,6 +275,22 @@ func (s *Server) Generar(ctx context.Context, tx pgx.Tx, eid int64, periodo stri
 		lineas[uid] = append(lineas[uid], lineaRecibo{Tipo: "reserva", Descripcion: "Reserva " + codigo + " " + recurso, MontoCts: total, ReservaID: &id})
 	}
 	fr.Close()
+	// Ajustes pendientes (notas de cargo/abono por correcciones de periodos ya emitidos, 0009).
+	fa, err := tx.Query(ctx, `SELECT id, unidad_id, monto_cts, motivo FROM ajuste WHERE edificio_id=$1 AND recibo_id IS NULL AND periodo_origen < $2 ORDER BY id`, eid, periodo)
+	if err != nil {
+		return nil, err
+	}
+	for fa.Next() {
+		var aid, uid, monto int64
+		var motivo string
+		if err := fa.Scan(&aid, &uid, &monto, &motivo); err != nil {
+			fa.Close()
+			return nil, err
+		}
+		id := aid
+		lineas[uid] = append(lineas[uid], lineaRecibo{Tipo: "ajuste", Descripcion: descAjuste(motivo, monto), MontoCts: monto, AjusteID: &id})
+	}
+	fa.Close()
 
 	var recibos []map[string]any
 	var totalPeriodo int64
@@ -283,15 +300,33 @@ func (s *Server) Generar(ctx context.Context, tx pgx.Tx, eid int64, periodo stri
 		for _, l := range ls {
 			total += l.MontoCts
 		}
+		if total < 0 {
+			// Un abono no puede dejar el recibo en negativo: los ajustes esperan al siguiente periodo.
+			var sin []lineaRecibo
+			total = 0
+			for _, l := range ls {
+				if l.Tipo != "ajuste" {
+					sin = append(sin, l)
+					total += l.MontoCts
+				}
+			}
+			ls = sin
+			advertencias = append(advertencias, "Unidad "+u.codigo+": el abono pendiente supera el recibo; se aplicará el mes siguiente.")
+		}
 		var rid int64
 		if err := tx.QueryRow(ctx, `INSERT INTO recibo (edificio_id, periodo_id, unidad_id, estado, total_cts) VALUES ($1,$2,$3,'borrador',$4) RETURNING id`,
 			eid, pid, u.id, total).Scan(&rid); err != nil {
 			return nil, err
 		}
 		for i, l := range ls {
-			if _, err := tx.Exec(ctx, `INSERT INTO recibo_linea (recibo_id, tipo, descripcion, monto_cts, orden, reserva_id, lectura_id) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-				rid, l.Tipo, l.Descripcion, l.MontoCts, i+1, l.ReservaID, l.LecturaID); err != nil {
+			if _, err := tx.Exec(ctx, `INSERT INTO recibo_linea (recibo_id, tipo, descripcion, monto_cts, orden, reserva_id, lectura_id, ajuste_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+				rid, l.Tipo, l.Descripcion, l.MontoCts, i+1, l.ReservaID, l.LecturaID, l.AjusteID); err != nil {
 				return nil, err
+			}
+			if l.AjusteID != nil {
+				if _, err := tx.Exec(ctx, `UPDATE ajuste SET recibo_id=$2 WHERE id=$1`, *l.AjusteID, rid); err != nil {
+					return nil, err
+				}
 			}
 		}
 		if ls == nil {
@@ -854,7 +889,7 @@ func (s *Server) morosidad(w http.ResponseWriter, r *http.Request) {
 	m := a.KPIs.Morosidad
 	P.JSON(w, http.StatusOK, map[string]any{"periodo": periodo, "indice_pct": m.Pct, "monto_cts": m.MontoCts,
 		"emitido_cts": a.KPIs.EmitidoCts, "unidades_con_saldo": m.Unidades, "unidades": unidades,
-		"del_mes": map[string]any{"pct": m.Pct, "monto_cts": m.MontoCts, "unidades": m.Unidades},
+		"del_mes":   map[string]any{"pct": m.Pct, "monto_cts": m.MontoCts, "unidades": m.Unidades},
 		"historica": map[string]any{"pct": m.HistoricaPct, "monto_cts": m.HistoricaMontoCts, "unidades": m.HistoricaUnidades, "deuda_inicial_cts": m.DeudaInicialCts}})
 }
 

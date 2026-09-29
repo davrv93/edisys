@@ -6,6 +6,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"image"
+	"image/png"
+	"mime/multipart"
+	"net/http"
 	"strings"
 	"testing"
 	"time"
@@ -14,6 +18,7 @@ import (
 
 	"edisys/api/internal/app"
 	P "edisys/api/internal/plataforma"
+	"edisys/api/internal/reparto"
 )
 
 // padronConDeuda: el padrón demo más la hoja «Deuda» con las filas dadas (codigo, periodo, monto en soles).
@@ -165,5 +170,213 @@ func TestDeudaInicialEnMorosidad(t *testing.T) {
 	}
 	if recuperada != 80000 {
 		t.Errorf("deuda recuperada en setiembre: %d", recuperada)
+	}
+}
+
+// ---------- utilidades multipart ----------
+
+func pngChico() []byte {
+	var b bytes.Buffer
+	_ = png.Encode(&b, image.NewRGBA(image.Rect(0, 0, 4, 4)))
+	return b.Bytes()
+}
+
+// multipartPedir envía un formulario con campos y, opcionalmente, un archivo.
+func (e *entorno) multipartPedir(metodo, ruta, tok string, campos map[string]string, campoArchivo, nombre string, datos []byte) (int, map[string]any) {
+	e.t.Helper()
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+	for k, v := range campos {
+		_ = w.WriteField(k, v)
+	}
+	if campoArchivo != "" {
+		fw, _ := w.CreateFormFile(campoArchivo, nombre)
+		_, _ = fw.Write(datos)
+	}
+	_ = w.Close()
+	req, _ := http.NewRequest(metodo, e.srv.URL+ruta, &b)
+	req.Header.Set("Content-Type", w.FormDataContentType())
+	req.Header.Set("Authorization", "Bearer "+tok)
+	return e.hacer(req)
+}
+
+// ---------- Bloque 2 · lecturas en cascada ----------
+
+func (e *entorno) lectura(unidad, periodo string) (id int64, valor, anterior string) {
+	e.t.Helper()
+	if err := e.pool.QueryRow(context.Background(), `SELECT l.id, l.valor::text, l.anterior::text FROM lectura l JOIN medidor m ON m.id=l.medidor_id
+		JOIN periodo p ON p.id=l.periodo_id WHERE m.serie=$1 AND p.periodo=$2`, "AG-"+unidad, periodo).Scan(&id, &valor, &anterior); err != nil {
+		e.t.Fatalf("lectura %s %s: %v", unidad, periodo, err)
+	}
+	return
+}
+
+// abrirOctubre: abre 2026-10, lee los 24 medidores (mismo consumo que setiembre), registra el recibo general
+// de S/ 5.000 y aprueba el reparto (5.000 / 4.800 / 200). genera=true deja los borradores de octubre.
+func (e *entorno) abrirOctubre(tok string, genera bool) {
+	e.t.Helper()
+	if st, d := e.pedir("POST", "/api/v1/edificios/1/periodos", tok, map[string]any{"periodo": "2026-10"}); st != 201 {
+		e.t.Fatalf("abrir octubre: %d %v", st, d)
+	}
+	filas, _ := e.pool.Query(context.Background(), `SELECT m.id, u.codigo, l.valor::text FROM medidor m JOIN unidad u ON u.id=m.unidad_id
+		JOIN lectura l ON l.medidor_id=m.id JOIN periodo p ON p.id=l.periodo_id WHERE p.periodo='2026-09' ORDER BY u.codigo`)
+	type med struct {
+		id         int64
+		cod, valor string
+	}
+	var ms []med
+	for filas.Next() {
+		var m med
+		_ = filas.Scan(&m.id, &m.cod, &m.valor)
+		ms = append(ms, m)
+	}
+	filas.Close()
+	for _, m := range ms {
+		v, _ := P.Milesimas(m.valor)
+		nuevo := P.TextoMilesimas(v + reparto.ConsumoSetiembreDemo[m.cod])
+		if st, d := e.multipartPedir("POST", fmt.Sprintf("/api/v1/edificios/1/medidores/%d/lecturas", m.id), tok,
+			map[string]string{"periodo": "2026-10", "valor": nuevo}, "foto", "m.png", pngChico()); st != 201 {
+			e.t.Fatalf("lectura octubre %s: %d %v", m.cod, st, d)
+		}
+	}
+	if st, d := e.multipartPedir("POST", "/api/v1/edificios/1/periodos/2026-10/recibo-general", tok,
+		map[string]string{"monto_cts": "500000", "consumo_total": "357.143"}, "foto_recibo", "sedapal.png", pngChico()); st != 201 {
+		e.t.Fatalf("recibo general octubre: %d %v", st, d)
+	}
+	if st, d := e.pedir("POST", "/api/v1/edificios/1/periodos/2026-10/reparto-medidores/aprobar", tok, nil); st != 200 || num(d["diferencia_cts"]) != 20000 {
+		e.t.Fatalf("reparto octubre: %d %v", st, d)
+	}
+	if genera {
+		if st, d := e.pedir("POST", "/api/v1/edificios/1/periodos/2026-10/recibos/generar", tok, nil); st != 200 {
+			e.t.Fatalf("generar octubre: %d %v", st, d)
+		}
+	}
+}
+
+func sumaLineas(ls []any) int64 {
+	var s int64
+	for _, l := range ls {
+		s += num(l.(map[string]any)["total_cts"])
+	}
+	return s
+}
+
+// Setiembre emitido y octubre sin recibos: corregir setiembre del 201 recalcula octubre (anterior y consumo),
+// rehace los dos repartos (siguen sumando S/ 5.000 al céntimo) y deja ajustes que entran al generar octubre.
+func TestLecturaEnCascadaConAjustes(t *testing.T) {
+	e := nuevo(t)
+	tok := e.login("admin@demo.pe")
+	e.abrirOctubre(tok, false)
+	lid, valor, _ := e.lectura("201", "2026-09")
+	_, valorOct, _ := e.lectura("201", "2026-10")
+	v, _ := P.Milesimas(valor)
+	corregido := P.TextoMilesimas(v + 2000) // +2 m³
+	// Sin motivo: 422.
+	if st, _ := e.pedir("PUT", fmt.Sprintf("/api/v1/edificios/1/lecturas/%d", lid), tok, map[string]any{"valor": corregido}); st != 422 {
+		t.Errorf("sin motivo: %d", st)
+	}
+	st, d := e.pedir("PUT", fmt.Sprintf("/api/v1/edificios/1/lecturas/%d", lid), tok, map[string]any{"valor": corregido, "motivo": "El operario leyó mal un dígito"})
+	if st != 200 {
+		t.Fatalf("corregir: %d %v", st, d)
+	}
+	// Octubre: la anterior es la corregida y su consumo baja 2 m³.
+	_, vo, ao := e.lectura("201", "2026-10")
+	if vo != valorOct || ao != corregido || d["siguiente"].(map[string]any)["consumo"] != "12.000" {
+		t.Errorf("octubre no se recalculó: valor %s anterior %s (quiero %s) · %v", vo, ao, corregido, d["siguiente"])
+	}
+	reps := d["repartos"].([]any)
+	if len(reps) != 2 {
+		t.Fatalf("repartos rehechos: %v", reps)
+	}
+	for _, x := range reps {
+		rp := x.(map[string]any)
+		if num(rp["suma_lineas_cts"]) != 500000 || num(rp["total_unidades_cts"])+num(rp["diferencia_cts"]) != 500000 {
+			t.Errorf("el reparto de %v no suma S/ 5.000: %v", rp["periodo"], rp)
+		}
+	}
+	sept := reps[0].(map[string]any)
+	if sept["periodo"] != "2026-09" || sept["emitido"] != true || num(sept["suma_ajustes_cts"]) != 0 || num(sept["ajustes"]) == 0 {
+		t.Errorf("setiembre emitido debería dar ajustes que suman 0: %v", sept)
+	}
+	// Los recibos emitidos de setiembre no cambian.
+	var total201 int64
+	_ = e.pool.QueryRow(context.Background(), `SELECT r.total_cts FROM recibo r JOIN unidad u ON u.id=r.unidad_id JOIN periodo p ON p.id=r.periodo_id WHERE u.codigo='201' AND p.periodo='2026-09'`).Scan(&total201)
+	if total201 != 99000 {
+		t.Errorf("el recibo emitido de setiembre del 201 cambió: %d", total201)
+	}
+	var cargo201 int64
+	for _, x := range d["ajustes"].([]any) {
+		a := x.(map[string]any)
+		if a["unidad"] == "201" {
+			cargo201 = num(a["monto_cts"])
+		}
+	}
+	if cargo201 <= 0 {
+		t.Errorf("el 201 consumió más: debería tener nota de cargo, tiene %d", cargo201)
+	}
+	// Al generar octubre, cada ajuste entra en el recibo de su unidad.
+	if st, g := e.pedir("POST", "/api/v1/edificios/1/periodos/2026-10/recibos/generar", tok, nil); st != 200 {
+		t.Fatalf("generar octubre: %d %v", st, g)
+	}
+	var enRecibo int64
+	_ = e.pool.QueryRow(context.Background(), `SELECT rl.monto_cts FROM recibo_linea rl JOIN recibo r ON r.id=rl.recibo_id JOIN unidad u ON u.id=r.unidad_id
+		JOIN periodo p ON p.id=r.periodo_id WHERE u.codigo='201' AND p.periodo='2026-10' AND rl.tipo='ajuste'`).Scan(&enRecibo)
+	if enRecibo != cargo201 {
+		t.Errorf("ajuste en el recibo de octubre: %d, quiero %d", enRecibo, cargo201)
+	}
+	_, pend := e.pedir("GET", "/api/v1/edificios/1/ajustes?pendientes=1", tok, nil)
+	if num(pend["total"]) != 0 {
+		t.Errorf("quedaron ajustes pendientes: %v", pend)
+	}
+	// Queda en la auditoría.
+	var aud int
+	_ = e.pool.QueryRow(context.Background(), `SELECT count(*) FROM auditoria WHERE modulo='lecturas' AND accion='corregir' AND entidad_id=$1`, fmt.Sprint(lid)).Scan(&aud)
+	if aud != 1 {
+		t.Errorf("auditoría de la corrección: %d", aud)
+	}
+	// Menor que la anterior: exige confirmar (cambio de medidor).
+	st, d = e.pedir("PUT", fmt.Sprintf("/api/v1/edificios/1/lecturas/%d", lid), tok, map[string]any{"valor": "1.000", "motivo": "cambio"})
+	if st != 422 || codigo(d) != "CONSUMO_NEGATIVO" {
+		t.Errorf("negativo sin confirmar: %d %v", st, d)
+	}
+}
+
+// Con los borradores de octubre ya generados: la corrección de setiembre (emitido) aplica los ajustes
+// directo en esos borradores y reescribe el agua de octubre; todo sigue cuadrando al céntimo.
+func TestLecturaEnCascadaConBorradores(t *testing.T) {
+	e := nuevo(t)
+	tok := e.login("admin@demo.pe")
+	e.abrirOctubre(tok, true)
+	var antes int64
+	_ = e.pool.QueryRow(context.Background(), `SELECT sum(rl.monto_cts) FROM recibo_linea rl JOIN recibo r ON r.id=rl.recibo_id JOIN periodo p ON p.id=r.periodo_id
+		WHERE p.periodo='2026-10' AND rl.tipo IN ('agua','agua_comun')`).Scan(&antes)
+	lid, valor, _ := e.lectura("201", "2026-09")
+	v, _ := P.Milesimas(valor)
+	st, d := e.pedir("PUT", fmt.Sprintf("/api/v1/edificios/1/lecturas/%d", lid), tok, map[string]any{"valor": P.TextoMilesimas(v + 3000), "motivo": "Foto releída"})
+	if st != 200 {
+		t.Fatalf("corregir: %d %v", st, d)
+	}
+	oct := d["repartos"].([]any)[1].(map[string]any)
+	if oct["emitido"] != false || num(oct["recibos_actualizados"]) != 24 {
+		t.Errorf("octubre en borrador: %v", oct)
+	}
+	var agua, ajustes, sinAplicar int64
+	_ = e.pool.QueryRow(context.Background(), `SELECT COALESCE(sum(rl.monto_cts) FILTER (WHERE rl.tipo IN ('agua','agua_comun')),0), COALESCE(sum(rl.monto_cts) FILTER (WHERE rl.tipo='ajuste'),0)
+		FROM recibo_linea rl JOIN recibo r ON r.id=rl.recibo_id JOIN periodo p ON p.id=r.periodo_id WHERE p.periodo='2026-10'`).Scan(&agua, &ajustes)
+	_ = e.pool.QueryRow(context.Background(), `SELECT count(*) FROM ajuste WHERE recibo_id IS NULL`).Scan(&sinAplicar)
+	if agua != 500000 || antes != 500000 || ajustes != 0 || sinAplicar != 0 {
+		t.Errorf("octubre: agua %d (antes %d), ajustes suman %d, sin aplicar %d", agua, antes, ajustes, sinAplicar)
+	}
+	var consumo string
+	_ = e.pool.QueryRow(context.Background(), `SELECT rl.descripcion FROM recibo_linea rl JOIN recibo r ON r.id=rl.recibo_id JOIN unidad u ON u.id=r.unidad_id
+		JOIN periodo p ON p.id=r.periodo_id WHERE u.codigo='201' AND p.periodo='2026-10' AND rl.tipo='agua'`).Scan(&consumo)
+	if !strings.Contains(consumo, "11,000") {
+		t.Errorf("el agua de octubre del 201 debería tomar 11 m³: %s", consumo)
+	}
+	// Los totales de los borradores cuadran con sus líneas.
+	var descuadre int
+	_ = e.pool.QueryRow(context.Background(), `SELECT count(*) FROM recibo r WHERE r.total_cts <> (SELECT COALESCE(sum(monto_cts),0) FROM recibo_linea WHERE recibo_id=r.id)`).Scan(&descuadre)
+	if descuadre != 0 {
+		t.Errorf("%d recibos no cuadran con sus líneas", descuadre)
 	}
 }

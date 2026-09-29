@@ -28,6 +28,7 @@ st=$(pedir GET '/api/v1/edificios/1/balance?periodo=2026-09'); revisar "balance 
 st=$(pedir GET '/api/v1/edificios/1/lecturas?periodo=2026-09'); revisar "lecturas" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"avance"'
 st=$(pedir POST '/api/v1/edificios/1/periodos/2026-09/reparto-medidores/calcular'); revisar "reparto 5.000/4.800/200" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"diferencia_cts":20000'
 st=$(pedir GET '/api/v1/edificios/1/morosidad?periodo=2026-09'); revisar "morosidad del mes e histórica" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"historica":{'
+st=$(pedir GET '/api/v1/edificios/1/ajustes?pendientes=1'); revisar "ajustes de lecturas corregidas" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"datos"'
 st=$(pedir GET '/api/v1/analitica/resumen?desde=2026-04&hasta=2026-09'); revisar "analítica" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"cobranza_mensual"'
 st=$(pedir POST /api/v1/chatbot/mensaje '{"telefono":"51900000201","texto":"¿cuánto debo?"}'); revisar "chatbot «cuánto debo» (201)" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"intencion":"saldo"'
 st=$(pedir POST /api/v1/whatsapp/enviar '{"telefono":"51900000201","plantilla":"libre","variables":{"texto":"Prueba de humo"}}'); revisar "whatsapp simulado" 201 "$st" "$(cat /tmp/edisys_smoke_body)" '"estado":"simulado"'
