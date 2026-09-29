@@ -4,13 +4,13 @@
 // el nombre de Lucide de los iconos registrados aquí (p. ej. «Landmark», «FileCheck2»).
 // Siempre acompañan a un texto o llevan aria-label en su botón: nunca son el único portador del significado.
 import {
-  Archive, ArrowDownLeft, ArrowLeft, ArrowUpRight, ArrowDownRight, BadgeCheck, Ban, Bot, Building2,
+  Archive, ArrowDownLeft, ArrowDownRight, ArrowLeft, ArrowUpRight, BadgeCheck, Ban, Bot, Building2,
   CalendarCheck, CalendarClock, CalendarDays, Camera, ChartColumn, Check, CheckCheck, ChevronDown, ChevronLeft,
-  ChevronRight, ChevronUp, Circle, CircleAlert, CircleCheck, CircleDashed, CircleDot, CircleOff, CircleX, Clock, Copy,
-  Download, Ellipsis, Eye, FileCheck2, FilePen, FileSpreadsheet, FileText, FlaskConical, Gauge,
-  GripVertical, Hourglass, Image, Inbox, Info, KeyRound, Landmark, LayoutDashboard, ListFilter, Loader, Lock, LogOut,
+  ChevronRight, ChevronUp, Circle, CircleAlert, CircleCheck, CircleDashed, CircleDot, CircleOff, CircleX, Clock,
+  Download, Ellipsis, Eye, FilePen, FileSpreadsheet, FileText, FlaskConical, Gauge,
+  GripVertical, Hourglass, Inbox, Info, Landmark, LayoutDashboard, Loader, Lock, LogOut,
   Mail, Menu, MessageCircle, Minus, PanelLeftClose, PanelLeftOpen, Plus, Printer, ReceiptText, Scale, Search,
-  Send, Settings, ShieldCheck, SlidersHorizontal, Smartphone, Timer, TrendingDown, TrendingUp, TriangleAlert, Upload,
+  Send, Settings, ShieldCheck, SlidersHorizontal, Timer, TrendingDown, TrendingUp, TriangleAlert, Upload,
   User, UserX, Vote, Wrench, X,
 } from 'lucide-react';
 
@@ -34,8 +34,7 @@ export const ICONOS = {
   grafico: ChartColumn,
   llave: ShieldCheck,
   roles: ShieldCheck,
-  conciliacion: Landmark, // pantalla 14 (la añade la rama de pendientes funcionales)
-  facturacion: FileCheck2, // configuración de facturación electrónica (ídem)
+  conciliacion: Landmark, // aviso de conciliación en el balance
   // Objetos y acciones
   camara: Camera,
   voucher: BadgeCheck,
@@ -51,15 +50,11 @@ export const ICONOS = {
   imprimir: Printer,
   enviar: Send,
   documento: FileText,
-  foto: Image,
   usuario: User,
   candado: Lock,
-  clave: KeyRound,
   correo: Mail,
-  celular: Smartphone,
   ver: Eye,
   engranaje: Settings,
-  filtro: ListFilter,
   ajustes: SlidersHorizontal,
   buscar: Search,
   // Navegación y controles
@@ -105,8 +100,8 @@ export const ICONOS = {
   agenda: CalendarClock,
 };
 
-// Los mismos componentes, también por su nombre de Lucide («Landmark», «FileCheck2», «Wrench»…).
-const POR_NOMBRE_LUCIDE = { Archive, ArrowDownLeft, ArrowLeft, ArrowUpRight, ArrowDownRight, BadgeCheck, Ban, Bot, Building2, CalendarCheck, CalendarClock, CalendarDays, Camera, ChartColumn, Check, CheckCheck, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Circle, CircleAlert, CircleCheck, CircleDashed, CircleDot, CircleOff, CircleX, Clock, Download, Ellipsis, Eye, FileCheck2, FilePen, FileSpreadsheet, FileText, FlaskConical, Gauge, GripVertical, Hourglass, Image, Inbox, Info, KeyRound, Landmark, LayoutDashboard, ListFilter, Loader, Lock, LogOut, Mail, Menu, MessageCircle, Minus, PanelLeftClose, PanelLeftOpen, Plus, Printer, ReceiptText, Scale, Search, Send, Settings, ShieldCheck, SlidersHorizontal, Smartphone, Timer, TrendingDown, TrendingUp, TriangleAlert, Upload, User, UserX, Vote, Wrench, X };
+// Los mismos componentes, también por su nombre de Lucide («Wrench», «Vote»…).
+const POR_NOMBRE_LUCIDE = { Archive, ArrowDownLeft, ArrowDownRight, ArrowLeft, ArrowUpRight, BadgeCheck, Ban, Bot, Building2, CalendarCheck, CalendarClock, CalendarDays, Camera, ChartColumn, Check, CheckCheck, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Circle, CircleAlert, CircleCheck, CircleDashed, CircleDot, CircleOff, CircleX, Clock, Download, Ellipsis, Eye, FilePen, FileSpreadsheet, FileText, FlaskConical, Gauge, GripVertical, Hourglass, Inbox, Info, Landmark, LayoutDashboard, Loader, Lock, LogOut, Mail, Menu, MessageCircle, Minus, PanelLeftClose, PanelLeftOpen, Plus, Printer, ReceiptText, Scale, Search, Send, Settings, ShieldCheck, SlidersHorizontal, Timer, TrendingDown, TrendingUp, TriangleAlert, Upload, User, UserX, Vote, Wrench, X };
 
 /** ¿Existe el icono? (acepta el nombre en español o el de Lucide). */
 export function existeIcono(nombre) {
