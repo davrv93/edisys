@@ -42,14 +42,15 @@ export default function Dashboard() {
   );
 
   const k = d?.kpis;
-  const vacio = d && (!k || d.vacio);
+  const vacio = d && (!k || d.vacio || d.hay_datos === false);
   const tareas = d?.tareas || {};
   const pendientes = d?.pendientes || construirPendientes(tareas);
   const rubros = d?.egresos_por_rubro || [];
   const maxRubro = Math.max(1, ...rubros.map((r) => r.total_cts));
   const cob = d?.cobranza;
   const pctCobrado = cob ? pctDe(cob.cobrado_cts ?? k?.ingresos_cts, cob.emitido_cts ?? k?.emitido_cts) : 0;
-  const va = d?.variacion_vs_mes_anterior || {};
+  const va0 = d?.variacion_vs_mes_anterior || {};
+  const va = { ...va0, periodo_anterior: va0.periodo_anterior || va0.periodo };
 
   return (
     <>
@@ -98,9 +99,11 @@ export default function Dashboard() {
             </div>
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
-              <Seccion titulo="Egresos por rubro" className="lg:col-span-2" extra={<a href={ruta('balance', { periodo, abrir: 'egr' })} className="text-sm">Ver balance por nodos</a>}>
+              <Seccion titulo={rubros.length || !d ? 'Egresos por rubro' : 'Mantenimiento del mes'} className="lg:col-span-2" extra={<a href={ruta('balance', { periodo, abrir: 'egr' })} className="text-sm">Ver balance por nodos</a>}>
                 {!d ? (
                   <Esqueleto className="h-40 w-full" />
+                ) : rubros.length === 0 ? (
+                  <TrabajosMes trabajos={d.trabajos_mes || []} />
                 ) : (
                   <div className="flex flex-col gap-3">
                     {rubros.map((r) => (
@@ -151,7 +154,12 @@ export default function Dashboard() {
               <Seccion titulo="Morosidad por unidad" extra={<a href={ruta('recibos', { periodo, estado: 'vencido' })} className="text-sm">Ver recibos</a>}>
                 {!d ? (
                   <Esqueleto className="h-32 w-full" />
-                ) : !d.morosidad_unidades?.length ? (
+                ) : !d.morosidad_unidades ? (
+                  <p className="text-base text-texto-suave">
+                    {k?.morosidad?.unidades ? `${k.morosidad.unidades} unidades con deuda por ${formatearSoles(k.morosidad.monto_cts)}. ` : 'Ninguna unidad morosa. '}
+                    <a href={ruta('recibos', { periodo, estado: 'vencido' })}>Ver recibos vencidos</a>
+                  </p>
+                ) : !d.morosidad_unidades.length ? (
                   <p className="text-base text-texto-suave">Ninguna unidad morosa. ¡Todo al día!</p>
                 ) : (
                   <table className="w-full text-sm">
@@ -216,6 +224,25 @@ export default function Dashboard() {
         )}
       </Contenido>
     </>
+  );
+}
+
+function TrabajosMes({ trabajos }) {
+  if (!trabajos.length) return <p className="text-base text-texto-suave">Sin trabajos este mes. Así da gusto.</p>;
+  return (
+    <ul className="flex flex-col divide-y divide-superficie-2">
+      {trabajos.slice(0, 8).map((t) => (
+        <li key={t.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+          <span className="min-w-0 truncate">
+            <b>{t.codigo}</b> {t.titulo}
+          </span>
+          <span className="flex shrink-0 items-center gap-2">
+            {t.monto_presupuesto_cts ? <span className="tabular-nums text-texto-suave">{formatearSoles(t.monto_presupuesto_cts)}</span> : null}
+            <Insignia estado={t.estado} />
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }
 

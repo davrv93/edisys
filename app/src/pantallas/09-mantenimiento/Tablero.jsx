@@ -5,7 +5,7 @@ import { formatearSoles } from '../../lib/dinero.js';
 import { formatearFecha, haceCuanto } from '../../lib/fechas.js';
 import {
   ACCION_HACIA, CATEGORIAS, COLUMNAS, CRITICIDADES, agruparPorEstado, filtrarIncidencias, filtrosAURL, filtrosDesdeURL,
-  hayFiltros, normalizarIncidencia, puedeTransicionar, transicionesPermitidas, PERMISO_HACIA,
+  hayFiltros, normalizarIncidencia, puedeTransicionar, transicionesPermitidas, PERMISO_HACIA, esSalida,
 } from '../../lib/kanban.js';
 import { lista as aLista } from '../../lib/api.js';
 import { ruta, useQuery } from '../../lib/nav.jsx';
@@ -62,16 +62,24 @@ export default function Tablero() {
     setQuery(filtrosAURL({}, window.location.search), { reemplazar: true });
   };
   const nFiltros = Object.keys(filtros).length;
-  const permitidas = (inc) => transicionesPermitidas(inc.estado, s.tiene);
+  const permitidas = (inc) => transicionesPermitidas(inc.estado, s.tiene, inc.transiciones);
 
   const mover = async (inc, a) => {
-    if (!puedeTransicionar(inc.estado, a) || !s.tiene(PERMISO_HACIA[a])) {
+    if (!puedeTransicionar(inc.estado, a, inc.transiciones) || !s.tiene(PERMISO_HACIA[a])) {
       toast(`No se puede pasar de «${etiqueta(inc.estado)}» a «${etiqueta(a)}».`, { tipo: 'aviso' });
       return;
     }
     let cuerpo = { estado: a };
-    if (a === 'rechazado') {
-      const motivo = await dialog.prompt({ title: `Rechazar ${inc.codigo}`, text: 'Quedará como «pendiente no aprobado» en el informe del mes.', label: 'Motivo', required: true, okText: 'Rechazar', danger: true });
+    if (a === 'rechazado' || a === 'descartado') {
+      const rechazo = a === 'rechazado';
+      const motivo = await dialog.prompt({
+        title: `${rechazo ? 'Rechazar' : 'Descartar'} ${inc.codigo}`,
+        text: rechazo ? 'Quedará como «pendiente no aprobado» en el informe del mes.' : 'Por ejemplo: «igual a INC-019» o «no corresponde a áreas comunes».',
+        label: 'Motivo',
+        required: true,
+        okText: rechazo ? 'Rechazar' : 'Descartar',
+        danger: true,
+      });
       if (motivo === null) return;
       cuerpo = { ...cuerpo, motivo };
     } else if (a === 'terminado') {
@@ -142,8 +150,8 @@ export default function Tablero() {
           </span>
           <b className="text-sm leading-snug text-tinta">{c ? `${inc.codigo} ${inc.titulo}` : inc.titulo}</b>
           <span className="text-texto-apoyo">
-            {inc.votos
-              ? `${formatearSoles(inc.monto_cts)} · ${inc.votos.a_favor} de ${inc.votos.necesarios} votos necesarios`
+            {inc.votos && inc.estado === 'presupuestado'
+              ? `${formatearSoles(inc.monto_cts)} · ${inc.votos.a_favor} de ${inc.votos.necesarios ?? '?'} votos necesarios`
               : inc.estado === 'terminado' && inc.monto_cts != null
                 ? `${formatearSoles(inc.costo_real_cts ?? inc.monto_cts)} · en balance`
                 : inc.monto_cts != null
@@ -164,10 +172,10 @@ export default function Tablero() {
                 type="button"
                 onClick={() => mover(inc, a)}
                 disabled={moviendo === inc.id}
-                className={`min-h-[36px] rounded-md border px-2 text-xs font-semibold ${a === 'rechazado' ? 'border-alerta-borde text-alerta hover:bg-alerta-suave' : 'border-acento-borde bg-acento-suave text-acento hover:bg-acento hover:text-white'}`}
+                className={`min-h-[36px] rounded-md border px-2 text-xs font-semibold ${esSalida(a) ? 'border-alerta-borde text-alerta hover:bg-alerta-suave' : 'border-acento-borde bg-acento-suave text-acento hover:bg-acento hover:text-white'}`}
               >
                 {ACCION_HACIA[a]}
-                {a !== 'rechazado' && ' →'}
+                {!esSalida(a) && ' →'}
               </button>
             ))}
           </div>
@@ -178,7 +186,7 @@ export default function Tablero() {
 
   const columna = (col, i, movil = false) => {
     const items = grupos[col.estado] || [];
-    const valida = arrastrando && arrastrando.estado !== col.estado && puedeTransicionar(arrastrando.estado, col.estado) && s.tiene(PERMISO_HACIA[col.estado]);
+    const valida = arrastrando && arrastrando.estado !== col.estado && puedeTransicionar(arrastrando.estado, col.estado, arrastrando.transiciones) && s.tiene(PERMISO_HACIA[col.estado]);
     return (
       <section
         key={col.estado}
@@ -286,7 +294,7 @@ const PASOS = ['reportado', 'validado', 'presupuestado', 'aprobado', 'en_ejecuci
 function Detalle({ inc, onCerrar, acciones, onMover }) {
   if (!inc) return null;
   const idx = PASOS.indexOf(inc.estado);
-  const rechazado = inc.estado === 'rechazado';
+  const rechazado = esSalida(inc.estado);
   return (
     <Modal abierto={!!inc} onCerrar={onCerrar} titulo={`${inc.codigo} · ${inc.titulo}`} lateral>
       <div className="flex flex-col gap-5 text-sm">
@@ -306,7 +314,7 @@ function Detalle({ inc, onCerrar, acciones, onMover }) {
             );
           })}
         </ol>
-        {rechazado && <p className="rounded-lg border border-alerta-borde bg-alerta-suave p-3 text-alerta-texto">Rechazado: queda como «pendiente no aprobado» en el informe del mes.</p>}
+        {rechazado && <p className="rounded-lg border border-alerta-borde bg-alerta-suave p-3 text-alerta-texto">{inc.estado === 'descartado' ? 'Descartado' : 'Rechazado: queda como «pendiente no aprobado» en el informe del mes'}{inc.motivo ? ` · ${inc.motivo}` : ''}.</p>}
         <dl className="grid grid-cols-[120px_1fr] gap-x-3 gap-y-2">
           {inc.descripcion && inc.descripcion !== inc.titulo && (
             <>
@@ -338,7 +346,7 @@ function Detalle({ inc, onCerrar, acciones, onMover }) {
         {acciones.length > 0 && (
           <div className="flex flex-col gap-2 border-t border-borde pt-4 sm:flex-row sm:flex-wrap">
             {acciones.map((a) => (
-              <Boton key={a} variante={a === 'rechazado' ? 'secundario' : 'primario'} onClick={() => onMover(inc, a)}>
+              <Boton key={a} variante={esSalida(a) ? 'secundario' : 'primario'} onClick={() => onMover(inc, a)}>
                 {ACCION_HACIA[a]}
               </Boton>
             ))}

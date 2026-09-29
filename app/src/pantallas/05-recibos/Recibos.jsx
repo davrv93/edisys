@@ -9,6 +9,7 @@ import { usePeriodo } from '../../layout/usePeriodo.js';
 import Encabezado, { Contenido } from '../../layout/Encabezado.jsx';
 import { Boton, Tabla, Insignia, SelectorPeriodo, ErrorCarga, Vacio, Esqueleto, Icono, useDialog, useToast } from '../../ui/index.js';
 import PagoModal from './PagoModal.jsx';
+import { nombreUnidad } from '../../lib/unidad.js';
 
 const POR_PAGINA = 25;
 const MEDIO = { yape: 'Yape', transferencia: 'Transferencia', deposito: 'Depósito', efectivo: 'Efectivo' };
@@ -51,10 +52,17 @@ export default function Recibos() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [detalle.datos]);
 
-  const filas = lista.datos?.datos || (Array.isArray(lista.datos) ? lista.datos : []);
+  const filas = (lista.datos?.datos || (Array.isArray(lista.datos) ? lista.datos : [])).map((f) => ({ ...f, unidad: nombreUnidad(f.unidad), estado: f.vencido ? 'vencido' : f.estado }));
   const total = lista.datos?.total ?? filas.length;
   const conteos = lista.datos?.conteos;
-  const r = idSel ? detalle.datos : null;
+  const r0 = idSel ? detalle.datos : null;
+  const r = r0 && {
+    ...r0,
+    unidad: nombreUnidad(r0.unidad),
+    emitido: r0.emitido ?? r0.emitido_en,
+    lineas: (r0.lineas || []).map((l) => ({ ...l, concepto: l.concepto || l.descripcion, detalle: l.detalle })),
+    foto_medidor: r0.foto_medidor || (r0.medidor ? { url: r0.foto_medidor_url, medidor: r0.medidor.serie, lectura: r0.medidor.lectura_actual, tomada_en: r0.medidor.tomada_en } : null),
+  };
 
   const seleccionar = (fila) => setQuery({ id: fila.id });
 
@@ -103,10 +111,11 @@ export default function Recibos() {
     try {
       const res = await api.post('/whatsapp/enviar', {
         unidad_id: r.unidad_id,
-        plantilla: 'recibo_emitido',
-        variables: { nombre: r.propietario, periodo: nombrePeriodo(r.periodo), monto: formatearSoles(r.total_cts), vence: formatearFecha(r.vence) },
+        plantilla: 'recibo',
+        variables: { nombre: r.propietario, periodo: nombrePeriodo(r.periodo), unidad: String(r0.unidad), total: formatearSoles(r.total_cts), vence: formatearFecha(r.vence) },
       });
-      toast(res?.simulado ? 'Enviado en modo SIMULADO: no salió ningún WhatsApp real.' : 'Recibo enviado por WhatsApp.', { tipo: res?.simulado ? 'aviso' : 'exito' });
+      const sim = res?.simulado || res?.estado === 'simulado';
+      toast(sim ? 'Enviado en modo SIMULADO: no salió ningún WhatsApp real.' : 'Recibo enviado por WhatsApp.', { tipo: sim ? 'aviso' : 'exito' });
     } catch (err) {
       dialog.alert({ title: 'No se pudo enviar por WhatsApp', text: err.message });
     }
@@ -232,7 +241,7 @@ export default function Recibos() {
                 </Boton>
               </Guarda>
               {r.saldo_cts > 0 && r.estado !== 'anulado' && (
-                <Guarda permiso={['pagos.registrar', 'portal.ver']}>
+                <Guarda permiso={['pagos.registrar', 'pagos.informar']}>
                   <Boton icono="mas_signo" onClick={() => setPagoAbierto(true)}>
                     {esAdmin ? 'Registrar pago' : 'Pagar'}
                   </Boton>
@@ -272,7 +281,7 @@ export default function Recibos() {
         eid={eid}
         recibo={r}
         esAdmin={esAdmin}
-        yape={s.edificio.yape || { numero: 'el Yape del edificio', titular: s.edificio.nombre }}
+        yape={s.edificio.yape || (r?.yape_numero ? { numero: r.yape_numero, titular: r.edificio || s.edificio.nombre } : { numero: 'el Yape del edificio', titular: s.edificio.nombre })}
         dialog={dialog}
         onListo={() => {
           setPagoAbierto(false);

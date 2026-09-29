@@ -187,14 +187,14 @@ export const DOCUMENTOS = {
 };
 
 export const INCIDENCIAS = [
-  { id: 19, codigo: 'INC-019', titulo: 'Humedad en muro de escalera, piso 2', descripcion: 'Mancha de humedad que creció esta semana; la pintura se está soltando.', estado: 'reportado', criticidad: null, categoria: 'humedad', ubicacion: 'Escalera, piso 2', unidad: 'Dpto 201', reportado_por: 'María Demo', reportado_en: '2026-09-28T16:00:00Z', n_fotos: 2 },
+  { id: 19, codigo: 'INC-019', titulo: 'Humedad en muro de escalera, piso 2', descripcion: 'Mancha de humedad que creció esta semana; la pintura se está soltando.', estado: 'reportado', criticidad: null, categoria: 'estructura', ubicacion: 'Escalera, piso 2', unidad: 'Dpto 201', reportado_por: 'María Demo', reportado_en: '2026-09-28T16:00:00Z', n_fotos: 2 },
   { id: 18, codigo: 'INC-018', titulo: 'Luz quemada en pasillo, piso 3', estado: 'reportado', criticidad: null, categoria: 'electricidad', ubicacion: 'Piso 3 – pasadizo', reportado_por: 'Conserje Demo', reportado_en: '2026-09-27T14:00:00Z', n_fotos: 1 },
-  { id: 17, codigo: 'INC-017', titulo: 'Filtración en techo', estado: 'reportado', criticidad: null, categoria: 'humedad', ubicacion: 'Dpto 602, sala', unidad: 'Dpto 602', reportado_por: 'Hugo Ejemplo', reportado_en: '2026-09-27T10:00:00Z', n_fotos: 1 },
+  { id: 17, codigo: 'INC-017', titulo: 'Filtración en techo', estado: 'reportado', criticidad: null, categoria: 'estructura', ubicacion: 'Dpto 602, sala', unidad: 'Dpto 602', reportado_por: 'Hugo Ejemplo', reportado_en: '2026-09-27T10:00:00Z', n_fotos: 1 },
   { id: 16, codigo: 'INC-016', titulo: 'Puerta de cochera con ruido', estado: 'validado', criticidad: 'media', categoria: 'seguridad', ubicacion: 'Cochera', reportado_por: 'Conserje Demo', reportado_en: '2026-09-24T13:00:00Z', n_fotos: 1, nota: 'Falta asignar técnico' },
   { id: 15, codigo: 'INC-015', titulo: 'Cámara 4 sin imagen', estado: 'presupuestado', criticidad: 'media', categoria: 'seguridad', ubicacion: 'Hall de ingreso', reportado_por: 'Conserje Demo', reportado_en: '2026-09-22T13:00:00Z', responsable_id: 31, monto_cts: 32000, n_fotos: 1, nota: 'Bajo el umbral, aprueba la administración' },
-  { id: 14, codigo: 'INC-014', titulo: 'Bomba de agua N.º 2', descripcion: 'Bomba de agua N.º 2 con ruido y goteo', estado: 'presupuestado', criticidad: 'critica', categoria: 'gasfiteria', ubicacion: 'Cuarto de bombas, sótano', reportado_por: 'Conserje Demo', reportado_en: '2026-09-20T13:00:00Z', responsable_id: 32, monto_cts: 185000, n_fotos: 2, votos: { a_favor: 2, necesarios: 3, miembros: 5 }, diagnostico: 'Rodamiento dañado; sin cambio, falla en semanas.' },
-  { id: 13, codigo: 'INC-013', titulo: 'Cambio de mayólica del hall', estado: 'rechazado', criticidad: 'baja', categoria: 'otro', ubicacion: 'Hall', reportado_por: 'Julia Demo', reportado_en: '2026-09-08T13:00:00Z', responsable_id: 31, monto_cts: 240000, n_fotos: 1, nota: 'Pendiente no aprobado por la junta' },
-  { id: 12, codigo: 'INC-012', titulo: 'Pintura de escalera', estado: 'en_ejecucion', criticidad: 'baja', categoria: 'otro', ubicacion: 'Escalera', reportado_por: 'Administración Demo', reportado_en: '2026-09-05T13:00:00Z', responsable_id: 31, monto_cts: 90000, avance_pct: 60, n_fotos: 3 },
+  { id: 14, codigo: 'INC-014', titulo: 'Bomba de agua N.º 2', descripcion: 'Bomba de agua N.º 2 con ruido y goteo', estado: 'presupuestado', criticidad: 'critica', categoria: 'bombas', ubicacion: 'Cuarto de bombas, sótano', reportado_por: 'Conserje Demo', reportado_en: '2026-09-20T13:00:00Z', responsable_id: 32, monto_cts: 185000, n_fotos: 2, votos: { a_favor: 2, necesarios: 3, miembros: 5 }, diagnostico: 'Rodamiento dañado; sin cambio, falla en semanas.' },
+  { id: 13, codigo: 'INC-013', titulo: 'Cambio de mayólica del hall', estado: 'rechazado', criticidad: 'baja', categoria: 'otros', ubicacion: 'Hall', reportado_por: 'Julia Demo', reportado_en: '2026-09-08T13:00:00Z', responsable_id: 31, monto_cts: 240000, n_fotos: 1, nota: 'Pendiente no aprobado por la junta' },
+  { id: 12, codigo: 'INC-012', titulo: 'Pintura de escalera', estado: 'en_ejecucion', criticidad: 'baja', categoria: 'otros', ubicacion: 'Escalera', reportado_por: 'Administración Demo', reportado_en: '2026-09-05T13:00:00Z', responsable_id: 31, monto_cts: 90000, avance_pct: 60, n_fotos: 3 },
   { id: 11, codigo: 'INC-011', titulo: 'Chapa de puerta principal', estado: 'terminado', criticidad: 'media', categoria: 'seguridad', ubicacion: 'Puerta principal', reportado_por: 'Conserje Demo', reportado_en: '2026-09-03T13:00:00Z', responsable_id: 31, monto_cts: 18000, costo_real_cts: 18000, n_fotos: 2 },
   { id: 10, codigo: 'INC-010', titulo: 'Destape de desagüe', estado: 'terminado', criticidad: 'critica', categoria: 'gasfiteria', ubicacion: 'Sótano', reportado_por: 'Conserje Demo', reportado_en: '2026-09-02T13:00:00Z', responsable_id: 32, monto_cts: 15000, costo_real_cts: 15000, n_fotos: 2 },
   { id: 9, codigo: 'INC-009', titulo: 'Luminarias del hall', estado: 'terminado', criticidad: 'baja', categoria: 'electricidad', ubicacion: 'Hall', reportado_por: 'Administración Demo', reportado_en: '2026-09-01T13:00:00Z', responsable_id: 31, monto_cts: 24000, costo_real_cts: 24000, n_fotos: 1 },
@@ -222,13 +222,13 @@ export const FRANJAS = [
 ];
 
 export const MENSAJES = [
-  { id: 1, direccion: 'saliente', telefono: '900000402', unidad: 'Dpto 402', destinatario: 'Pedro Prueba', plantilla: 'recordatorio_deuda', texto: 'Hola Pedro, tu recibo de setiembre (S/ 1.420,00) venció el 15-09. Puedes pagar por Yape al 900 000 000.', estado: 'entregado', fecha: '2026-09-26T14:10:00Z' },
-  { id: 2, direccion: 'saliente', telefono: '900000201', unidad: 'Dpto 201', destinatario: 'María Demo', plantilla: 'recibo_emitido', texto: 'Hola María, tu recibo de setiembre es S/ 990,00 y vence el 15-09. Detalle: https://edisys.pe/app/', estado: 'leido', fecha: '2026-09-01T13:00:00Z' },
+  { id: 1, direccion: 'saliente', telefono: '900000402', unidad: 'Dpto 402', destinatario: 'Pedro Prueba', plantilla: 'recordatorio_deuda', texto: 'Hola Pedro, tu recibo de setiembre (S/ 1.420,00) venció el 15-09. Puedes pagar por Yape al 900 000 000.', estado: 'enviado', fecha: '2026-09-26T14:10:00Z' },
+  { id: 2, direccion: 'saliente', telefono: '900000201', unidad: 'Dpto 201', destinatario: 'María Demo', plantilla: 'recibo_emitido', texto: 'Hola María, tu recibo de setiembre es S/ 990,00 y vence el 15-09. Detalle: https://edisys.pe/app/', estado: 'enviado', fecha: '2026-09-01T13:00:00Z' },
   { id: 3, direccion: 'entrante', telefono: '900000201', unidad: 'Dpto 201', destinatario: 'María Demo', plantilla: null, texto: '¿Cuánto debo?', estado: 'recibido', fecha: '2026-09-27T23:02:00Z' },
-  { id: 4, direccion: 'saliente', telefono: '900000201', unidad: 'Dpto 201', destinatario: 'María Demo', plantilla: 'chatbot', texto: 'Estás al día, María. Tu recibo de setiembre (S/ 990,00) figura pagado el 12-09.', estado: 'entregado', fecha: '2026-09-27T23:02:05Z' },
-  { id: 5, direccion: 'saliente', telefono: '900000503', unidad: 'Dpto 503', destinatario: 'Elena Muestra', plantilla: 'recordatorio_deuda', texto: 'Hola Elena, tu recibo de setiembre (S/ 760,00) venció el 15-09.', estado: 'fallido', error: 'Número sin WhatsApp', fecha: '2026-09-26T14:10:00Z' },
+  { id: 4, direccion: 'saliente', telefono: '900000201', unidad: 'Dpto 201', destinatario: 'María Demo', plantilla: 'chatbot', texto: 'Estás al día, María. Tu recibo de setiembre (S/ 990,00) figura pagado el 12-09.', estado: 'enviado', fecha: '2026-09-27T23:02:05Z' },
+  { id: 5, direccion: 'saliente', telefono: '900000503', unidad: 'Dpto 503', destinatario: 'Elena Muestra', plantilla: 'recordatorio_deuda', texto: 'Hola Elena, tu recibo de setiembre (S/ 760,00) venció el 15-09.', estado: 'error', error: 'Número sin WhatsApp', fecha: '2026-09-26T14:10:00Z' },
   { id: 6, direccion: 'saliente', telefono: '900000104', unidad: 'Dpto 104', destinatario: 'Jorge Demo', plantilla: 'recordatorio_deuda', texto: 'Hola Jorge, tu recibo de setiembre (S/ 760,00) venció el 15-09.', estado: 'enviado', fecha: '2026-09-26T14:10:00Z' },
-  { id: 7, direccion: 'saliente', telefono: '900000002', unidad: null, destinatario: 'Presidente Demo', plantilla: 'voto_pendiente', texto: 'INC-014 Bomba de agua N.º 2 (S/ 1.850,00) espera tu voto.', estado: 'en_cola', fecha: '2026-09-28T15:00:00Z' },
+  { id: 7, direccion: 'saliente', telefono: '900000002', unidad: null, destinatario: 'Presidente Demo', plantilla: 'voto_pendiente', texto: 'INC-014 Bomba de agua N.º 2 (S/ 1.850,00) espera tu voto.', estado: 'pendiente', fecha: '2026-09-28T15:00:00Z' },
 ];
 
 export const PLANTILLAS = [
@@ -253,7 +253,7 @@ export const ANALITICA = {
   ],
   incidencias_por_estado: [
     { estado: 'reportado', cantidad: 3 }, { estado: 'validado', cantidad: 1 }, { estado: 'presupuestado', cantidad: 2 },
-    { estado: 'aprobado', cantidad: 0 }, { estado: 'en_ejecucion', cantidad: 1 }, { estado: 'terminado', cantidad: 3 }, { estado: 'rechazado', cantidad: 1 },
+    { estado: 'aprobado', cantidad: 0 }, { estado: 'en_ejecucion', cantidad: 1 }, { estado: 'terminado', cantidad: 3 }, { estado: 'rechazado', cantidad: 1 }, { estado: 'descartado', cantidad: 0 },
   ],
   tiempo_resolucion_dias: 4.6,
 };

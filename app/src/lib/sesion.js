@@ -21,7 +21,7 @@ function edificiosDe(r) {
     out.set(String(id), {
       ...previo,
       id,
-      nombre: e.edificio_nombre || e.nombre || previo.nombre || `Edificio ${id}`,
+      nombre: e.edificio_nombre || (typeof e.edificio === 'string' ? e.edificio : null) || e.nombre || previo.nombre || `Edificio ${id}`,
       unidades: e.unidades_total ?? e.n_unidades ?? (typeof e.unidades === 'number' ? e.unidades : previo.unidades),
       periodo_abierto: e.periodo_abierto || previo.periodo_abierto,
       roles: [...new Set(roles)],

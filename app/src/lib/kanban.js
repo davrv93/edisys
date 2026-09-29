@@ -1,7 +1,8 @@
 // Tablero de mantenimiento: estados, transiciones y filtros (en la URL).
-// Máquina de estados (§3 · 09 y contrato del API):
-// reportado → validado → presupuestado → aprobado → en_ejecucion → terminado, y rechazado.
-// El API es quien manda: esto solo decide qué botones y qué arrastres ofrecer.
+// Máquina de estados: copia de api/internal/mantenimiento/estados.go (la que manda).
+// reportado → validado → presupuestado → aprobado → en_ejecucion → terminado;
+// descartado (desde reportado o validado) y rechazado (la junta, desde presupuestado; se puede re-presupuestar).
+// Si el API trae `transiciones` en cada incidencia, se usan esas.
 
 export const COLUMNAS = [
   { estado: 'reportado', etiqueta: 'Reportado' },
@@ -11,19 +12,24 @@ export const COLUMNAS = [
   { estado: 'en_ejecucion', etiqueta: 'En ejecución' },
   { estado: 'terminado', etiqueta: 'Terminado' },
   { estado: 'rechazado', etiqueta: 'Rechazado' },
+  { estado: 'descartado', etiqueta: 'Descartado' },
 ];
 
 export const ESTADOS = COLUMNAS.map((c) => c.estado);
 
 export const TRANSICIONES = {
-  reportado: ['validado', 'rechazado'],
-  validado: ['presupuestado', 'rechazado'],
+  reportado: ['validado', 'descartado'],
+  validado: ['presupuestado', 'descartado'],
   presupuestado: ['aprobado', 'rechazado'],
+  rechazado: ['presupuestado'],
   aprobado: ['en_ejecucion'],
   en_ejecucion: ['terminado'],
   terminado: [],
-  rechazado: [],
+  descartado: [],
 };
+
+/** Estados finales o de salida: no son el «siguiente paso feliz». */
+const SALIDAS = ['rechazado', 'descartado'];
 
 /** Verbo del botón que lleva a cada estado. */
 export const ACCION_HACIA = {
@@ -33,30 +39,39 @@ export const ACCION_HACIA = {
   en_ejecucion: 'Iniciar ejecución',
   terminado: 'Marcar terminado',
   rechazado: 'Rechazar',
+  descartado: 'Descartar',
 };
 
 /** Qué permiso hace falta para llevar una incidencia a cada estado. */
 export const PERMISO_HACIA = {
   validado: 'incidencias.validar',
+  descartado: 'incidencias.validar',
   presupuestado: 'trabajos.presupuestar',
   aprobado: 'trabajos.aprobar',
-  en_ejecucion: 'trabajos.presupuestar',
-  terminado: 'trabajos.presupuestar',
-  rechazado: 'incidencias.validar',
+  rechazado: 'trabajos.aprobar',
+  en_ejecucion: 'trabajos.ejecutar',
+  terminado: 'trabajos.ejecutar',
 };
 
-export function puedeTransicionar(de, a) {
-  return (TRANSICIONES[de] || []).includes(a);
+export const esSalida = (estado) => SALIDAS.includes(estado);
+
+/** Transiciones desde un estado: las que trae el API para esa incidencia, o la tabla local. */
+function desde(de, propias) {
+  return Array.isArray(propias) ? propias : TRANSICIONES[de] || [];
 }
 
-/** Siguiente paso «feliz» (sin rechazo), o null si no hay. */
+export function puedeTransicionar(de, a, propias) {
+  return desde(de, propias).includes(a);
+}
+
+/** Siguiente paso «feliz» (sin rechazo ni descarte), o null si no hay. */
 export function siguienteEstado(de) {
-  return (TRANSICIONES[de] || []).find((e) => e !== 'rechazado') || null;
+  return (TRANSICIONES[de] || []).find((e) => !esSalida(e)) || null;
 }
 
 /** Transiciones que el usuario puede hacer, según sus permisos. */
-export function transicionesPermitidas(de, tienePermiso = () => true) {
-  return (TRANSICIONES[de] || []).filter((a) => tienePermiso(PERMISO_HACIA[a]));
+export function transicionesPermitidas(de, tienePermiso = () => true, propias) {
+  return desde(de, propias).filter((a) => tienePermiso(PERMISO_HACIA[a]));
 }
 
 export const CRITICIDADES = [
@@ -65,14 +80,18 @@ export const CRITICIDADES = [
   { valor: 'baja', etiqueta: 'Baja' },
 ];
 
+// Mismas categorías que el CHECK de la tabla incidencia (api/migrations/0006_mantenimiento.sql).
 export const CATEGORIAS = [
-  { valor: 'humedad', etiqueta: 'Humedad o filtración' },
+  { valor: 'gasfiteria', etiqueta: 'Agua o filtración' },
   { valor: 'electricidad', etiqueta: 'Electricidad' },
-  { valor: 'gasfiteria', etiqueta: 'Agua y bombas' },
-  { valor: 'ascensor', etiqueta: 'Ascensor' },
+  { valor: 'ascensores', etiqueta: 'Ascensor' },
+  { valor: 'bombas', etiqueta: 'Bombas' },
+  { valor: 'estructura', etiqueta: 'Humedad o estructura' },
   { valor: 'limpieza', etiqueta: 'Limpieza' },
   { valor: 'seguridad', etiqueta: 'Seguridad' },
-  { valor: 'otro', etiqueta: 'Otro' },
+  { valor: 'areas_comunes', etiqueta: 'Áreas comunes' },
+  { valor: 'jardineria', etiqueta: 'Jardinería' },
+  { valor: 'otros', etiqueta: 'Otro' },
 ];
 
 export const CLAVES_FILTRO = ['criticidad', 'categoria', 'responsable_id', 'q', 'desde', 'hasta'];
@@ -152,16 +171,19 @@ export function normalizarIncidencia(r) {
     criticidad: r.criticidad || null,
     categoria: r.categoria || r.tipo || null,
     ubicacion: r.ubicacion || '',
-    unidad: r.unidad || r.unidad_codigo || '',
+    unidad: r.unidad ? (/^\d+$/.test(String(r.unidad)) ? `Dpto ${r.unidad}` : r.unidad) : r.unidad_codigo || '',
     reportado_por: r.reportado_por_nombre || (typeof r.reportado_por === 'string' ? r.reportado_por : r.reportado_por?.nombre) || '',
     reportado_en: r.reportado_en || r.creado_en || r.created_at || '',
     responsable_id: resp ? resp.id : r.responsable_id ?? null,
     responsable_nombre: resp ? resp.nombre : r.responsable_nombre || '',
-    monto_cts: r.monto_cts ?? r.presupuesto_cts ?? r.costo_cts ?? null,
-    costo_real_cts: r.costo_real_cts ?? null,
-    fotos: r.fotos || r.evidencias || [],
-    n_fotos: r.n_fotos ?? (r.fotos ? r.fotos.length : 0),
-    votos: r.votos || null,
+    monto_cts: r.monto_cts ?? r.monto_presupuesto_cts ?? r.presupuesto_cts ?? null,
+    costo_real_cts: r.costo_real_cts || null,
+    proveedor: r.proveedor || '',
+    foto_url: r.foto_url || null,
+    n_fotos: r.n_fotos ?? (typeof r.evidencias === 'number' ? r.evidencias : Array.isArray(r.fotos) ? r.fotos.length : 0),
+    votos: r.votos || (r.requiere_junta ? { a_favor: r.votos_a_favor ?? 0, necesarios: r.votos_necesarios ?? null } : null),
+    transiciones: Array.isArray(r.transiciones) ? r.transiciones : null,
+    motivo: r.motivo || '',
     avance_pct: r.avance_pct ?? null,
   };
 }

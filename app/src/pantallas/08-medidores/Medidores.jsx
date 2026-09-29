@@ -10,6 +10,9 @@ import { useModoTarea } from '../../layout/Armazon.jsx';
 import { usePeriodo } from '../../layout/usePeriodo.js';
 import { Boton, ErrorCarga, Esqueleto, Icono, Insignia, SubirFoto, useDialog, useToast } from '../../ui/index.js';
 import Reparto from './Reparto.jsx';
+import { nombreUnidad } from '../../lib/unidad.js';
+
+const num = (v) => (v === null || v === undefined || v === '' ? null : Number(v));
 
 /** 08 · Medidores. Operario: ronda de lecturas con foto obligatoria. Administración: además, el reparto (?vista=reparto). */
 export default function Medidores() {
@@ -25,7 +28,9 @@ function Ronda() {
   const [periodo] = usePeriodo();
   const [q, setQuery] = useQuery();
   const { datos, error, recargar, setDatos } = useCarga(() => api.get(`/edificios/${eid}/lecturas`, { periodo, tipo: 'agua' }), [eid, periodo]);
-  const medidores = [...(datos?.medidores || [])].sort((a, b) => (a.orden_ronda ?? 0) - (b.orden_ronda ?? 0));
+  const medidores = (datos?.medidores || [])
+    .map((m) => ({ ...m, unidad: nombreUnidad(m.unidad), medidor: m.medidor || m.serie, lectura_anterior: num(m.lectura_anterior), lectura_actual: num(m.lectura_actual), consumo: num(m.consumo), media_3m: num(m.media_3m) }))
+    .sort((a, b) => (a.orden_ronda ?? 0) - (b.orden_ronda ?? 0));
   const avance = datos?.avance || { leidas: medidores.filter((m) => m.estado !== 'pendiente').length, total: medidores.length };
   const pct = avance.total ? (avance.leidas / avance.total) * 100 : 0;
   const idSel = q.get('medidor');
@@ -43,7 +48,7 @@ function Ronda() {
           <div className="flex min-w-0 flex-col">
             <span className="text-lg font-semibold">Lectura de agua</span>
             <span className="text-xs text-texto-tenue">
-              {edificio.nombre} · corte {formatearFecha(datos?.corte)}
+              {edificio.nombre} · {datos?.corte ? `corte ${formatearFecha(datos.corte)}` : `periodo ${periodo}`}
             </span>
           </div>
         </div>
@@ -80,7 +85,7 @@ function Ronda() {
           setDatos((d) => ({
             ...d,
             avance: { ...avance, leidas: avance.leidas + (actual.estado === 'pendiente' ? 1 : 0) },
-            medidores: d.medidores.map((m) => (m.medidor_id === actual.medidor_id ? { ...m, lectura_actual: valor, consumo: res?.consumo ?? calcularConsumo(m.lectura_anterior, valor), estado: res?.alerta ? 'alerta' : 'leida', alerta: res?.alerta || null } : m)),
+            medidores: d.medidores.map((m) => (m.medidor_id === actual.medidor_id ? { ...m, lectura_actual: valor, lectura_id: res?.id ?? m.lectura_id, consumo: res?.consumo ?? calcularConsumo(m.lectura_anterior, valor), estado: res?.alerta ? 'alerta' : 'leida', alerta: res?.alerta || null } : m)),
           }));
           const sig = siguientePendiente(medidores, actual.medidor_id);
           setQuery({ medidor: sig ? sig.medidor_id : null });

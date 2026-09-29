@@ -7,14 +7,23 @@ import { ruta, useQuery } from '../../lib/nav.jsx';
 import { useEid, useSesion, Guarda } from '../../layout/Sesion.jsx';
 import { usePeriodo } from '../../layout/usePeriodo.js';
 import Encabezado, { Contenido, Seccion } from '../../layout/Encabezado.jsx';
+import { nombreUnidad } from '../../lib/unidad.js';
 import { Boton, Campo, ErrorCarga, Esqueleto, Icono, Insignia, SelectorPeriodo, Vacio, useDialog, useToast } from '../../ui/index.js';
 
-const ESTADOS = ['', 'en_cola', 'simulado', 'enviado', 'entregado', 'leido', 'fallido', 'recibido'];
+// Estados del CHECK de whatsapp_mensaje (api/migrations/0007_whatsapp.sql).
+const ESTADOS = ['', 'pendiente', 'simulado', 'enviado', 'error', 'recibido'];
+const NOMBRE_PLANTILLA = {
+  recibo: 'Recibo del mes',
+  recordatorio_deuda: 'Recordatorio de deuda',
+  reserva_confirmada: 'Reserva confirmada',
+  incidencia_actualizada: 'Incidencia actualizada',
+  aviso_general: 'Aviso general',
+  libre: 'Texto libre',
+};
 const PLANTILLAS_BASE = [
-  { id: 'recibo_emitido', nombre: 'Recibo emitido', variables: ['nombre', 'periodo', 'monto', 'vence'] },
-  { id: 'recordatorio_deuda', nombre: 'Recordatorio de deuda', variables: ['nombre', 'periodo', 'monto'] },
-  { id: 'reserva_confirmada', nombre: 'Reserva confirmada', variables: ['nombre', 'area', 'fecha', 'codigo'] },
-  { id: 'aviso_general', nombre: 'Aviso general', variables: ['texto'] },
+  { id: 'aviso_general', nombre: 'Aviso general', variables: ['mensaje'] },
+  { id: 'recordatorio_deuda', nombre: 'Recordatorio de deuda', variables: ['nombre', 'unidad', 'saldo', 'yape'] },
+  { id: 'libre', nombre: 'Texto libre', variables: ['texto'] },
 ];
 
 /** 12 · WhatsApp: bandeja con filtro por estado, envío de recibos del periodo y configuración (con aviso de modo SIMULADO). */
@@ -23,7 +32,8 @@ export default function WhatsApp() {
   const [q, setQuery] = useQuery();
   const tab = ['bandeja', 'enviar', 'config'].includes(q.get('tab')) ? q.get('tab') : 'bandeja';
   const config = useCarga(() => api.get('/whatsapp/config'), []);
-  const simulado = config.datos?.modo !== 'evolution';
+  // Con el API real, «envio_real» dice si de verdad sale algo; si no viene, se deduce del modo.
+  const simulado = config.datos ? (config.datos.envio_real !== undefined ? !config.datos.envio_real : config.datos.modo !== 'evolution') : false;
 
   return (
     <>
@@ -108,9 +118,9 @@ function Bandeja() {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="flex items-center gap-2 text-sm">
                   <Icono nombre={m.direccion === 'entrante' ? 'volver' : 'enviar'} tam={16} className={m.direccion === 'entrante' ? 'text-acento' : 'text-texto-apoyo'} />
-                  <b>{m.destinatario || m.telefono}</b>
+                  <b>{m.destinatario || nombreUnidad(m.unidad) || m.telefono}</b>
                   <span className="text-texto-apoyo">
-                    {[m.unidad, m.telefono].filter(Boolean).join(' · ')}
+                    {[m.destinatario ? nombreUnidad(m.unidad) : null, m.telefono].filter(Boolean).join(' · ')}
                   </span>
                 </span>
                 <span className="flex items-center gap-2">
@@ -120,7 +130,7 @@ function Bandeja() {
               </div>
               <p className="whitespace-pre-line text-base">{m.texto}</p>
               <div className="flex flex-wrap justify-between gap-2 text-xs text-texto-apoyo">
-                <span>{m.direccion === 'entrante' ? 'Recibido' : 'Enviado'} {formatearFechaHora(m.fecha)}</span>
+                <span>{m.direccion === 'entrante' ? 'Recibido' : 'Enviado'} {formatearFechaHora(m.fecha || m.creado_en)}{m.enviado_por ? ` · ${m.enviado_por}` : ''}{m.intencion ? ` · intención: ${m.intencion}` : ''}</span>
                 {m.error && <span className="font-semibold text-alerta">{m.error}</span>}
               </div>
             </li>
@@ -138,9 +148,13 @@ function Enviar({ simulado }) {
   const { toast } = useToast();
   const [enviandoRecibos, setEnviandoRecibos] = useState(false);
   const unidades = useCarga(() => api.get(`/edificios/${eid}/unidades`, { por_pagina: 500 }), [eid]);
-  // El contrato no expone un endpoint de plantillas: se usan las conocidas por el API.
-  const plantillas = PLANTILLAS_BASE;
+  const plantillasApi = useCarga(() => api.get('/whatsapp/plantillas'), []);
+  const plantillas = (plantillasApi.datos?.plantillas || [])
+    .filter((p) => p.codigo !== 'chatbot')
+    .map((p) => ({ id: p.codigo, nombre: NOMBRE_PLANTILLA[p.codigo] || p.codigo, variables: p.variables || [], texto: p.texto }));
+  if (!plantillas.length) plantillas.push(...PLANTILLAS_BASE);
   const [f, setF] = useState({ unidad_id: '', telefono: '', plantilla: 'aviso_general', variables: {} });
+  const opcional = (v) => ['unidad', 'nombre', 'yape', 'enlace', 'estado'].includes(v) && f.unidad_id;
   const [enviando, setEnviando] = useState(false);
   const [errores, setErrores] = useState({});
   const plantilla = plantillas.find((p) => p.id === f.plantilla) || plantillas[0];
@@ -155,7 +169,9 @@ function Enviar({ simulado }) {
     setEnviandoRecibos(true);
     try {
       const r = await api.post(`/whatsapp/recibos/${periodo}/enviar`, {});
-      toast(`${r?.en_cola ?? ''} recibos en cola${r?.simulado || simulado ? ' (SIMULADO: no salió ninguno)' : ''}.`, { tipo: r?.simulado || simulado ? 'aviso' : 'exito' });
+      const sim = r?.simulado || r?.modo === 'simulado' || (r?.simulados > 0 && !r?.enviados) || simulado;
+      const n = r?.encolados ?? r?.en_cola ?? '';
+      toast(`${n} recibos en cola${r?.sin_telefono ? ` · ${Array.isArray(r.sin_telefono) ? r.sin_telefono.length : r.sin_telefono} sin teléfono` : ''}${sim ? ' (SIMULADO: no salió ninguno)' : ''}.`, { tipo: sim ? 'aviso' : 'exito' });
     } catch (err) {
       dialog.alert({ title: 'No se pudieron enviar', text: err.message });
     } finally {
@@ -167,13 +183,14 @@ function Enviar({ simulado }) {
     const e = {};
     if (!f.unidad_id && !f.telefono.trim()) e.destino = 'Elige una unidad o escribe un teléfono.';
     if (f.telefono && !/^9\d{8}$/.test(f.telefono.replace(/\D/g, '').slice(-9))) e.telefono = 'Celular de 9 dígitos que empieza con 9.';
-    for (const v of plantilla.variables || []) if (!String(f.variables[v] || '').trim()) e[v] = 'Obligatorio.';
+    for (const v of plantilla.variables || []) if (!opcional(v) && !String(f.variables[v] || '').trim()) e[v] = 'Obligatorio.';
     setErrores(e);
     if (Object.keys(e).length) return;
     setEnviando(true);
     try {
       const r = await api.post('/whatsapp/enviar', { unidad_id: f.unidad_id ? Number(f.unidad_id) : undefined, telefono: f.telefono.trim() || undefined, plantilla: f.plantilla, variables: f.variables });
-      toast(r?.simulado || simulado ? 'Mensaje registrado en modo SIMULADO (no salió).' : 'Mensaje en cola de envío.', { tipo: r?.simulado || simulado ? 'aviso' : 'exito' });
+      const sim = r?.simulado || r?.estado === 'simulado' || simulado;
+      toast(sim ? 'Mensaje registrado en modo SIMULADO (no salió).' : 'Mensaje en cola de envío.', { tipo: sim ? 'aviso' : 'exito' });
       setF({ ...f, variables: {} });
     } catch (err) {
       if (Object.keys(err.campos || {}).length) setErrores(err.campos);
@@ -207,7 +224,7 @@ function Enviar({ simulado }) {
           <Campo etiqueta="Teléfono (opcional)" tipo="telefono" valor={f.telefono} onCambio={(v) => setF({ ...f, telefono: v })} placeholder="900 000 000" error={errores.telefono} />
           <Campo etiqueta="Plantilla" tipo="select" valor={f.plantilla} onCambio={(v) => setF({ ...f, plantilla: v, variables: {} })} opciones={plantillas.map((p) => ({ valor: p.id, etiqueta: p.nombre }))} />
           {(plantilla.variables || []).map((v) => (
-            <Campo key={v} etiqueta={v.charAt(0).toUpperCase() + v.slice(1)} tipo={v === 'texto' ? 'textarea' : 'texto'} valor={f.variables[v] || ''} onCambio={(x) => setF({ ...f, variables: { ...f.variables, [v]: x } })} error={errores[v]} placeholder={v === 'monto' ? formatearSoles(99000) : undefined} />
+            <Campo key={v} etiqueta={`${v.charAt(0).toUpperCase() + v.slice(1)}${opcional(v) ? ' (opcional: sale de la unidad)' : ''}`} tipo={v === 'texto' || v === 'mensaje' ? 'textarea' : 'texto'} valor={f.variables[v] || ''} onCambio={(x) => setF({ ...f, variables: { ...f.variables, [v]: x } })} error={errores[v]} placeholder={v === 'monto' ? formatearSoles(99000) : undefined} />
           ))}
           <Boton icono="enviar" onClick={enviar} cargando={enviando} className="self-start">
             Enviar mensaje
@@ -220,7 +237,7 @@ function Enviar({ simulado }) {
 
 function Configuracion({ inicial, onGuardado }) {
   const { toast } = useToast();
-  const [f, setF] = useState({ modo: inicial.modo || 'simulado', url: inicial.url || '', instancia: inicial.instancia || '' });
+  const [f, setF] = useState({ modo: inicial.modo || 'simulado', url: inicial.url || '', instancia: inicial.instancia || '', apikey: '' });
   const [errores, setErrores] = useState({});
   const [guardando, setGuardando] = useState(false);
   const guardar = async () => {
@@ -233,7 +250,10 @@ function Configuracion({ inicial, onGuardado }) {
     if (Object.keys(e).length) return;
     setGuardando(true);
     try {
-      await api.put('/whatsapp/config', { modo: f.modo, url: f.url.trim(), instancia: f.instancia.trim() });
+      const cuerpo = { modo: f.modo, url: f.url.trim(), instancia: f.instancia.trim() };
+      if (f.apikey.trim()) cuerpo.apikey = f.apikey.trim();
+      await api.put('/whatsapp/config', cuerpo);
+      setF((x) => ({ ...x, apikey: '' }));
       toast(f.modo === 'simulado' ? 'Guardado: modo SIMULADO, no sale ningún mensaje.' : 'Guardado: los mensajes saldrán por evolution-go.', { tipo: f.modo === 'simulado' ? 'aviso' : 'exito' });
       onGuardado();
     } catch (err) {
@@ -259,7 +279,7 @@ function Configuracion({ inicial, onGuardado }) {
         <>
           <Campo etiqueta="URL de evolution-go" valor={f.url} onCambio={(v) => setF({ ...f, url: v })} placeholder="http://evolution-go:8080" error={errores.url} />
           <Campo etiqueta="Instancia" valor={f.instancia} onCambio={(v) => setF({ ...f, instancia: v })} placeholder="edificio-demo" error={errores.instancia} />
-          <p className="text-xs text-texto-apoyo">La clave de la API se configura en el servidor, no aquí.</p>
+          <Campo etiqueta="API key de evolution-go" tipo="clave" valor={f.apikey} onCambio={(v) => setF({ ...f, apikey: v })} autoComplete="new-password" ayuda={inicial.tiene_apikey ? 'Ya hay una clave guardada. Déjalo vacío para conservarla.' : 'Se guarda en el servidor y no se vuelve a mostrar.'} />
         </>
       )}
       {errores.general && (

@@ -30,3 +30,21 @@ describe('menú por rol (§2.5)', () => {
     expect(destinoPorRol('tecnico')).toBe('mantenimiento');
   });
 });
+
+import { veCalendarioReservas, veTableroMantenimiento } from './permisos.js';
+describe('qué vista ve cada rol con los permisos reales', () => {
+  it('reservas: staff ve el calendario; residentes reservan', () => {
+    expect(veCalendarioReservas(con('administrador'))).toBe(true);
+    expect(veCalendarioReservas(con('junta'))).toBe(true);
+    expect(veCalendarioReservas(con('operario'))).toBe(true);
+    expect(veCalendarioReservas(con('propietario'))).toBe(false);
+    expect(veCalendarioReservas(con('inquilino'))).toBe(false);
+  });
+  it('mantenimiento: tablero para quien gestiona; reportar para el resto', () => {
+    expect(veTableroMantenimiento(con('administrador'))).toBe(true);
+    expect(veTableroMantenimiento(con('junta'))).toBe(true);
+    expect(veTableroMantenimiento(con('tecnico'))).toBe(true);
+    expect(veTableroMantenimiento(con('propietario'))).toBe(false);
+    expect(veTableroMantenimiento(con('operario'))).toBe(false);
+  });
+});

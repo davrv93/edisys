@@ -43,7 +43,8 @@ export default function NodoDesplegable({
   };
 
   const sangria = { paddingLeft: `${12 + Math.min(nivel, 5) * 20}px` };
-  const tipoDoc = (nodo.formato || nodo.tipo_documento || 'pdf').toUpperCase().slice(0, 3);
+  const t = String(nodo.formato || nodo.documento_tipo || nodo.tipo_documento || 'pdf').toLowerCase();
+  const tipoDoc = t.includes('pdf') ? 'PDF' : t.includes('foto') || t.includes('image') || t.includes('img') || t.includes('voucher') ? 'IMG' : t.toUpperCase().slice(0, 3);
 
   return (
     <div

@@ -20,7 +20,7 @@ export default function Reportar() {
   const input = useRef(null);
   const [fotos, setFotos] = useState([]);
   const [procesando, setProcesando] = useState(false);
-  const [categoria, setCategoria] = useState('humedad');
+  const [categoria, setCategoria] = useState('estructura');
   const [donde, setDonde] = useState('');
   const [que, setQue] = useState('');
   const [progreso, setProgreso] = useState(null);

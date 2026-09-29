@@ -14,11 +14,11 @@ const PANTALLAS = {
   unidades: { permiso: 'unidades.ver', C: lazy(() => import('../pantallas/06-unidades/Unidades.jsx')) },
   reservas: { permiso: ['reservas.ver', 'reservas.crear'], C: lazy(() => import('../pantallas/07-reservas/Reservas.jsx')) },
   medidores: { permiso: ['lecturas.registrar', 'lecturas.ver'], C: lazy(() => import('../pantallas/08-medidores/Medidores.jsx')) },
-  mantenimiento: { permiso: ['incidencias.ver', 'trabajos.aprobar', 'incidencias.reportar'], C: lazy(() => import('../pantallas/09-mantenimiento/Mantenimiento.jsx')) },
+  mantenimiento: { permiso: ['incidencias.ver', 'incidencias.reportar'], C: lazy(() => import('../pantallas/09-mantenimiento/Mantenimiento.jsx')) },
   portal: { permiso: 'portal.ver', C: lazy(() => import('../pantallas/10-portal/Portal.jsx')) },
   roles: { permiso: 'roles.administrar', C: lazy(() => import('../pantallas/11-roles/Roles.jsx')) },
   whatsapp: { permiso: 'whatsapp.ver', C: lazy(() => import('../pantallas/12-whatsapp/WhatsApp.jsx')) },
-  chatbot: { permiso: 'whatsapp.ver', C: lazy(() => import('../pantallas/12-whatsapp/Chatbot.jsx')) },
+  chatbot: { permiso: 'chatbot.probar', C: lazy(() => import('../pantallas/12-whatsapp/Chatbot.jsx')) },
   analitica: { permiso: 'analitica.ver', C: lazy(() => import('../pantallas/13-analitica/Analitica.jsx')) },
 };
 

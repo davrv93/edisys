@@ -56,14 +56,17 @@ export default function Balance() {
   // Al cambiar de periodo: raíz abierta y los dos primeros niveles; luego, lo que pida ?abrir=
   useEffect(() => {
     if (!raiz) return;
-    setHijos({ raiz: raiz.hijos || [] });
+    // El API ya manda los nietos de la raíz: se aprovechan sin pedirlos otra vez.
+    const iniciales0 = { raiz: raiz.hijos || [] };
+    for (const h of raiz.hijos || []) if (Array.isArray(h.hijos) && h.hijos.length) iniciales0[h.id] = h.hijos;
+    setHijos(iniciales0);
     const iniciales = ['raiz', ...(raiz.hijos || []).filter((h) => h.tiene_hijos).map((h) => h.id)];
     const abrir = q.get('abrir');
     const extra = abrir ? ancestros(abrir) : [];
     const todos = [...new Set([...iniciales, ...extra])];
     setAbiertos(new Set(todos));
     (async () => {
-      for (const id of todos) if (id !== 'raiz') await cargarHijos(id);
+      for (const id of todos) if (id !== 'raiz' && !iniciales0[id]) await cargarHijos(id);
       if (abrir) setTimeout(() => document.querySelector(`[data-nodo="${CSS.escape(abrir)}"] [role="treeitem"]`)?.focus(), 50);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -99,13 +102,14 @@ export default function Balance() {
   };
 
   const abrirDocumento = async (nodo) => {
-    if (nodo.bloqueado || !nodo.doc_id) {
+    const docId = nodo.doc_id ?? nodo.documento_id;
+    if (nodo.bloqueado || nodo.documento_restringido || docId == null) {
       setDoc({ nodo, datos: null, error: null, bloqueado: true });
       return;
     }
     setDoc({ nodo, datos: null, error: null });
     try {
-      const datos = await api.get(`/edificios/${eid}/balance/documentos/${encodeURIComponent(nodo.doc_id)}`);
+      const datos = await api.get(`/edificios/${eid}/balance/documentos/${encodeURIComponent(docId)}`);
       setDoc({ nodo, datos, error: null });
     } catch (error) {
       setDoc({ nodo, datos: null, error, bloqueado: error.status === 403 });
@@ -160,7 +164,7 @@ export default function Balance() {
       <Contenido>
         {resumen.error ? (
           <ErrorCarga error={resumen.error} onReintentar={resumen.recargar} />
-        ) : resumen.datos && !raiz ? (
+        ) : resumen.datos && (!raiz || resumen.datos.hay_datos === false) ? (
           <Vacio titulo={`Sin movimientos en ${mesDePeriodo(periodo)}`} texto="Cuando se registren pagos y egresos del periodo, aparecerán aquí con su sustento." />
         ) : (
           <>

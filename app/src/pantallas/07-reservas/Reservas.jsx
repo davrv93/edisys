@@ -5,15 +5,26 @@ import { formatearSoles } from '../../lib/dinero.js';
 import { diaLima, diasDeSemana, etiquetaDia, formatearHora, inicioSemana, rangoSemana, sumarDias } from '../../lib/fechas.js';
 import { ruta, useQuery } from '../../lib/nav.jsx';
 import { useEid, useSesion, Guarda } from '../../layout/Sesion.jsx';
+import { veCalendarioReservas } from '../../lib/permisos.js';
 import Encabezado, { Contenido } from '../../layout/Encabezado.jsx';
 import { Boton, Calendario, LeyendaCalendario, ErrorCarga, Esqueleto, Icono, Insignia, Modal, Vacio, useDialog, useToast } from '../../ui/index.js';
 import NuevaReserva from './NuevaReserva.jsx';
+import { nombreUnidad } from '../../lib/unidad.js';
+
+/** Cómo se cobra una reserva, con la forma del API (modo_cobro) o la del mock (medio). */
+export function textoCobro(r) {
+  if (r.estado === 'pendiente_pago') return 'Esperando pago';
+  if (r.medio) return r.medio;
+  if (r.modo_cobro === 'cargo_recibo') return 'Cargo al recibo';
+  if (r.modo_cobro === 'pago_inmediato') return r.pago_validado ? 'Pagado' : 'Pago por validar';
+  return '';
+}
 
 /** 07 · Reservas. Administración: calendario semanal. Propietario/inquilino (o ?nueva=1): reservar desde el celular. */
 export default function Reservas() {
   const s = useSesion();
   const [q] = useQuery();
-  if (q.get('nueva') || !s.tiene('reservas.ver')) return <NuevaReserva />;
+  if (q.get('nueva') || !veCalendarioReservas(s.tiene)) return <NuevaReserva />;
   return <CalendarioAdmin />;
 }
 
@@ -35,7 +46,7 @@ function CalendarioAdmin() {
 
   const listaAreas = Array.isArray(areas.datos) ? areas.datos : areas.datos?.datos || [];
   const recursos = listaAreas.flatMap((a) =>
-    (a.recursos || []).map((r) => ({ id: r.id, nombre: r.nombre, area: a, detalle: `${a.tarifa_cts ? formatearSoles(a.tarifa_cts, { sinDecimales: true }) : 'Sin costo'} · ${a.duracion_h} h` })),
+    (a.recursos || []).filter((r) => r.activo !== false).map((r) => ({ id: r.id, nombre: r.nombre, area: a, detalle: `${a.tarifa_cts ? formatearSoles(a.tarifa_cts, { sinDecimales: true }) : 'Sin costo'}${a.duracion_h ? ` · ${a.duracion_h} h` : ''}` })),
   );
   const listaRes = useMemo(() => (Array.isArray(reservas.datos) ? reservas.datos : reservas.datos?.datos || []), [reservas.datos]);
   const eventos = listaRes
@@ -45,8 +56,10 @@ function CalendarioAdmin() {
       dia: diaLima(r.inicio),
       desde: formatearHora(r.inicio),
       hasta: formatearHora(r.fin),
-      titulo: r.estado === 'bloqueo' ? 'Cerrada' : r.unidad,
-      sub: r.estado === 'pendiente_pago' ? 'Esperando pago' : r.medio,
+      unidad: nombreUnidad(r.unidad),
+      titulo: r.estado === 'bloqueo' ? 'Cerrada' : nombreUnidad(r.unidad),
+      sub: textoCobro(r),
+      medio: textoCobro(r),
     }));
 
   const resumen = useMemo(() => {
@@ -54,8 +67,8 @@ function CalendarioAdmin() {
     const suma = (f) => vivas.filter(f).reduce((a, r) => a + (r.total_cts || 0), 0);
     return {
       cantidad: vivas.length,
-      enLinea: suma((r) => r.estado === 'confirmada' && !/recibo/i.test(r.medio || '')),
-      alRecibo: suma((r) => r.estado === 'confirmada' && /recibo/i.test(r.medio || '')),
+      enLinea: suma((r) => r.estado === 'confirmada' && !/recibo/i.test(textoCobro(r))),
+      alRecibo: suma((r) => r.estado === 'confirmada' && /recibo/i.test(textoCobro(r))),
       porConfirmar: suma((r) => r.estado === 'pendiente_pago'),
     };
   }, [listaRes]);
@@ -165,12 +178,14 @@ function CalendarioAdmin() {
                 <section className="flex flex-col gap-2 rounded-xl border border-borde bg-superficie p-5 text-sm">
                   <h2 className="text-base font-semibold">Reglas de {area0.nombre}</h2>
                   <span className="text-texto-suave">
-                    Horario {area0.horario} · turnos de {area0.duracion_h} h
+                    Turnos: {area0.horario || (area0.franjas || []).map((f) => `${f.inicio}–${f.fin}`).join(' · ') || '—'}
                   </span>
-                  <span className="text-texto-suave">
-                    Aforo {area0.aforo} personas · {area0.incluye}
-                  </span>
-                  <span className="text-texto-suave">Cobro: {area0.cobro}</span>
+                  {area0.aforo ? (
+                    <span className="text-texto-suave">
+                      Aforo {area0.aforo} personas{area0.incluye ? ` · ${area0.incluye}` : ''}
+                    </span>
+                  ) : null}
+                  <span className="text-texto-suave">Cobro: {area0.cobro || (areas.datos?.modo_cobro === 'pago_inmediato' ? 'pago inmediato con voucher' : areas.datos?.modo_cobro === 'cargo_recibo' ? 'cargo al recibo' : '—')}</span>
                   <span className="text-texto-suave">Unidades morosas: no pueden reservar</span>
                 </section>
               )}

@@ -54,6 +54,7 @@ export const ESTADOS = {
   entregado: { tono: 'acento', texto: 'Entregado' },
   leido: { tono: 'acento', texto: 'Leído' },
   fallido: { tono: 'alerta', texto: 'Fallido' },
+  error: { tono: 'alerta', texto: 'Error' },
   simulado: { tono: 'aviso', texto: 'Simulado' },
   recibido: { tono: 'neutro', texto: 'Recibido' },
   // Usuarios

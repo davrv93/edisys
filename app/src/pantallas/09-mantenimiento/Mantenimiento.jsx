@@ -1,5 +1,6 @@
 import { useQuery } from '../../lib/nav.jsx';
 import { useSesion } from '../../layout/Sesion.jsx';
+import { veTableroMantenimiento } from '../../lib/permisos.js';
 import Tablero from './Tablero.jsx';
 import Reportar from './Reportar.jsx';
 
@@ -7,7 +8,7 @@ import Reportar from './Reportar.jsx';
 export default function Mantenimiento() {
   const s = useSesion();
   const [q] = useQuery();
-  const veTablero = s.tiene(['incidencias.ver', 'trabajos.aprobar']);
+  const veTablero = veTableroMantenimiento(s.tiene);
   if (q.get('reportar') || !veTablero) return <Reportar />;
   return <Tablero />;
 }

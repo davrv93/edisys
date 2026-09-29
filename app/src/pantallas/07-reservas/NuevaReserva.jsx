@@ -51,7 +51,8 @@ export default function NuevaReserva() {
   const disp = useCarga(
     async () => {
       const res = await Promise.all(idsConsulta.map((id) => api.get(`/edificios/${eid}/disponibilidad`, { recurso: id, desde: dia, hasta: dia })));
-      return res.flatMap((r) => r?.franjas || []);
+      // Forma del API: fecha, hora_inicio, hora_fin; la del mock: dia, desde, hasta.
+      return res.flatMap((r) => r?.franjas || []).map((f) => ({ ...f, dia: f.dia || f.fecha, desde: f.desde || f.hora_inicio, hasta: f.hasta || f.hora_fin }));
     },
     [eid, dia, areaId, recursoId],
     { activo: !!area && idsConsulta.length > 0 },
@@ -72,6 +73,9 @@ export default function NuevaReserva() {
 
   const nombreRecurso = recursoId === 'cualquiera' ? area?.nombre : recursos.find((r) => r.id === recursoId)?.nombre;
   const tarifa = area?.tarifa_cts || 0;
+  // El modo de cobro lo fija el edificio (modo_cobro); si el API no lo dice, la persona elige.
+  const modoEdificio = areas.datos?.modo_cobro || null;
+  const medioEfectivo = modoEdificio === 'pago_inmediato' ? 'yape' : modoEdificio === 'cargo_recibo' ? 'recibo' : medio;
   const mesRecibo = mesDePeriodo(sumarMeses(periodoActual(), 1));
   const unidadNombre = esAdmin ? unidadesAdmin.datos?.datos?.find((u) => String(u.id) === String(unidadId))?.codigo : s.unidades?.[0]?.codigo;
 
@@ -85,7 +89,7 @@ export default function NuevaReserva() {
         inicio: franja.inicio,
         fin: franja.fin,
         acepta_normas: true,
-        medio: tarifa ? medio : 'recibo',
+        medio: tarifa ? medioEfectivo : 'recibo',
       });
       setCreada({ ...r, franja, recurso: nombreRecurso });
     } catch (err) {
@@ -105,6 +109,7 @@ export default function NuevaReserva() {
   const subtitulo = `${unidadNombre ? `Dpto ${unidadNombre} · ` : ''}${s.edificio.nombre}`;
   const dias = Array.from({ length: DIAS_VISIBLES }, (_, i) => sumarDias(hoy, i));
 
+  const nMeses = moroso ? (Array.isArray(moroso.meses) ? moroso.meses.length : moroso.meses) : 0;
   if (moroso) {
     return (
       <div className="flex min-h-screen flex-col bg-fondo">
@@ -114,7 +119,7 @@ export default function NuevaReserva() {
             <span className="text-xs font-bold">RECIBO VENCIDO</span>
             <span className="font-titulo text-3xl font-semibold text-alerta">{formatearSoles(moroso.monto_cts)}</span>
             <span className="text-base">
-              {moroso.meses ? `Tienes ${moroso.meses} ${moroso.meses === 1 ? 'mes' : 'meses'} pendiente${moroso.meses === 1 ? '' : 's'}. ` : ''}Las unidades con deuda vencida no pueden reservar áreas comunes. Cuando se valide tu pago, podrás reservar.
+              {nMeses ? `Tienes ${nMeses} ${nMeses === 1 ? 'mes' : 'meses'} pendiente${nMeses === 1 ? '' : 's'}. ` : ''}Las unidades con deuda vencida no pueden reservar áreas comunes. Cuando se valide tu pago, podrás reservar.
             </span>
           </div>
           <Boton href={ruta('recibos')} tamano="lg" bloque>
@@ -230,12 +235,17 @@ export default function NuevaReserva() {
               )}
               {area && (
                 <span className="text-xs text-texto-apoyo">
-                  Aforo {area.aforo} personas · {area.incluye}. {area.normas}
+                  {[area.aforo ? `Aforo ${area.aforo} personas` : null, area.incluye, area.normas].filter(Boolean).join(' · ')}
                 </span>
               )}
             </section>
 
-            {tarifa > 0 && (
+            {tarifa > 0 && modoEdificio && (
+              <p className="rounded-xl border border-borde bg-superficie p-4 text-sm text-texto-suave">
+                {modoEdificio === 'pago_inmediato' ? 'Se paga al reservar con Yape: guardamos tu turno 15 minutos mientras subes el voucher.' : `Se carga a tu recibo de ${mesRecibo}.`}
+              </p>
+            )}
+            {tarifa > 0 && !modoEdificio && (
               <section className="flex flex-col gap-2">
                 <span className="text-sm font-semibold">Forma de pago</span>
                 <OpcionPago valor="yape" medio={medio} setMedio={setMedio} titulo="Yape" detalle="QR y código de operación · guardamos tu turno 15 min" />
@@ -259,9 +269,9 @@ export default function NuevaReserva() {
                 <span className="font-titulo text-2xl font-semibold tabular-nums">{tarifa ? formatearSoles(tarifa) : 'Sin costo'}</span>
               </div>
               <Boton tamano="lg" bloque disabled={!franja || !acepta || (esAdmin && !unidadId)} cargando={enviando} onClick={reservar}>
-                {!tarifa ? 'Reservar' : medio === 'yape' ? 'Pagar con Yape' : `Reservar con cargo al recibo`}
+                {!tarifa ? 'Reservar' : medioEfectivo === 'yape' ? 'Pagar con Yape' : `Reservar con cargo al recibo`}
               </Boton>
-              {tarifa > 0 && medio === 'yape' && <span className="text-center text-xs text-texto-apoyo">Guardamos tu turno 15 minutos mientras pagas.</span>}
+              {tarifa > 0 && medioEfectivo === 'yape' && <span className="text-center text-xs text-texto-apoyo">Guardamos tu turno 15 minutos mientras pagas.</span>}
             </div>
           </footer>
         </>

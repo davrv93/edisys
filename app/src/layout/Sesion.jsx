@@ -30,15 +30,17 @@ export function SesionProvider({ children }) {
   const cargar = useCallback(async () => {
     setError(null);
     try {
-      setCrudo(await api.get('/yo'));
+      // El API acepta ?edificio_id= para devolver permisos y unidades de ese edificio.
+      setCrudo(await api.get('/yo', { edificio_id: eid || undefined }));
     } catch (e) {
       if (e.status !== 401) setError(e);
     }
-  }, []);
+  }, [eid]);
 
   useEffect(() => {
     cargar();
   }, [cargar]);
+  // cargar depende de eid: cambiar de edificio vuelve a pedir /yo con sus permisos.
 
   const sesion = useMemo(() => (crudo ? normalizarYo(crudo, eid) : null), [crudo, eid]);
 

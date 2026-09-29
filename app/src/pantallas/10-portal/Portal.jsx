@@ -6,6 +6,7 @@ import { ruta } from '../../lib/nav.jsx';
 import { useEid, useSesion, Guarda } from '../../layout/Sesion.jsx';
 import { useModoTarea } from '../../layout/Armazon.jsx';
 import { Boton, ErrorCarga, Esqueleto, Icono, Insignia } from '../../ui/index.js';
+import { nombreUnidad } from '../../lib/unidad.js';
 
 const PASOS = ['reportado', 'validado', 'presupuestado', 'aprobado', 'en_ejecucion', 'terminado'];
 const TEXTO_PASO = {
@@ -16,6 +17,7 @@ const TEXTO_PASO = {
   en_ejecucion: 'En ejecución',
   terminado: 'Terminado',
   rechazado: 'No aprobado por la junta',
+  descartado: 'Descartado por la administración',
 };
 
 /** 10 · Portal del propietario (móvil primero): cuánto debo, pagar, transparencia, reservar y reportar. */
@@ -40,9 +42,9 @@ export default function Portal() {
     estadoCuenta = {
       titulo: `Debes ${formatearSoles(deuda)}`,
       tono: 'text-alerta-borde',
-      detalle: d.deuda.meses?.length > 1 ? d.deuda.meses.map((m) => `${nombrePeriodo(m.periodo)} ${formatearSoles(m.saldo_cts)}`).join(' · ') : `${nombrePeriodo(r.periodo)} · vence el ${formatearDiaMes(r.vence)}`,
+      detalle: `${nombrePeriodo(r.periodo)} · vence el ${formatearDiaMes(r.vence)}`,
     };
-  else if (d.pago_en_revision) estadoCuenta = { titulo: 'Pago en revisión', tono: 'text-aviso-borde', detalle: 'La administración está validando tu voucher.' };
+  else if (d.pago_en_revision || r.pagos_en_revision > 0) estadoCuenta = { titulo: 'Pago en revisión', tono: 'text-aviso-borde', detalle: 'La administración está validando tu voucher.' };
   else estadoCuenta = { titulo: 'Al día', tono: 'text-acento-oscuro', detalle: `${mesDePeriodo(r.periodo).replace(/^./, (c) => c.toUpperCase())} ${formatearSoles(r.total_cts)}${pago ? ` · pagado ${formatearDiaMes(pago.fecha)}` : ''}` };
 
   return (
@@ -93,15 +95,33 @@ export default function Portal() {
           </a>
         )}
 
-        {deuda > 0 && d?.deuda?.meses?.length > 0 && (
+        {deuda > 0 && (d?.deuda?.meses?.length > 0 || d?.deuda?.por_unidad?.length > 0) && (
           <section className="flex flex-col gap-2 rounded-xl border border-alerta-borde bg-alerta-suave p-4 text-alerta-texto">
             <h2 className="text-base font-semibold">Detalle de tu deuda</h2>
-            {d.deuda.meses.map((m) => (
+            {(d.deuda.meses || []).map((m) => (
               <div key={m.periodo} className="flex justify-between text-base">
                 <span>{nombrePeriodo(m.periodo)}</span>
                 <b className="tabular-nums">{formatearSoles(m.saldo_cts)}</b>
               </div>
             ))}
+            {!d.deuda.meses &&
+              d.deuda.por_unidad.flatMap((u) =>
+                Array.isArray(u.meses) && u.meses.length
+                  ? u.meses.map((m) => (
+                      <div key={`${u.unidad_id ?? u.unidad}-${m.periodo}`} className="flex justify-between text-base">
+                        <span>
+                          {nombreUnidad(u.codigo || u.unidad)} · {nombrePeriodo(m.periodo)}
+                        </span>
+                        <b className="tabular-nums">{formatearSoles(m.saldo_cts)}</b>
+                      </div>
+                    ))
+                  : [
+                      <div key={u.unidad_id ?? u.unidad} className="flex justify-between text-base">
+                        <span>{nombreUnidad(u.codigo || u.unidad)}</span>
+                        <b className="tabular-nums">{formatearSoles(u.deuda_cts)}</b>
+                      </div>,
+                    ],
+              )}
             <span className="text-sm">Mientras haya un recibo vencido no se pueden reservar áreas comunes.</span>
           </section>
         )}
@@ -122,7 +142,7 @@ export default function Portal() {
         {k && (
           <section className="flex flex-col gap-3">
             <div className="flex items-baseline justify-between">
-              <h2 className="text-base font-semibold">Balance de {mesDePeriodo(s.edificio.periodo_abierto || r?.periodo || '')}</h2>
+              <h2 className="text-base font-semibold">Balance de {mesDePeriodo(d.periodo_kpis || s.edificio.periodo_abierto || r?.periodo || '')}</h2>
               <Guarda permiso="balance.ver">
                 <a href={ruta('balance')} className="text-sm">
                   Ver detalle

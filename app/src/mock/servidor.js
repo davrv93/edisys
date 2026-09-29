@@ -417,14 +417,14 @@ en('GET', '/whatsapp/mensajes', ({ query }) => {
 en('POST', '/whatsapp/enviar', ({ body }) => {
   const u = body.unidad_id ? UNIDADES.find((x) => x.id === Number(body.unidad_id)) : null;
   const texto = body.plantilla === 'aviso_general' ? body.variables?.texto : `[${body.plantilla}] ${Object.values(body.variables || {}).join(' · ')}`;
-  const m = { id: db.sigMsg++, direccion: 'saliente', telefono: body.telefono || u?.celular, unidad: u ? `Dpto ${u.codigo}` : null, destinatario: u?.propietario || body.telefono, plantilla: body.plantilla, texto, estado: db.wa.modo === 'simulado' ? 'simulado' : 'en_cola', fecha: new Date().toISOString() };
+  const m = { id: db.sigMsg++, direccion: 'saliente', telefono: body.telefono || u?.celular, unidad: u ? `Dpto ${u.codigo}` : null, destinatario: u?.propietario || body.telefono, plantilla: body.plantilla, texto, estado: db.wa.modo === 'simulado' ? 'simulado' : 'pendiente', fecha: new Date().toISOString() };
   db.mensajes.push(m);
   return { id: m.id, estado: m.estado, simulado: db.wa.modo === 'simulado' };
 });
 en('POST', '/whatsapp/recibos/:periodo/enviar', ({ params }) => {
   const n = db.recibos.filter((r) => r.periodo === params.periodo).length;
   for (const r of db.recibos.slice(0, 3)) {
-    db.mensajes.push({ id: db.sigMsg++, direccion: 'saliente', telefono: `900000${r.unidad.slice(5)}`, unidad: r.unidad, destinatario: r.propietario, plantilla: 'recibo_emitido', texto: `Hola, tu recibo de setiembre es ${formatearSoles(r.total_cts)}.`, estado: db.wa.modo === 'simulado' ? 'simulado' : 'en_cola', fecha: new Date().toISOString() });
+    db.mensajes.push({ id: db.sigMsg++, direccion: 'saliente', telefono: `900000${r.unidad.slice(5)}`, unidad: r.unidad, destinatario: r.propietario, plantilla: 'recibo_emitido', texto: `Hola, tu recibo de setiembre es ${formatearSoles(r.total_cts)}.`, estado: db.wa.modo === 'simulado' ? 'simulado' : 'pendiente', fecha: new Date().toISOString() });
   }
   return { en_cola: n, simulado: db.wa.modo === 'simulado' };
 });
@@ -470,3 +470,12 @@ en('GET', '/edificios/:eid/unidades/:uid', ({ params }) => {
   };
 });
 en('POST', '/edificios/:eid/periodos/:p/recibo-general', () => ({ id: Date.now() }));
+en('GET', '/whatsapp/plantillas', () => ({
+  plantillas: [
+    { codigo: 'recibo', variables: ['nombre', 'periodo', 'unidad', 'total', 'vence', 'estado', 'enlace'] },
+    { codigo: 'recordatorio_deuda', variables: ['nombre', 'unidad', 'saldo', 'yape'] },
+    { codigo: 'reserva_confirmada', variables: ['nombre', 'codigo', 'area', 'fecha'] },
+    { codigo: 'aviso_general', variables: ['mensaje'] },
+    { codigo: 'libre', variables: ['texto'] },
+  ],
+}));

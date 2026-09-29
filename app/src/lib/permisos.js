@@ -13,27 +13,37 @@ export const NOMBRE_ROL = {
   tecnico: 'Técnico',
 };
 
+// Espejo de la semilla del API (api/migrations/0001_base.sql). Solo se usa si /yo no trae permisos
+// (y en el modo mock). El API es quien manda.
 const TODOS = [
-  'dashboard.ver', 'balance.ver', 'balance.ver_documentos', 'egresos.registrar',
-  'recibos.ver', 'recibos.emitir', 'pagos.registrar',
-  'unidades.ver', 'unidades.editar', 'unidades.importar',
-  'reservas.ver', 'reservas.crear', 'reservas.administrar',
-  'lecturas.ver', 'lecturas.registrar', 'lecturas.aprobar_reparto',
-  'incidencias.ver', 'incidencias.reportar', 'incidencias.validar', 'trabajos.presupuestar', 'trabajos.aprobar',
-  'roles.administrar', 'whatsapp.ver', 'whatsapp.enviar', 'whatsapp.configurar', 'analitica.ver', 'portal.ver',
+  'analitica.ver', 'areas.administrar', 'auditoria.ver', 'balance.ver', 'balance.ver_documentos', 'chatbot.probar',
+  'dashboard.ver', 'edificio.editar', 'edificio.ver', 'egresos.registrar', 'incidencias.reportar', 'incidencias.validar',
+  'incidencias.ver', 'lecturas.aprobar_reparto', 'lecturas.corregir', 'lecturas.registrar', 'lecturas.ver', 'morosidad.ver',
+  'pagos.informar', 'pagos.registrar', 'pagos.validar', 'periodos.administrar', 'portal.ver', 'recibos.emitir', 'recibos.ver',
+  'reservas.administrar', 'reservas.crear', 'reservas.ver', 'roles.administrar', 'trabajos.aprobar', 'trabajos.ejecutar',
+  'trabajos.presupuestar', 'trabajos.votar', 'unidades.editar', 'unidades.importar', 'unidades.ver', 'usuarios.ver',
+  'whatsapp.configurar', 'whatsapp.enviar', 'whatsapp.ver',
 ];
 
-/** Permisos por defecto si /yo no los trae (semilla de la guía). */
 export const PERMISOS_POR_ROL = {
   superadmin: TODOS,
-  // El administrador aprueba lo que está bajo el umbral; por encima decide la junta (lo valida el API).
-  administrador: TODOS.filter((p) => p !== 'portal.ver'),
-  junta: ['dashboard.ver', 'balance.ver', 'balance.ver_documentos', 'recibos.ver', 'unidades.ver', 'reservas.ver', 'lecturas.ver', 'incidencias.ver', 'trabajos.aprobar', 'analitica.ver'],
-  propietario: ['portal.ver', 'balance.ver', 'recibos.ver', 'reservas.crear', 'incidencias.reportar'],
-  inquilino: ['portal.ver', 'reservas.crear', 'incidencias.reportar'],
-  operario: ['lecturas.registrar', 'incidencias.reportar', 'reservas.ver'],
-  tecnico: ['incidencias.ver', 'trabajos.avance'],
+  administrador: TODOS.filter((p) => !['trabajos.votar', 'pagos.informar', 'portal.ver'].includes(p)),
+  junta: ['dashboard.ver', 'balance.ver', 'balance.ver_documentos', 'edificio.ver', 'unidades.ver', 'recibos.ver', 'morosidad.ver', 'reservas.ver', 'lecturas.ver', 'incidencias.reportar', 'incidencias.ver', 'trabajos.aprobar', 'trabajos.votar', 'analitica.ver', 'usuarios.ver', 'whatsapp.ver'],
+  propietario: ['balance.ver', 'balance.ver_documentos', 'edificio.ver', 'recibos.ver', 'pagos.informar', 'reservas.ver', 'reservas.crear', 'incidencias.reportar', 'incidencias.ver', 'portal.ver'],
+  inquilino: ['edificio.ver', 'reservas.ver', 'reservas.crear', 'incidencias.reportar', 'incidencias.ver', 'portal.ver'],
+  operario: ['edificio.ver', 'lecturas.ver', 'lecturas.registrar', 'reservas.ver', 'incidencias.reportar', 'incidencias.ver'],
+  tecnico: ['edificio.ver', 'incidencias.reportar', 'incidencias.ver', 'trabajos.ejecutar'],
 };
+
+/** ¿Ve el calendario de reservas (staff) o el flujo para reservar (residente)? */
+export function veCalendarioReservas(tiene) {
+  return tiene('reservas.administrar') || !tiene('reservas.crear');
+}
+
+/** ¿Ve el tablero de mantenimiento? Solo quien gestiona trabajos; el resto, el formulario para reportar. */
+export function veTableroMantenimiento(tiene) {
+  return ['incidencias.validar', 'trabajos.presupuestar', 'trabajos.aprobar', 'trabajos.votar', 'trabajos.ejecutar'].some((p) => tiene(p));
+}
 
 /** Pantalla de aterrizaje por rol (§3 · 01). */
 export function destinoPorRol(rol) {
@@ -62,10 +72,10 @@ const ITEMS = {
   medidores: { pagina: 'medidores', etiqueta: 'Medidores', corta: 'Lecturas', icono: 'medidor', permiso: ['lecturas.registrar', 'lecturas.ver'] },
   mantenimiento: { pagina: 'mantenimiento', etiqueta: 'Mantenimiento', corta: 'Mantenim.', icono: 'herramienta', permiso: 'incidencias.ver' },
   aprobaciones: { pagina: 'mantenimiento', etiqueta: 'Aprobaciones', corta: 'Aprobar', icono: 'herramienta', permiso: 'trabajos.aprobar' },
-  trabajos: { pagina: 'mantenimiento', etiqueta: 'Mis trabajos', corta: 'Trabajos', icono: 'herramienta', permiso: null },
+  trabajos: { pagina: 'mantenimiento', etiqueta: 'Mis trabajos', corta: 'Trabajos', icono: 'herramienta', permiso: 'trabajos.ejecutar' },
   reportar: { pagina: 'mantenimiento', query: { reportar: 1 }, etiqueta: 'Reportar incidencia', corta: 'Reportar', icono: 'camara', permiso: 'incidencias.reportar' },
   whatsapp: { pagina: 'whatsapp', etiqueta: 'WhatsApp', corta: 'WhatsApp', icono: 'whatsapp', permiso: 'whatsapp.ver' },
-  chatbot: { pagina: 'chatbot', etiqueta: 'Simulador del chatbot', corta: 'Chatbot', icono: 'robot', permiso: 'whatsapp.ver' },
+  chatbot: { pagina: 'chatbot', etiqueta: 'Simulador del chatbot', corta: 'Chatbot', icono: 'robot', permiso: 'chatbot.probar' },
   analitica: { pagina: 'analitica', etiqueta: 'Analítica', corta: 'Analítica', icono: 'grafico', permiso: 'analitica.ver' },
   roles: { pagina: 'roles', etiqueta: 'Roles y permisos', corta: 'Roles', icono: 'llave', permiso: 'roles.administrar' },
 };

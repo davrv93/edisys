@@ -36,3 +36,27 @@ describe('normalizarYo', () => {
     expect(iniciales('')).toBe('U');
   });
 });
+
+describe('forma real del API (api/internal/app/sesion.go)', () => {
+  it('roles_por_edificio con «edificio» como nombre', () => {
+    const s = normalizarYo({
+      usuario: { id: 1, nombre: 'Administración Demo', roles_por_edificio: [{ edificio_id: 1, edificio: 'Edificio Demo', rol: 'administrador' }] },
+      roles_por_edificio: [{ edificio_id: 1, edificio: 'Edificio Demo', rol: 'administrador' }],
+      edificio_actual: { id: 1, nombre: 'Edificio Demo', rol: 'administrador' },
+      permisos: ['dashboard.ver'],
+      unidades: [],
+    });
+    expect(s.edificio.nombre).toBe('Edificio Demo');
+    expect(s.edificios).toHaveLength(1);
+    expect(s.rol).toBe('administrador');
+  });
+});
+
+import { nombreUnidad } from './unidad.js';
+describe('nombreUnidad', () => {
+  it('antepone Dpto al código pelado', () => {
+    expect(nombreUnidad('201')).toBe('Dpto 201');
+    expect(nombreUnidad('Dpto 201')).toBe('Dpto 201');
+    expect(nombreUnidad(null)).toBe('');
+  });
+});
