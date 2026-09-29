@@ -211,14 +211,19 @@ export default function Dashboard() {
 }
 
 function TrabajosMes({ trabajos }) {
-  if (!trabajos.length) return <p className="text-base text-texto-suave">Sin trabajos este mes. Así da gusto.</p>;
+  if (!trabajos.length)
+    return (
+      <p className="flex items-center gap-2 text-sm text-texto-suave">
+        <Icono nombre="hecho" tam={16} className="text-acento" /> Sin trabajos este mes. Así da gusto.
+      </p>
+    );
   return (
     <ul className="flex flex-col divide-y divide-superficie-2">
       {trabajos.slice(0, 8).map((t) => (
         <li key={t.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-          <span className="min-w-0 truncate">
+          <a href={ruta('mantenimiento', { q: t.codigo })} className="line-clamp-2 min-w-0 text-tinta hover:text-acento" title={`${t.codigo} ${t.titulo}`}>
             <b>{t.codigo}</b> {t.titulo}
-          </span>
+          </a>
           <span className="flex shrink-0 items-center gap-2">
             {t.monto_presupuesto_cts ? <span className="tabular-nums text-texto-suave">{formatearSoles(t.monto_presupuesto_cts)}</span> : null}
             <Insignia estado={t.estado} />

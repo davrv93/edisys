@@ -110,7 +110,17 @@ function Bandeja() {
       ) : !datos && cargando ? (
         <Esqueleto className="h-64 w-full" />
       ) : mensajes.length === 0 ? (
-        <Vacio titulo="No hay mensajes" texto={estado || busca ? 'Prueba con otro filtro.' : 'Los recibos y avisos que envíes aparecerán aquí.'} icono="mensaje" compacto />
+        <Vacio titulo="No hay mensajes" texto={estado || busca ? 'Prueba con otro filtro.' : 'Los recibos y avisos que envíes aparecerán aquí.'} icono="bandeja" compacto>
+          {estado || busca ? (
+            <Boton variante="secundario" icono="cerrar" onClick={() => (setTexto(''), setQuery({ estado: null, q: null }, { reemplazar: true }))}>
+              Quitar filtros
+            </Boton>
+          ) : (
+            <Boton icono="enviar" onClick={() => setQuery({ tab: 'enviar' })}>
+              Enviar un mensaje
+            </Boton>
+          )}
+        </Vacio>
       ) : (
         <ul className="flex flex-col divide-y divide-superficie-2 overflow-hidden rounded-tarjeta border border-borde bg-superficie" aria-label="Mensajes">
           {mensajes.map((m) => (

@@ -205,9 +205,21 @@ export default function Recibos() {
           seleccionada={idSel}
           vacio={
             propio ? (
-              <Vacio titulo="Aún no tienes recibos" texto={`Tu primer recibo llega el 1 de ${mesDePeriodo(sumarMeses(periodo, 1))}.`} compacto />
+              <Vacio titulo="Aún no tienes recibos" texto={`Tu primer recibo llega el 1 de ${mesDePeriodo(sumarMeses(periodo, 1))}.`} icono="recibo" compacto />
             ) : (
-              <Vacio titulo={estado || buscar ? 'Ningún recibo coincide' : `Aún no hay recibos de ${mesDePeriodo(periodo)}`} texto={estado || buscar ? 'Prueba con otro filtro.' : 'Genera los borradores, revísalos y emítelos.'} compacto />
+              <Vacio titulo={estado || buscar ? 'Ningún recibo coincide' : `Aún no hay recibos de ${mesDePeriodo(periodo)}`} texto={estado || buscar ? 'Prueba con otro filtro.' : 'Genera los borradores, revísalos y emítelos.'} icono={estado || buscar ? 'buscar' : 'recibo'} compacto>
+                {estado || buscar ? (
+                  <Boton variante="secundario" icono="cerrar" onClick={() => (setTexto(''), setQuery({ estado: null, buscar: null, pagina: null }, { reemplazar: true }))}>
+                    Quitar filtros
+                  </Boton>
+                ) : (
+                  <Guarda permiso="recibos.emitir">
+                    <Boton icono="borrador" onClick={generar} cargando={trabajando === 'generar'}>
+                      Generar borradores
+                    </Boton>
+                  </Guarda>
+                )}
+              </Vacio>
             )
           }
           paginacion={total > POR_PAGINA ? { pagina, porPagina: POR_PAGINA, total, onPagina: (p) => setQuery({ pagina: p }), unidad: 'recibos' } : undefined}

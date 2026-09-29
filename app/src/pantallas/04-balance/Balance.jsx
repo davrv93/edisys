@@ -191,7 +191,13 @@ export default function Balance() {
         {resumen.error ? (
           <ErrorCarga error={resumen.error} onReintentar={resumen.recargar} />
         ) : resumen.datos && (!raiz || resumen.datos.hay_datos === false) ? (
-          <Vacio titulo={`Sin movimientos en ${mesDePeriodo(periodo)}`} texto="Cuando se registren pagos y egresos del periodo, aparecerán aquí con su sustento." />
+          <Vacio titulo={`Sin movimientos en ${mesDePeriodo(periodo)}`} texto="Cuando se registren pagos y egresos del periodo, aparecerán aquí con su sustento." icono="balance">
+            <Guarda permiso="egresos.registrar">
+              <Boton icono="mas_signo" onClick={() => setEgresoAbierto(true)}>
+                Registrar egreso
+              </Boton>
+            </Guarda>
+          </Vacio>
         ) : (
           <>
             <FranjaKPI

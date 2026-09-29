@@ -97,7 +97,7 @@ export default function Analitica() {
                     />
                   </>
                 ) : (
-                  <Vacio titulo="Sin datos en el rango" compacto />
+                  <Vacio titulo="Sin datos en el rango" texto="Prueba con los últimos 12 meses." icono="grafico" compacto />
                 )}
               </Seccion>
 
@@ -114,7 +114,7 @@ export default function Analitica() {
                     />
                   </>
                 ) : (
-                  <Vacio titulo="Sin datos en el rango" compacto />
+                  <Vacio titulo="Sin datos en el rango" texto="Prueba con los últimos 12 meses." icono="grafico" compacto />
                 )}
               </Seccion>
 
@@ -124,7 +124,7 @@ export default function Analitica() {
                     <BarrasH titulo="Consumo por unidad" datos={agua} etiqueta={(x) => x.unidad} valor={(x) => x.m3} formato={(v) => formatearNumero(v, 1)} resaltar={(x) => x.m3 > 2 * mediaAgua} />
                   </div>
                 ) : (
-                  <Vacio titulo="Sin lecturas" compacto />
+                  <Vacio titulo="Sin lecturas" texto="Aparecen cuando el operario registra la ronda." icono="medidor" compacto />
                 )}
               </Seccion>
 
@@ -142,11 +142,11 @@ export default function Analitica() {
                       </ul>
                     </>
                   ) : (
-                    <Vacio titulo="Sin reservas" compacto />
+                    <Vacio titulo="Sin reservas" texto="Aún no hay reservas en este rango." icono="calendario" compacto />
                   )}
                 </Seccion>
                 <Seccion titulo="Incidencias por estado">
-                  {inc.length ? <BarrasH titulo="Incidencias por estado" datos={inc} etiqueta={(x) => ETIQUETA_ESTADO[x.estado] || x.estado} valor={(x) => x.cantidad} formato={(v) => `${v}`} claseBarra={(x) => TONO_PUNTO[tonoDe(x.estado)]} /> : <Vacio titulo="Sin incidencias" compacto />}
+                  {inc.length ? <BarrasH titulo="Incidencias por estado" datos={inc} etiqueta={(x) => ETIQUETA_ESTADO[x.estado] || x.estado} valor={(x) => x.cantidad} formato={(v) => `${v}`} claseBarra={(x) => TONO_PUNTO[tonoDe(x.estado)]} /> : <Vacio titulo="Sin incidencias" texto="Ningún reporte en este rango." icono="herramienta" compacto />}
                 </Seccion>
               </div>
             </div>

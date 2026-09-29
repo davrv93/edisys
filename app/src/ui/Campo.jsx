@@ -4,7 +4,7 @@ import SelectorFecha from './SelectorFecha.jsx';
 import Icono from './Icono.jsx';
 
 const BASE_INPUT =
-  'w-full rounded-control border bg-superficie px-3 text-base sm:text-sm text-tinta placeholder:text-texto-tenue ' +
+  'w-full rounded-control border bg-superficie px-3 text-base sm:text-sm text-tinta placeholder:text-texto-apoyo ' +
   'transition-colors duration-rapida focus:outline-none focus:ring-2 focus:ring-acento focus:border-acento disabled:bg-superficie-2 disabled:text-texto-apoyo';
 
 /**
