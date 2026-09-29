@@ -21,3 +21,21 @@
     }
   }
 }
+
+@layer components {
+  /* Partícula del login: puntito que flota y parpadea en bucle (ver Particulas).
+     Sin movimiento reducido por la regla global de arriba. */
+  .particula {
+    position: absolute;
+    border-radius: 9999px;
+    opacity: var(--op, 0.25);
+    animation-name: flotar;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    will-change: transform, opacity;
+  }
+  @keyframes flotar {
+    0%, 100% { transform: translate3d(0, 0, 0); opacity: var(--op, 0.25); }
+    50% { transform: translate3d(var(--deriva, 20px), -26px, 0); opacity: calc(var(--op, 0.25) * 0.35); }
+  }
+}

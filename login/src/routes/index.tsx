@@ -6,6 +6,7 @@ import {
   type RequestHandler,
 } from "@builder.io/qwik-city";
 import { Logo } from "~/components/logo/logo";
+import { Particulas } from "~/components/particulas/particulas";
 import {
   DESTINO_POR_DEFECTO,
   ERROR_SIN_CONEXION,
@@ -251,12 +252,15 @@ export default component$(() => {
 
   return (
     <div class="flex min-h-screen flex-col bg-fondo lg:flex-row">
-      {/* Panel de marca: escritorio */}
-      <aside class="hidden w-[480px] shrink-0 flex-col justify-between bg-tinta p-12 text-borde lg:flex xl:w-[540px] xl:p-14">
-        <a href="/" class="self-start rounded-lg" aria-label="EDISYS, ir a la página principal">
+      {/* Panel de marca: escritorio, con partículas y resplandor */}
+      <aside class="relative hidden w-[480px] shrink-0 flex-col justify-between overflow-hidden bg-tinta p-12 text-borde lg:flex xl:w-[540px] xl:p-14">
+        <div aria-hidden="true" class="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-acento-oscuro opacity-10 blur-3xl" />
+        <div aria-hidden="true" class="pointer-events-none absolute -bottom-32 -right-16 h-80 w-80 rounded-full bg-acento opacity-20 blur-3xl" />
+        <Particulas cantidad={26} />
+        <a href="/" class="relative z-10 self-start rounded-lg" aria-label="EDISYS, ir a la página principal">
           <Logo tam={40} texto="text-3xl" />
         </a>
-        <div class="flex flex-col gap-6">
+        <div class="relative z-10 flex flex-col gap-6">
           <h1 class="font-titulo text-4xl font-medium leading-[1.15] text-white xl:text-5xl">{LEMA}</h1>
           <p class="text-lg leading-relaxed text-texto-claro">
             Recibos, balance, reservas y mantenimiento en un solo lugar para la administración, la junta y cada
@@ -264,22 +268,24 @@ export default component$(() => {
           </p>
           <ul class="mt-4 grid grid-cols-3 gap-2">
             {TARJETAS.map((t) => (
-              <li key={t.titulo} class="flex flex-col gap-1 rounded-tarjeta border border-superficie-oscura-2 p-3">
+              <li key={t.titulo} class="flex flex-col gap-1 rounded-tarjeta border border-superficie-oscura-2 bg-superficie-oscura p-3">
                 <span class="text-xs text-texto-tenue">{t.titulo}</span>
                 <span class="text-sm font-semibold text-white">{t.valor}</span>
               </li>
             ))}
           </ul>
         </div>
-        <p class="text-xs text-texto-tenue">Datos personales protegidos según la Ley 29733.</p>
+        <p class="relative z-10 text-xs text-texto-tenue">Datos personales protegidos según la Ley 29733.</p>
       </aside>
 
-      {/* Cabecera: móvil */}
-      <header class="flex flex-col gap-6 bg-tinta px-6 pb-8 pt-12 lg:hidden">
-        <a href="/" class="self-start rounded-lg" aria-label="EDISYS, ir a la página principal">
+      {/* Cabecera: móvil, con partículas */}
+      <header class="relative flex flex-col gap-6 overflow-hidden bg-tinta px-6 pb-8 pt-12 lg:hidden">
+        <div aria-hidden="true" class="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-acento opacity-20 blur-3xl" />
+        <Particulas cantidad={12} />
+        <a href="/" class="relative z-10 self-start rounded-lg" aria-label="EDISYS, ir a la página principal">
           <Logo tam={36} texto="text-2xl" />
         </a>
-        <h1 class="font-titulo text-3xl font-medium leading-tight text-white">{LEMA}</h1>
+        <h1 class="relative z-10 font-titulo text-3xl font-medium leading-tight text-white">{LEMA}</h1>
       </header>
 
       <main class="flex flex-1 justify-center px-0 lg:items-center lg:px-12">
