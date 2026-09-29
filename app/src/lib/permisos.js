@@ -61,8 +61,10 @@ export function destinoPorRol(rol) {
 }
 
 // Menú lateral (escritorio) y pestañas (móvil). Cada ítem apunta a una página Astro (+ query opcional).
-const ITEMS = {
-  inicio: { pagina: 'inicio', etiqueta: 'Resumen', corta: 'Inicio', icono: 'inicio', permiso: 'dashboard.ver' },
+// Para añadir una sección: una entrada aquí (pagina, etiqueta, corta, icono, permiso) y su id en MENU_POR_ROL.
+// Iconos previstos para lo que llega de la rama de pendientes: «conciliacion» (Landmark) y «facturacion» (FileCheck2).
+export const ITEMS = {
+  inicio: { pagina: 'inicio', etiqueta: 'Resumen', corta: 'Resumen', icono: 'inicio', permiso: 'dashboard.ver' },
   portal: { pagina: 'portal', etiqueta: 'Mi portal', corta: 'Inicio', icono: 'inicio', permiso: 'portal.ver' },
   balance: { pagina: 'balance', etiqueta: 'Balance', corta: 'Balance', icono: 'balance', permiso: 'balance.ver' },
   recibos: { pagina: 'recibos', etiqueta: 'Recibos y cobranza', corta: 'Recibos', icono: 'recibo', permiso: 'recibos.ver' },
@@ -80,10 +82,10 @@ const ITEMS = {
   roles: { pagina: 'roles', etiqueta: 'Roles y permisos', corta: 'Roles', icono: 'llave', permiso: 'roles.administrar' },
 };
 
-const MENU_POR_ROL = {
+export const MENU_POR_ROL = {
   administrador: {
     lateral: ['inicio', 'balance', 'recibos', 'unidades', 'reservas', 'medidores', 'mantenimiento', 'whatsapp', 'chatbot', 'analitica', 'roles'],
-    movil: ['inicio', 'balance', 'recibos', 'mantenimiento'],
+    movil: ['inicio', 'recibos', 'mantenimiento', 'whatsapp'],
   },
   junta: {
     lateral: ['inicio', 'balance', 'recibos', 'unidades', 'reservas', 'aprobaciones', 'analitica'],

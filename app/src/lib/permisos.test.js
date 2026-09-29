@@ -4,10 +4,10 @@ import { menuPara, destinoPorRol, PERMISOS_POR_ROL } from './permisos.js';
 const con = (rol) => (p) => PERMISOS_POR_ROL[rol].includes(p);
 
 describe('menú por rol (§2.5)', () => {
-  it('administrador: Inicio · Balance · Recibos · Mantenimiento + Más', () => {
+  it('administrador: Resumen · Recibos · Mantenimiento · WhatsApp + Más (plan de la segunda pasada)', () => {
     const m = menuPara('administrador', con('administrador'));
-    expect(m.movil.map((i) => i.corta)).toEqual(['Inicio', 'Balance', 'Recibos', 'Mantenim.']);
-    expect(m.mas.map((i) => i.id)).toContain('whatsapp');
+    expect(m.movil.map((i) => i.corta)).toEqual(['Resumen', 'Recibos', 'Mantenim.', 'WhatsApp']);
+    expect(m.mas.map((i) => i.id)).toContain('balance');
     expect(m.lateral.map((i) => i.id)).toContain('analitica');
   });
   it('propietario: Portal · Recibos · Reservas · Reportar', () => {

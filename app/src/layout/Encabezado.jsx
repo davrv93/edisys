@@ -1,25 +1,31 @@
-import { Icono } from '../ui/index.js';
+import { BotonIcono, MenuAcciones } from '../ui/index.js';
 
 /**
- * Cabecera de pantalla. Escritorio: barra blanca de 72 px con h1 en Fraunces y acciones.
- * Móvil: título y acciones debajo, a una columna.
+ * Cabecera de pantalla (v2): 56 px en escritorio. Título de 22 px a la izquierda; a la derecha,
+ * `acciones` (la principal y lo que deba verse) y el menú `⋯` con las `secundarias`
+ * (Imprimir, Exportar…): ninguna acción se pierde, pasan al menú.
+ * secundarias: [{ etiqueta, icono?, onClick?, href?, peligro?, oculto? }] (ver ui/Menu.jsx).
+ * En móvil: título y `⋯` en una fila; las acciones debajo, en una sola línea que se desliza si no cabe.
  */
-export default function Encabezado({ titulo, subtitulo, acciones, volver, children }) {
+export default function Encabezado({ titulo, subtitulo, acciones, secundarias, volver, children }) {
+  const menu = secundarias?.some((x) => x && !x.oculto) ? <MenuAcciones items={secundarias} lado="abajo" /> : null;
   return (
     <header className="border-b border-borde bg-superficie">
-      <div className="flex flex-col gap-3 px-4 py-4 lg:min-h-topbar lg:flex-row lg:items-center lg:justify-between lg:px-8 lg:py-3">
-        <div className="flex min-w-0 items-center gap-2">
-          {volver && (
-            <a href={volver} className="-ml-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-control hover:bg-fondo" aria-label="Volver">
-              <Icono nombre="volver" />
-            </a>
-          )}
-          <div className="min-w-0">
-            <h1 className="font-titulo text-2xl font-semibold leading-tight lg:text-3xl">{titulo}</h1>
-            {subtitulo && <p className="text-sm text-texto-apoyo">{subtitulo}</p>}
+      <div className="flex flex-col gap-2 px-4 py-3 lg:min-h-topbar lg:flex-row lg:items-center lg:justify-between lg:gap-4 lg:px-6 lg:py-2">
+        <div className="flex min-w-0 items-center gap-1">
+          {volver && <BotonIcono href={volver} etiqueta="Volver" icono="volver" lado="abajo" className="-ml-2" />}
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate font-titulo text-titulo-pantalla font-semibold">{titulo}</h1>
+            {subtitulo && <p className="truncate text-xs text-texto-apoyo">{subtitulo}</p>}
           </div>
+          {menu && <span className="lg:hidden">{menu}</span>}
         </div>
-        {acciones && <div className="flex flex-wrap items-center gap-2 lg:gap-3">{acciones}</div>}
+        {(acciones || menu) && (
+          <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-0.5 lg:mx-0 lg:shrink-0 lg:overflow-visible lg:px-0 lg:pb-0">
+            {acciones}
+            {menu && <span className="hidden lg:inline-flex">{menu}</span>}
+          </div>
+        )}
       </div>
       {children}
     </header>
@@ -29,30 +35,28 @@ export default function Encabezado({ titulo, subtitulo, acciones, volver, childr
 /** Cabecera blanca de las pantallas-tarea en el celular (07 y 09 del lienzo). */
 export function CabeceraTarea({ titulo, subtitulo, volver }) {
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-1 border-b border-borde bg-superficie px-2">
-      <a href={volver} className="flex h-11 w-11 items-center justify-center rounded-control hover:bg-fondo" aria-label="Volver">
-        <Icono nombre="volver" />
-      </a>
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-1 border-b border-borde bg-superficie px-2">
+      <BotonIcono href={volver} etiqueta="Volver" icono="volver" lado="abajo" />
       <div className="flex min-w-0 flex-col">
-        <span className="truncate text-lg font-semibold">{titulo}</span>
+        <span className="truncate text-lg font-semibold leading-tight">{titulo}</span>
         {subtitulo && <span className="truncate text-xs text-texto-apoyo">{subtitulo}</span>}
       </div>
     </header>
   );
 }
 
-/** Contenedor de contenido con ancho máximo de 1280 px. */
+/** Contenedor de contenido con ancho máximo de 1280 px. Sus hijos entran escalonados (30 ms, máx. 6). */
 export function Contenido({ children, className = '' }) {
-  return <div className={`mx-auto flex w-full max-w-contenido flex-col gap-4 p-4 lg:gap-6 lg:p-8 ${className}`}>{children}</div>;
+  return <div className={`escalonado mx-auto flex w-full max-w-contenido flex-col gap-4 p-4 lg:gap-5 lg:p-6 ${className}`}>{children}</div>;
 }
 
-/** Tarjeta de sección con título y enlace opcional, como en el lienzo. */
+/** Sección con título y enlace opcional. Separación con borde y espacio, sin sombra. */
 export function Seccion({ titulo, extra, children, className = '', padding = 'p-tarjeta' }) {
   return (
-    <section className={`flex min-w-0 flex-col gap-4 rounded-tarjeta border border-borde bg-superficie ${padding} ${className}`}>
+    <section className={`flex min-w-0 flex-col gap-3 rounded-tarjeta border border-borde bg-superficie ${padding} ${className}`}>
       {(titulo || extra) && (
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          {titulo && <h2 className="text-lg font-semibold">{titulo}</h2>}
+          {titulo && <h2 className="text-base font-semibold">{titulo}</h2>}
           {extra}
         </div>
       )}
