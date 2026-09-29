@@ -161,24 +161,30 @@ func (s *Server) enviarRecibosCorreo(w http.ResponseWriter, r *http.Request) {
 		P.Fallo(w, r, P.Validacion("Periodo AAAA-MM.").Campo("periodo", "Formato AAAA-MM."))
 		return
 	}
-	e := edf(r)
-	ctx := r.Context()
-	filas, err := db.Filas(ctx, s.DB, `SELECT r.id, u.id AS unidad_id, u.codigo, COALESCE(pe.nombre,'') AS nombre, COALESCE(pe.correo,'') AS correo
-		FROM recibo r JOIN unidad u ON u.id=r.unidad_id JOIN periodo p ON p.id=r.periodo_id
-		LEFT JOIN LATERAL (SELECT pe.nombre, pe.correo FROM unidad_persona up JOIN persona pe ON pe.id=up.persona_id
-			WHERE up.unidad_id=u.id AND up.rol='propietario' AND up.hasta IS NULL LIMIT 1) pe ON true
-		WHERE r.edificio_id=$1 AND p.periodo=$2 AND r.origen='periodo' AND r.estado NOT IN ('borrador','anulado') ORDER BY u.codigo`, e.ID, periodo)
+	res, err := s.CorreoRecibos(r.Context(), edf(r), ses(r).UsuarioID, periodo, nil)
 	if err != nil {
 		P.Fallo(w, r, err)
 		return
 	}
-	if len(filas) == 0 {
-		P.Fallo(w, r, P.NoEncontrado("recibos emitidos de "+P.NombrePeriodo(periodo)))
-		return
+	P.JSON(w, http.StatusAccepted, res)
+}
+
+// CorreoRecibos encola el recibo en PDF para el propietario de cada recibo emitido del periodo (o de los ids).
+func (s *Server) CorreoRecibos(ctx context.Context, e *Edificio, uid int64, periodo string, ids []int64) (map[string]any, error) {
+	filas, err := db.Filas(ctx, s.DB, `SELECT r.id, u.id AS unidad_id, u.codigo, COALESCE(pe.nombre,'') AS nombre, COALESCE(pe.correo,'') AS correo
+		FROM recibo r JOIN unidad u ON u.id=r.unidad_id JOIN periodo p ON p.id=r.periodo_id
+		LEFT JOIN LATERAL (SELECT pe.nombre, pe.correo FROM unidad_persona up JOIN persona pe ON pe.id=up.persona_id
+			WHERE up.unidad_id=u.id AND up.rol='propietario' AND up.hasta IS NULL LIMIT 1) pe ON true
+		WHERE r.edificio_id=$1 AND r.origen='periodo' AND r.estado NOT IN ('borrador','anulado') AND (($2 <> '' AND p.periodo=$2) OR r.id = ANY($3))
+		ORDER BY u.codigo`, e.ID, periodo, ids)
+	if err != nil {
+		return nil, err
 	}
-	uid := ses(r).UsuarioID
+	if len(filas) == 0 {
+		return nil, P.NoEncontrado("recibos emitidos para enviar")
+	}
 	sinCorreo := []string{}
-	ids := []int64{}
+	enviados := []int64{}
 	for _, f := range filas {
 		cod := f["codigo"].(string)
 		if !correo.ValidarDireccion(f["correo"].(string)) {
@@ -188,15 +194,13 @@ func (s *Server) enviarRecibosCorreo(w http.ResponseWriter, r *http.Request) {
 		rid := f["id"].(int64)
 		rc, err := s.reciboVisible(ctx, e, rid)
 		if err != nil {
-			P.Fallo(w, r, err)
-			return
+			return nil, err
 		}
 		pdfB, err := s.reciboPDF(ctx, rc, rid)
 		if err != nil {
-			P.Fallo(w, r, err)
-			return
+			return nil, err
 		}
-		nombre := primerNombre(f["nombre"].(string))
+		per := rc["periodo"].(string)
 		saldo := rc["saldo_cts"].(int64)
 		estado := "Pendiente de pago"
 		if saldo == 0 {
@@ -206,23 +210,23 @@ func (s *Server) enviarRecibosCorreo(w http.ResponseWriter, r *http.Request) {
 			{"Saldo", P.Soles(saldo)}, {"Vence", fechaCorta(rc["vence"])}, {"Estado", estado}}
 		cierre := "Puedes verlo con la foto de tu medidor y subir tu voucher en " + s.Cfg.URLPublica + "/app/recibos/."
 		if yp, _ := rc["yape_numero"].(string); yp != "" && saldo > 0 {
-			cierre = "Paga por Yape al " + yp + " con el concepto «Dpto " + cod + " " + periodo + "» y sube tu voucher en " + s.Cfg.URLPublica + "/app/recibos/."
+			cierre = "Paga por Yape al " + yp + " con el concepto «Dpto " + cod + " " + per + "» y sube tu voucher en " + s.Cfg.URLPublica + "/app/recibos/."
 		}
-		html, texto := armarCorreo(datosCorreo{Edificio: e.Nombre, Nombre: nombre, Intro: "Te enviamos tu recibo de mantenimiento de " + P.NombrePeriodo(periodo) + " del Dpto " + cod + ".",
+		html, texto := armarCorreo(datosCorreo{Edificio: e.Nombre, Nombre: primerNombre(f["nombre"].(string)), Intro: "Te enviamos tu recibo de mantenimiento de " + P.NombrePeriodo(per) + " del Dpto " + cod + ".",
 			Filas: filasC, Cierre: cierre})
 		unidad := f["unidad_id"].(int64)
-		id, err := s.encolarCorreo(ctx, s.DB, e.ID, &unidad, f["correo"].(string), f["nombre"].(string), "Tu recibo de "+P.NombrePeriodo(periodo)+" · Dpto "+cod,
+		id, err := s.encolarCorreo(ctx, s.DB, e.ID, &unidad, f["correo"].(string), f["nombre"].(string), "Tu recibo de "+P.NombrePeriodo(per)+" · Dpto "+cod,
 			html, texto, "recibo", val(rc["numero"]), []adjuntoCola{{"recibo-" + val(rc["numero"]) + ".pdf", "application/pdf", pdfB}}, &uid)
 		if err != nil {
-			P.Fallo(w, r, err)
-			return
+			return nil, err
 		}
-		ids = append(ids, id)
+		enviados = append(enviados, id)
+		_, _ = s.DB.Exec(ctx, `UPDATE recibo SET enviado_en=now() WHERE id=$1`, rid)
 	}
 	s.despacharCorreos(ctx)
-	c := s.conteoCorreos(ctx, ids)
-	P.JSON(w, http.StatusAccepted, map[string]any{"periodo": periodo, "encolados": len(ids), "enviados": c["enviado"], "simulados": c["simulado"],
-		"errores": c["error"], "pendientes": c["pendiente"], "sin_correo": sinCorreo, "mensaje_ids": ids, "modo": s.Cfg.CorreoModo})
+	c := s.conteoCorreos(ctx, enviados)
+	return map[string]any{"periodo": periodo, "encolados": len(enviados), "en_cola": len(enviados), "enviados": c["enviado"], "simulados": c["simulado"],
+		"errores": c["error"], "pendientes": c["pendiente"], "sin_correo": sinCorreo, "mensaje_ids": enviados, "modo": s.Cfg.CorreoModo, "canal": "correo"}, nil
 }
 
 // enviarBalanceCorreo: POST /balance/{periodo}/enviar-correo {destinatarios: todos|junta|propietarios}.

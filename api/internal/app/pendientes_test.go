@@ -742,3 +742,18 @@ func TestSunatCertificadoPFX(t *testing.T) {
 		t.Errorf("firmado con el pfx: %d %v", st, b)
 	}
 }
+
+// El botón «Enviar por correo» del recibo (POST /recibos/enviar) manda ese recibo en PDF a su propietario.
+func TestEnviarUnReciboPorCorreo(t *testing.T) {
+	e := nuevo(t)
+	tok := e.login("admin@demo.pe")
+	st, d := e.pedir("POST", "/api/v1/edificios/1/recibos/enviar", tok, map[string]any{"recibo_ids": []int64{e.reciboDe("201", "2026-09")}})
+	if st != 202 || num(d["encolados"]) != 1 || d["canal"] != "correo" {
+		t.Fatalf("enviar un recibo: %d %v", st, d)
+	}
+	var para string
+	_ = e.pool.QueryRow(context.Background(), `SELECT para FROM correo_mensaje WHERE origen='recibo'`).Scan(&para)
+	if para != "propietario201@demo.pe" {
+		t.Errorf("destinatario %q", para)
+	}
+}

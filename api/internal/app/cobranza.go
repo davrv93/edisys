@@ -616,17 +616,31 @@ func val(v any) string {
 	return fmt.Sprint(v)
 }
 
-// enviarRecibos: POST /recibos/enviar {recibo_ids} → 202 {en_cola}. Sale por la bandeja de WhatsApp
-// (en modo simulado solo se registra); el correo queda para después.
+// enviarRecibos: POST /recibos/enviar {recibo_ids, canal?: correo|whatsapp} → 202 {en_cola}. Por defecto va por
+// correo con el PDF adjunto (bandeja correo_mensaje); con canal=whatsapp, por la bandeja de WhatsApp.
 func (s *Server) enviarRecibos(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		ReciboIDs []int64 `json:"recibo_ids"`
+		Canal     string  `json:"canal"`
 	}
 	if err := P.Leer(r, &in); err != nil {
 		P.Fallo(w, r, err)
 		return
 	}
 	e := edf(r)
+	if in.Canal != "whatsapp" {
+		if len(in.ReciboIDs) == 0 {
+			P.Fallo(w, r, P.Validacion("Indica los recibos.").Campo("recibo_ids", "Obligatorio."))
+			return
+		}
+		res, err := s.CorreoRecibos(r.Context(), e, ses(r).UsuarioID, "", in.ReciboIDs)
+		if err != nil {
+			P.Fallo(w, r, err)
+			return
+		}
+		P.JSON(w, http.StatusAccepted, res)
+		return
+	}
 	res, err := s.encolarRecibos(r.Context(), e.ID, ses(r).UsuarioID, "", in.ReciboIDs)
 	if err != nil {
 		P.Fallo(w, r, err)
