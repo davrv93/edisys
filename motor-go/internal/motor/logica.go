@@ -5,6 +5,7 @@ package motor
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -39,7 +40,10 @@ const (
 	GoldenMin        = 0.45
 	GoldenPesoJacc   = 0.03
 	MaxTokensLlama   = 280
-	Temperatura      = 0.3
+	// Temperatura baja (Python usaba 0,3): menos creatividad con las cifras.
+	Temperatura          = 0.1
+	TemperaturaReintento = 0.0
+	MotivoCifra          = "cifra_no_verificada"
 )
 
 // System es SYSTEM de app.py, literal.
@@ -77,6 +81,10 @@ type Embebedor interface {
 type Interaccion struct {
 	Cuando, Pregunta, Respuesta, Intencion, Claves string
 	Tokens                                         *pyjson.Value
+	// Motivo = "cifra_no_verificada" si se respondió la versión segura;
+	// Descartadas = las cifras inventadas que se quitaron.
+	Motivo      string
+	Descartadas []string
 }
 
 // Propuesta = entrada de _propuestas.
@@ -767,6 +775,16 @@ type RespuestaChat struct {
 	Sugerencias          []string
 	Contexto             []ContextoUsado
 	Tokens               *pyjson.Value
+	Verificacion         Verificacion
+}
+
+// Verificacion = campo "verificacion" de /v1/chat (ver CONTRATO.md).
+type Verificacion struct {
+	Cifras      []string // cifras de la respuesta final (todas verificadas)
+	OK          bool     // el LLM dio una respuesta verificada (a la 1.ª o en el reintento)
+	Reintento   bool     // hubo que pedirla otra vez
+	Seguro      bool     // se respondió la versión segura
+	Descartadas []string // cifras inventadas que no salieron
 }
 
 // ContextoUsado = elemento de contexto_usado.
@@ -807,32 +825,37 @@ func (m *Motor) Chat(mensajes []Mensaje, pedirSug, usarMemoria bool, datos *pyjs
 	if err != nil {
 		return nil, err
 	}
-	texto, tokens, err := m.llama(prompt, MaxTokensLlama)
+	// Verificación de cifras: reglas en el system, comprobación después.
+	fuentes := ReunirFuentes(mensajes, frag, mem, datos)
+	prompt[0].Content += "\n\n" + ReglasCifras(fuentes, datos)
+	texto, tokens, err := m.generar(prompt, frag, Temperatura)
 	if err != nil {
-		return nil, ErrLlama{err}
-	}
-	if texto, err = m.aplicarFiltro(texto, frag); err != nil {
 		return nil, err
 	}
-
-	// F5: evasión aprendida — respuesta casi literal de ≥2 fragmentos → el primero.
-	if len(frag) > 0 {
-		vr, err := m.e5uno(PrefijoP + texto)
-		if err != nil {
-			return nil, err
+	ver := Verificacion{OK: true}
+	cifras, malas := fuentes.Verificar(texto)
+	if len(malas) > 0 {
+		ver.Reintento = true
+		ver.Descartadas = textos(malas)
+		estricto := append([]Mensaje(nil), prompt...)
+		estricto[0].Content += "\n\n" + Estricto(fuentes, malas)
+		texto2, tokens2, err2 := m.generar(estricto, frag, TemperaturaReintento)
+		if err2 == nil {
+			texto, tokens = texto2, tokens2
+			cifras, malas = fuentes.Verificar(texto)
+			ver.Descartadas = unir(ver.Descartadas, textos(malas))
 		}
-		similares := 0
-		for _, f := range frag {
-			if dot(vr, f.Vec) > UmbralAltoSim {
-				similares++
-			}
-		}
-		if similares >= UmbralAltoVeces {
-			if texto, err = frag[0].Texto(); err != nil {
-				return nil, err
+		if err2 != nil || len(malas) > 0 {
+			ver.OK, ver.Seguro = false, true
+			texto = VersionSegura(texto, malas, fuentes, datos)
+			if cifras, malas = fuentes.Verificar(texto); len(malas) > 0 {
+				texto, cifras = SinMonto, nil // no debería pasar: la versión segura solo lleva cifras de las fuentes
 			}
 		}
 	}
+	ver.Cifras = textos(cifras)
+	log.Printf("verificación: ok=%v reintento=%v seguro=%v cifras=%q descartadas=%q",
+		ver.OK, ver.Reintento, ver.Seguro, ver.Cifras, ver.Descartadas)
 
 	sug := []string{}
 	if pedirSug {
@@ -853,10 +876,16 @@ func (m *Motor) Chat(mensajes []Mensaje, pedirSug, usarMemoria bool, datos *pyjs
 		intencion = "falla"
 	}
 
+	motivo, descartadas := "", []string(nil)
+	if ver.Seguro {
+		motivo, descartadas = MotivoCifra, ver.Descartadas
+		log.Printf("%s: %q → descartadas %q", MotivoCifra, consulta, descartadas)
+	}
 	m.candado.Lock()
 	m.log = append(m.log, Interaccion{
 		Cuando: m.cuando(), Pregunta: consulta, Respuesta: cortarRunas(texto, 400),
 		Intencion: intencion, Claves: claveFiltro(idsDe(frag)), Tokens: tokens,
+		Motivo: motivo, Descartadas: descartadas,
 	})
 	if len(m.log) > MaxLog {
 		m.log = append([]Interaccion(nil), m.log[len(m.log)-MaxLog:]...)
@@ -871,7 +900,53 @@ func (m *Motor) Chat(mensajes []Mensaje, pedirSug, usarMemoria bool, datos *pyjs
 		}
 		ctx = append(ctx, ContextoUsado{ID: id, Sim: round3(fragSim[i])})
 	}
-	return &RespuestaChat{Respuesta: texto, Intencion: intencion, Sugerencias: sug, Contexto: ctx, Tokens: tokens}, nil
+	return &RespuestaChat{Respuesta: texto, Intencion: intencion, Sugerencias: sug, Contexto: ctx, Tokens: tokens, Verificacion: ver}, nil
+}
+
+// generar = llama + filtro KTO-lite + evasión aprendida (pasos 5–7 de chat()).
+func (m *Motor) generar(prompt []Mensaje, frag []*Item, temperatura float64) (string, *pyjson.Value, error) {
+	texto, tokens, err := m.llama(prompt, MaxTokensLlama, temperatura)
+	if err != nil {
+		return "", nil, ErrLlama{err}
+	}
+	if texto, err = m.aplicarFiltro(texto, frag); err != nil {
+		return "", nil, err
+	}
+	// F5: evasión aprendida — respuesta casi literal de ≥2 fragmentos → el primero.
+	if len(frag) > 0 {
+		vr, err := m.e5uno(PrefijoP + texto)
+		if err != nil {
+			return "", nil, err
+		}
+		similares := 0
+		for _, f := range frag {
+			if dot(vr, f.Vec) > UmbralAltoSim {
+				similares++
+			}
+		}
+		if similares >= UmbralAltoVeces {
+			if texto, err = frag[0].Texto(); err != nil {
+				return "", nil, err
+			}
+		}
+	}
+	return texto, tokens, nil
+}
+
+func unir(a, b []string) []string {
+	for _, x := range b {
+		esta := false
+		for _, y := range a {
+			if x == y {
+				esta = true
+				break
+			}
+		}
+		if !esta {
+			a = append(a, x)
+		}
+	}
+	return a
 }
 
 // ---------- feedback ----------

@@ -77,8 +77,11 @@ type llamaFalso struct {
 	mu        sync.Mutex
 	pedidos   []map[string]any
 	respuesta string
-	codigo    int
-	sinUsage  bool
+	// respuestas se consumen en orden (una por llamada); agotadas, respuesta.
+	respuestas []string
+	codigoTras int // >0: a partir de esa llamada (contando desde 1) contesta 500
+	codigo     int
+	sinUsage   bool
 }
 
 func (l *llamaFalso) servidor(t *testing.T) *httptest.Server {
@@ -93,6 +96,12 @@ func (l *llamaFalso) servidor(t *testing.T) *httptest.Server {
 			l.mu.Lock()
 			l.pedidos = append(l.pedidos, p)
 			cod, resp, sin := l.codigo, l.respuesta, l.sinUsage
+			if l.codigoTras > 0 && len(l.pedidos) > l.codigoTras {
+				cod = 500
+			}
+			if len(l.respuestas) > 0 {
+				resp, l.respuestas = l.respuestas[0], l.respuestas[1:]
+			}
 			l.mu.Unlock()
 			if cod != 0 {
 				w.WriteHeader(cod)
@@ -213,7 +222,7 @@ func TestChatContratoEIndexado(t *testing.T) {
 		t.Fatalf("%d %s", c, b)
 	}
 	// Orden de claves, respuesta sin espacios, sims redondeadas como round(x,3).
-	igual(t, "chat", b, `{"respuesta":"La piscina abre temprano.","intencion":"falla","sugerencias":[],"contexto_usado":[{"id":"f1","sim":1.0},{"id":"f2","sim":0.8}],"tokens_generados":7}`)
+	igual(t, "chat", b, `{"respuesta":"La piscina abre temprano.","intencion":"falla","sugerencias":[],"contexto_usado":[{"id":"f1","sim":1.0},{"id":"f2","sim":0.8}],"tokens_generados":7,"verificacion":{"cifras":[],"ok":true,"reintento":false,"seguro":false,"descartadas":[]}}`)
 
 	// El primer lote e5 es el de _indexar: los 3 fragmentos juntos, con «passage: ».
 	if got := e.emb.lotes[0]; len(got) != 3 || got[0] != "passage: Piscina abre de 8 a 12." {
@@ -238,7 +247,7 @@ func TestChatContratoEIndexado(t *testing.T) {
 
 	// Lo que llegó a llama-server.
 	p := e.llama.pedidos[0]
-	if p["temperature"] != 0.3 || p["max_tokens"] != float64(280) || p["cache_prompt"] != true {
+	if p["temperature"] != 0.1 || p["max_tokens"] != float64(280) || p["cache_prompt"] != true {
 		t.Errorf("parámetros a llama: %v", p)
 	}
 	ms := p["messages"].([]any)
@@ -263,7 +272,7 @@ func TestChatIntencionesYSinUsage(t *testing.T) {
 	e := nuevoEntorno(t, faqSemilla)
 	e.llama.sinUsage = true
 	_, b := e.post(t, "/v1/chat", `{"mensajes":[{"role":"user","content":"algo sin relación"}],"pedir_sugerencias":false}`)
-	igual(t, "conversa", b, `{"respuesta":"La piscina abre temprano.","intencion":"conversa","sugerencias":[],"contexto_usado":[],"tokens_generados":null}`)
+	igual(t, "conversa", b, `{"respuesta":"La piscina abre temprano.","intencion":"conversa","sugerencias":[],"contexto_usado":[],"tokens_generados":null,"verificacion":{"cifras":[],"ok":true,"reintento":false,"seguro":false,"descartadas":[]}}`)
 	_, b = e.post(t, "/v1/chat", `{"mensajes":[{"role":"user","content":"algo sin relación"}],"pedir_sugerencias":false,"datos":{"filas":[{"x":1}]}}`)
 	if !strings.Contains(b, `"intencion":"golden"`) {
 		t.Errorf("con filas la intención es golden: %s", b)

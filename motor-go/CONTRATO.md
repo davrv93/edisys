@@ -4,7 +4,10 @@ Contrato HTTP y de archivos del servicio `motor`, fijado a partir de
 `motor/app.py` (versión 1.1.0, con el WIP del 29-09-2026: caché de golden por
 `(id, texto)`, desempate Jaccard y few-shot solo sin filas) y de su cliente
 `api/internal/app/motor.go`. `motor-go/` lo cumple **byte a byte**; la
-comprobación está en *Verificación* al final.
+comprobación está en *Verificación* al final. **Excepción desde el 29-09-2026:**
+`/v1/chat` verifica las cifras (ver *Verificación de cifras*): añade el campo
+`verificacion`, dos partes al `system`, baja la temperatura a 0,1 y puede
+llamar dos veces a llama. Python no lo hace.
 
 Puerto `8080`. Sin autenticación: el API manda `Authorization: Bearer $MOTOR_TOKEN`
 si está definido, pero el motor no lo valida (Python tampoco). Todas las
@@ -43,8 +46,17 @@ Salida `200`:
 
 ```json
 {"respuesta":"…","intencion":"golden|falla|conversa","sugerencias":["…"],
- "contexto_usado":[{"id":"faq_…","sim":0.84}],"tokens_generados":71}
+ "contexto_usado":[{"id":"faq_…","sim":0.84}],"tokens_generados":71,
+ "verificacion":{"cifras":["402","S/ 1.420,00"],"ok":true,"reintento":false,
+                 "seguro":false,"descartadas":[]}}
 ```
+
+- `verificacion` (nuevo, solo motor Go; el API lo ignora porque decodifica
+  en un struct con `respuesta`/`sugerencias`/`tokens_generados`):
+  `cifras` = las de la respuesta final, todas presentes en las fuentes;
+  `ok` = el LLM dio una respuesta verificada (a la primera o en el reintento);
+  `reintento` = hubo segunda llamada; `seguro` = se respondió la versión segura
+  (implica `ok=false`); `descartadas` = cifras inventadas que no salieron.
 
 - `intencion`: `golden` si `datos.filas` es *truthy* (lista no vacía…), si no
   `falla` si hubo fragmentos de FAQ, si no `conversa`.
@@ -77,10 +89,15 @@ Algoritmo (orden de `app.py`):
      antiguo mientras `Σlen(partes) + Σlen(content) ≤ 6000` caracteres (sin
      contar los `\n\n` del join); se para en el primero que no cabe. El último
      mensaje va como `{"role":"user","content":<content sin strip>}`.
-5. `POST {LLAMA}/v1/chat/completions` con
-   `{"messages":…,"temperature":0.3,"max_tokens":280,"cache_prompt":true}`,
-   timeout 120 s. Respuesta = `strip(choices[0].message.content)`. No-2xx,
-   error de red o JSON sin ese campo → 502.
+5. (Go) Al `system` se le añade `"\n\n" + ReglasCifras`: solo cifras textuales de
+   las fuentes, copiadas tal cual, sin sumar ni restar; aviso de que el
+   «S/ 4.800,00» del SYSTEM es solo formato; los `*_cts` de `datos.filas` ya
+   convertidos a soles por fila (`- codigo 402: saldo = S/ 1.420,00`) y la lista
+   «Cifras disponibles» (máx. 40).
+   `POST {LLAMA}/v1/chat/completions` con
+   `{"messages":…,"temperature":0.1,"max_tokens":280,"cache_prompt":true}`
+   (Python: 0.3), timeout 120 s. Respuesta = `strip(choices[0].message.content)`.
+   No-2xx, error de red o JSON sin ese campo → 502.
 6. Filtro KTO-lite: si para la clave `"|".join(sorted(str(id)))` de los
    fragmentos hay más votos `-1` que `+1`, quita las líneas (`splitlines`) que
    contengan alguna palabra (`[\s,;:]+`, ≥6 caracteres, en minúsculas) del texto
@@ -88,9 +105,43 @@ Algoritmo (orden de `app.py`):
 7. Evasión aprendida: si hubo fragmentos, `r = e5("passage: " + respuesta)`; si
    ≥ **2** fragmentos tienen `dot(r, vector) > 0.93`, la respuesta pasa a ser el
    texto del primero.
+7.bis (Go) Verificación de cifras sobre el texto ya filtrado (ver abajo). Si
+   alguna cifra no está en las fuentes: se repiten 5–7 con `temperature 0.0` y
+   el `system` + «ATENCIÓN: … cifras que NO están … las ÚNICAS cifras que puedes
+   escribir son: …». Si vuelve a fallar (o llama falla en el reintento: no es
+   502), versión segura. Nunca sale una cifra no verificada.
 8. Sugerencias (ver `/v1/sugerencias`) con `usadas` = contenidos de todos los
    mensajes `user`.
-9. Registro en memoria (máx. 100): `{"cuando","pregunta","respuesta"[:400],"intencion","claves","tokens"}`.
+9. Registro en memoria (máx. 100): `{"cuando","pregunta","respuesta"[:400],"intencion","claves","tokens"}`;
+   si se respondió la versión segura, además `"motivo":"cifra_no_verificada","descartadas":[…]`
+   (y una línea `cifra_no_verificada:` en el log del contenedor).
+
+#### Verificación de cifras (Go, 29-09-2026)
+
+- **Extractor** (`ExtraerCifras`): montos `S/ 1.420,00`, `S/1420`, `S/. 3.500`,
+  `1,420.00`, `80 soles`, `4,8 mil`; porcentajes `13,1 %`; horas `8:00`;
+  fechas `29/09`, `29/09/26`, `2026-09-29`; números sueltos. Ignora números
+  pegados a letras (`e5`, `F5`) y viñetas (`1. `, `2) `). Rangos
+  (`12:00-17:00`, `8-12`) y correlativos se parten por `-`. Un número con un
+  solo separador seguido de 3 cifras (`1.500`, `1,420`) es ambiguo y se lee de
+  las dos formas (miles o decimal).
+- **Fuentes**: `datos.filas` (los campos `*_cts` cuentan **solo** divididos
+  entre 100: `142000` no autoriza «S/ 142.000»), `datos.golden[].pregunta`,
+  fragmentos del FAQ, memoria (P y R) y los mensajes `user` (identificadores de
+  la pregunta: Dpto 402, 29/09). **No** cuentan el `SYSTEM` (su «S/ 4.800,00») ni
+  los mensajes del asistente.
+- **Comparación**: un número escrito con *d* decimales vale si alguna fuente
+  redondeada a *d* decimales da lo mismo (`S/ 1.420` ← 1420,00; `4,8 mil` ←
+  4 812,50; `13 %` ← 13,1). Horas: misma hh:mm, o `h:00` si la fuente trae `h`.
+  Fechas: mismo día y mes (y año si ambos lo traen). No distingue tipos: un
+  monto que coincida con un conteo de la fuente pasa.
+- **Versión segura**: (1) si la única cifra mala es el único monto del texto y
+  `datos.filas` trae un único monto → se sustituye por él (`S/ 1.420,00`);
+  (2) si hay filas (≤ 8) → se narran sin LLM: «Esto es lo que tengo en los
+  datos del edificio:\n- codigo: 402 · saldo: S/ 1.420,00»; (3) si no, se quitan
+  las frases con cifras malas y se añade «No tengo ese monto a mano; revísalo en
+  Recibos.» (o «No tengo ese dato a mano; escríbele a la administración.» si
+  ninguna era un monto).
 
 ### `POST /v1/feedback`
 
@@ -129,6 +180,7 @@ sin las que coincidan en `lower()` con alguna `usada` (`strip().lower()`), las 3
 ### `GET /v1/registro`
 
 `200 {"interacciones":[…],"propuestas":[…],"filtro":{"<clave>":{"+1":n,"-1":n}}}`
+(las interacciones con versión segura llevan además `motivo` y `descartadas`)
 (estado en memoria; se pierde al reiniciar, en las dos implementaciones).
 
 ### Rutas y errores genéricos

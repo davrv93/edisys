@@ -34,7 +34,7 @@ type mensajeLlama struct {
 
 // llama = _llama: POST /v1/chat/completions (OpenAI-compatible) y devuelve el
 // contenido sin espacios en los bordes y usage.completion_tokens (o null).
-func (m *Motor) llama(mensajes []Mensaje, maxTokens int) (string, *pyjson.Value, error) {
+func (m *Motor) llama(mensajes []Mensaje, maxTokens int, temperatura float64) (string, *pyjson.Value, error) {
 	ms := make([]mensajeLlama, len(mensajes))
 	for i, x := range mensajes {
 		ms[i] = mensajeLlama{x.Role, x.Content}
@@ -44,7 +44,7 @@ func (m *Motor) llama(mensajes []Mensaje, maxTokens int) (string, *pyjson.Value,
 		Temperature float64        `json:"temperature"`
 		MaxTokens   int            `json:"max_tokens"`
 		CachePrompt bool           `json:"cache_prompt"`
-	}{ms, Temperatura, maxTokens, true})
+	}{ms, temperatura, maxTokens, true})
 	resp, err := m.Cliente.chat.Post(m.LlamaURL+"/v1/chat/completions", "application/json", bytes.NewReader(cuerpo))
 	if err != nil {
 		return "", nil, err

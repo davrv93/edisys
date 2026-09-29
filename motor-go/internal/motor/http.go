@@ -321,8 +321,15 @@ func (m *Motor) chat(w http.ResponseWriter, r *http.Request) {
 	for i, c := range res.Contexto {
 		ctx[i] = obj("id", c.ID, "sim", c.Sim)
 	}
+	v := res.Verificacion
+	desc := v.Descartadas
+	if desc == nil {
+		desc = []string{}
+	}
 	escribir(w, 200, obj("respuesta", res.Respuesta, "intencion", res.Intencion,
-		"sugerencias", res.Sugerencias, "contexto_usado", ctx, "tokens_generados", res.Tokens))
+		"sugerencias", res.Sugerencias, "contexto_usado", ctx, "tokens_generados", res.Tokens,
+		"verificacion", obj("cifras", v.Cifras, "ok", v.OK, "reintento", v.Reintento,
+			"seguro", v.Seguro, "descartadas", desc)))
 }
 
 func (m *Motor) feedback(w http.ResponseWriter, r *http.Request) {
@@ -415,6 +422,10 @@ func (m *Motor) registro(w http.ResponseWriter, r *http.Request) {
 	for i, x := range inter {
 		li[i] = obj("cuando", x.Cuando, "pregunta", x.Pregunta, "respuesta", x.Respuesta,
 			"intencion", x.Intencion, "claves", x.Claves, "tokens", x.Tokens)
+		if x.Motivo != "" { // solo en las versiones seguras: el resto sale como en Python
+			li[i].Set("motivo", pyjson.NewString(x.Motivo))
+			li[i].Set("descartadas", valor(x.Descartadas))
+		}
 	}
 	lp := make([]*pyjson.Value, len(props))
 	for i, p := range props {
