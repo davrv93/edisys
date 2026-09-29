@@ -184,7 +184,6 @@ export default function Balance() {
                 to={s.tiene('recibos.ver') ? ruta('recibos', { periodo, estado: 'vencido' }) : undefined}
               />
             </div>
-            {resumen.datos?.conciliacion && <p className={`text-sm ${resumen.datos.conciliacion.conciliado ? 'text-acento' : 'text-alerta'}`} role="status">{resumen.datos.conciliacion.texto}</p>}
 
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
               <section className="flex min-w-0 flex-1 flex-col gap-3">
@@ -234,9 +233,9 @@ export default function Balance() {
                   )}
                 </div>
                 {resumen.datos?.conciliacion && (
-                  <div className="flex items-start gap-2 rounded-xl border border-acento-borde bg-acento-suave p-4 text-sm text-acento-hover">
-                    <Icono nombre="check" tam={18} className="mt-0.5" />
-                    {resumen.datos.conciliacion}
+                  <div className={`flex items-start gap-2 rounded-xl border p-4 text-sm ${resumen.datos.conciliacion.conciliado === false ? 'border-aviso-borde bg-aviso-suave text-aviso' : 'border-acento-borde bg-acento-suave text-acento-hover'}`} role="status">
+                    <Icono nombre={resumen.datos.conciliacion.conciliado === false ? 'alerta' : 'check'} tam={18} className="mt-0.5" />
+                    {resumen.datos.conciliacion.texto ?? resumen.datos.conciliacion}
                   </div>
                 )}
                 <p className="text-xs text-texto-apoyo">Toca un nodo para bajar de lo general al documento. Con teclado: flechas para moverte y abrir, Enter para ver el documento.</p>
