@@ -18,3 +18,4 @@ export { default as Logo, Isotipo } from './Logo.jsx';
 export { Tooltip, BotonIcono } from './Tooltip.jsx';
 export { MenuAcciones, Desplegable } from './Menu.jsx';
 export { ICONOS, existeIcono } from './Icono.jsx';
+export { default as Chip } from './Chip.jsx';

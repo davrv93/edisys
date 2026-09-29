@@ -20,8 +20,9 @@ export function ToastProvider({ children }) {
     (mensaje, op = {}) => {
       const id = ++n.current;
       const tipo = op.tipo || 'info';
-      setLista((l) => [...l.slice(-3), { id, mensaje, tipo, accion: op.accion }]);
-      if (tipo !== 'error' && !op.fijo) setTimeout(() => quitar(id), op.duracion || 4000);
+      const dura = tipo !== 'error' && !op.fijo ? op.duracion || 4000 : null;
+      setLista((l) => [...l.slice(-3), { id, mensaje, tipo, accion: op.accion, dura }]);
+      if (dura) setTimeout(() => quitar(id), dura);
       return id;
     },
     [quitar],
@@ -32,7 +33,7 @@ export function ToastProvider({ children }) {
       {children}
       <div className="pointer-events-none fixed inset-x-0 bottom-20 z-[90] flex flex-col items-center gap-2 px-4 lg:bottom-6 lg:items-end lg:pr-6" aria-live="polite">
         {lista.map((t) => (
-          <div key={t.id} role={t.tipo === 'error' ? 'alert' : 'status'} className={`pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-tarjeta px-4 py-3 text-sm shadow-flotante ${TONOS[t.tipo]}`}>
+          <div key={t.id} role={t.tipo === 'error' ? 'alert' : 'status'} className={`pointer-events-auto relative flex w-full max-w-sm items-start gap-3 overflow-hidden rounded-tarjeta px-4 py-3 text-sm shadow-flotante animate-entrar-abajo ${TONOS[t.tipo]}`}>
             <Icono nombre={ICONOS[t.tipo]} tam={18} className="mt-0.5" />
             <span className="flex-1">{t.mensaje}</span>
             {t.accion && (
@@ -40,9 +41,12 @@ export function ToastProvider({ children }) {
                 {t.accion.texto}
               </button>
             )}
-            <button type="button" aria-label="Cerrar aviso" onClick={() => quitar(t.id)} className="-m-1 p-1 opacity-80 hover:opacity-100">
+            <button type="button" aria-label="Cerrar aviso" onClick={() => quitar(t.id)} className="-m-1 rounded-control p-1 opacity-80 transition-opacity duration-rapida hover:opacity-100">
               <Icono nombre="cerrar" tam={16} />
             </button>
+            {t.dura && (
+              <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-0.5 origin-left bg-current opacity-40 animate-consumir motion-reduce:hidden" style={{ animationDuration: `${t.dura}ms` }} />
+            )}
           </div>
         ))}
       </div>
