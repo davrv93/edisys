@@ -32,11 +32,11 @@
 
 	# No hay landing pública: la raíz manda a la app.
 	handle / {
-		redir /app/ 302
+		redir * /app/ 302
 	}
 
 	handle {
-		redir /app/ 302
+		redir * /app/ 302
 	}
 
 	header {
