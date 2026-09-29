@@ -1,0 +1,101 @@
+# EDISYS · integración continua: pruebas del API (con PostgreSQL), de la app y del login, build de las
+# imágenes y el stack completo con docker compose + humo. No publica ni despliega nada.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: edisys
+          POSTGRES_USER: edisys
+          POSTGRES_PASSWORD: edisys
+        ports: ["4754:5432"]
+        options: >-
+          --health-cmd "pg_isready -U edisys -d edisys" --health-interval 5s --health-timeout 5s --health-retries 20
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: api/go.mod
+          cache-dependency-path: api/go.sum
+      - name: gofmt
+        run: test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
+      - name: go vet
+        run: go vet ./...
+      - name: go test (puras + integración)
+        env:
+          TEST_DATABASE_URL: postgres://edisys:edisys@localhost:4754/edisys_test?sslmode=disable
+        run: go test -count=1 ./...
+      - name: UBL 2.1 (XSD) y firma (xmlsec1)
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq libxml2-utils >/dev/null
+          ../scripts/validar-ubl.sh
+
+  app:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  login:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: login
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: login/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+
+  compose:
+    needs: [api, app]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Construir imágenes
+        run: docker compose build
+      - name: Levantar el stack
+        run: docker compose up -d
+      - name: Esperar al borde
+        run: |
+          for i in $(seq 1 60); do curl -fs http://localhost:4700/api/health >/dev/null && break; sleep 3; done
+          curl -fs http://localhost:4700/api/health
+      - name: Humo
+        run: make smoke
+      - name: Respaldo y restauración
+        run: make backup && make restore
+      - name: Logs si falla
+        if: failure()
+        run: docker compose logs --tail=200

@@ -2,7 +2,7 @@
 COMPOSE := docker compose
 TEST_DB ?= postgres://edisys:edisys@localhost:4754/edisys_test?sslmode=disable
 
-.PHONY: up down logs seed seed-demo test test-unit ps smoke build api
+.PHONY: up down logs seed seed-demo test test-unit ps smoke build api backup restore respaldos validar-ubl
 
 up:            ## Construye y levanta todo (edge en http://localhost:4700)
 	$(COMPOSE) up -d --build
@@ -41,3 +41,15 @@ test:          ## Todas las pruebas; las de integración usan la base edisys_tes
 
 smoke:         ## Pruebas de humo con curl contra el stack levantado
 	./scripts/smoke.sh
+
+backup:        ## Respaldo ahora (base + archivos) en el volumen edisys_respaldos
+	$(COMPOSE) run --rm --no-deps backup respaldar.sh
+
+respaldos:     ## Lista los respaldos
+	$(COMPOSE) run --rm --no-deps --entrypoint sh backup -c 'ls -1 /respaldos'
+
+restore:       ## Restaura FECHA=AAAAMMDD-HHMM (o «ultimo») en una base temporal y compara el conteo de filas
+	$(COMPOSE) run --rm --no-deps backup restaurar.sh $(or $(FECHA),ultimo)
+
+validar-ubl:   ## Valida boleta/factura/nota de crédito contra los XSD de UBL 2.1 y verifica la firma con xmlsec1
+	./scripts/validar-ubl.sh

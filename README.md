@@ -23,6 +23,7 @@ Usuarios de demostración (clave **`Demo2026!`**): `admin@demo.pe` (administrado
 | postgres | `edisys_postgres` | 4754 | PostgreSQL 16 |
 | s3 | `edisys_s3` | 4790 (S3) · 4791 (admin) | Garage v2 de un nodo |
 | migrate | `edisys_migrate` | — | `edisys preparar`: migra y siembra si la base está vacía; termina |
+| backup | `edisys_backup` | — | Respaldo diario 02:00 (Lima): `pg_dump` + cubo de Garage, 30 días en `edisys_respaldos` |
 | mailpit | `edisys_mailpit` | 4725 (SMTP) · **4726** (web) | Buzón local: atrapa todo el correo del API |
 
 S3: MinIO ya no publica imágenes libres, así que en local se usa **Garage** (lo mismo que el EC2). El API lo inicializa solo
@@ -37,7 +38,28 @@ make seed-demo   # igual, pero deja 2 lecturas de setiembre pendientes para toma
 make test        # go test ./... (puras + integración contra la base edisys_test del compose)
 make smoke       # humo con curl contra http://localhost:4700
 make logs / make down
+make api         # reconstruye el API y recrea solo migrate + api (el resto sigue arriba)
+make backup      # respaldo ahora: base + archivos + conteos + SHA-256 en el volumen edisys_respaldos
+make respaldos   # lista los respaldos
+make restore FECHA=20260928-2151   # (o sin FECHA: el último) restaura en una base TEMPORAL y compara filas
+make validar-ubl # comprobantes SUNAT contra los XSD de UBL 2.1 y firma verificada con xmlsec1
 ```
+
+## Respaldo y despliegue
+
+- **Respaldo** (`backup/`): Alpine + cron. A las 02:00 de Lima (`RESPALDO_CRON`) hace `pg_dump -Fc`, el conteo de filas de
+  cada tabla, la copia del cubo de Garage (rclone) y las sumas SHA-256; rota lo que pase de `RETENCION_DIAS` (30).
+  Copia externa opcional a S3/R2: define `EXTERNO_REMOTO=externo`, `EXTERNO_ENDPOINT`, `EXTERNO_ACCESS_KEY`,
+  `EXTERNO_SECRET_KEY` (desactivada por defecto). `make restore` nunca pisa la base en uso: restaura en
+  `edisys_restauracion`, compara los conteos y la borra. Para restaurar de verdad: `RESTAURAR_EN=edisys CONFIRMAR=si`
+  con el API detenido.
+- **CI** (`.github/workflows/ci.yml`): `gofmt`, `go vet`, `go test` con PostgreSQL, XSD de UBL y firma, lint + vitest +
+  build de la app, build del login, y el stack entero con `docker compose` + `make smoke` + respaldo y restauración.
+- **Despliegue** (`.github/workflows/deploy.yml` + `scripts/desplegar.sh`): solo con disparo manual y escribiendo
+  «desplegar». Publica `api`, `login`, `edge` y `backup` en GHCR (`ghcr.io/<dueño>/edisys/*:<sha>`) y por `ssh` al EC2
+  (secretos `EC2_HOST`, `EC2_USER`, `EC2_SSH_KEY`) corre `desplegar.sh`: `pull`, respaldo previo, migraciones
+  (`SEMBRAR=no`) y `up -d`. **No se ha ejecutado**: todavía no hay remoto ni EC2. Las imágenes toman
+  `EDISYS_REGISTRO`/`EDISYS_TAG` (por defecto `edisys/*:local`).
 
 Binario: `edisys serve | migrate | seed [--pendientes=N] | preparar | salud`.
 

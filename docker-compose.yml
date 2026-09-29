@@ -105,7 +105,7 @@ services:
   migrate:
     build:
       context: ./api
-    image: edisys/api:local
+    image: ${EDISYS_REGISTRO:-edisys}/api:${EDISYS_TAG:-local}
     container_name: edisys_migrate
     <<: *logs
     command: ["preparar"]
@@ -120,7 +120,7 @@ services:
     restart: "no"
 
   api:
-    image: edisys/api:local
+    image: ${EDISYS_REGISTRO:-edisys}/api:${EDISYS_TAG:-local}
     container_name: edisys_api
     <<: *logs
     command: ["serve"]
@@ -145,7 +145,7 @@ services:
   login:
     build:
       context: ./login
-    image: edisys/login:local
+    image: ${EDISYS_REGISTRO:-edisys}/login:${EDISYS_TAG:-local}
     container_name: edisys_login
     <<: *logs
     environment:
@@ -169,7 +169,7 @@ services:
     build:
       context: .
       dockerfile: edge/Dockerfile
-    image: edisys/edge:local
+    image: ${EDISYS_REGISTRO:-edisys}/edge:${EDISYS_TAG:-local}
     container_name: edisys_edge
     <<: *logs
     ports: ["4700:80"]
@@ -186,7 +186,41 @@ services:
       start_period: 10s
       start_interval: 5s
 
+  # Respaldos: pg_dump diario a las 02:00 de Lima + copia del cubo, 30 días en el volumen edisys_respaldos.
+  # Copia externa opcional (S3/R2) con EXTERNO_REMOTO y RCLONE_CONFIG_<REMOTO>_*; desactivada por defecto.
+  backup:
+    build:
+      context: ./backup
+    image: ${EDISYS_REGISTRO:-edisys}/backup:${EDISYS_TAG:-local}
+    container_name: edisys_backup
+    <<: *logs
+    environment:
+      DATABASE_URL: postgres://edisys:${POSTGRES_PASSWORD:-edisys}@postgres:5432/edisys?sslmode=disable
+      S3_BUCKET: ${S3_BUCKET:-edisys-privado}
+      RCLONE_CONFIG_GARAGE_TYPE: s3
+      RCLONE_CONFIG_GARAGE_PROVIDER: Other
+      RCLONE_CONFIG_GARAGE_ENDPOINT: http://s3:3900
+      RCLONE_CONFIG_GARAGE_REGION: garage
+      RCLONE_CONFIG_GARAGE_FORCE_PATH_STYLE: "true"
+      RCLONE_CONFIG_GARAGE_ACCESS_KEY_ID: ${S3_ACCESS_KEY:-GK0e615b1c2d3e4f5a6b7c8d9e}
+      RCLONE_CONFIG_GARAGE_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:-7d1f0c9b8a7e6d5c4b3a29181716151413121110a9b8c7d6e5f4a3b2c1d0e9f8}
+      RETENCION_DIAS: ${RETENCION_DIAS:-30}
+      RESPALDO_CRON: ${RESPALDO_CRON:-0 2 * * *}
+      EXTERNO_REMOTO: ${EXTERNO_REMOTO:-}
+      EXTERNO_RUTA: ${EXTERNO_RUTA:-edisys-respaldos}
+      RCLONE_CONFIG_EXTERNO_TYPE: s3
+      RCLONE_CONFIG_EXTERNO_PROVIDER: ${EXTERNO_PROVEEDOR:-Cloudflare}
+      RCLONE_CONFIG_EXTERNO_ENDPOINT: ${EXTERNO_ENDPOINT:-}
+      RCLONE_CONFIG_EXTERNO_ACCESS_KEY_ID: ${EXTERNO_ACCESS_KEY:-}
+      RCLONE_CONFIG_EXTERNO_SECRET_ACCESS_KEY: ${EXTERNO_SECRET_KEY:-}
+    volumes: [respaldos:/respaldos]
+    depends_on:
+      postgres: { condition: service_healthy }
+    mem_limit: 128m
+    restart: unless-stopped
+
 volumes:
   pgdata:
   s3meta:
   s3data:
+  respaldos:
