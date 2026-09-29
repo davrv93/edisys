@@ -1,9 +1,7 @@
 // Cliente del API: mismo origen, cookie HttpOnly, cabecera anti-CSRF (§2.4).
-// Con VITE_MOCK=1 las peticiones las contesta src/mock/ (solo desarrollo;
-// en el build de producción esa rama desaparece y se llama al API real).
+// Todo sale al API real (datos de la semilla en desarrollo); no hay capa mock.
 
 export const BASE = '/api/v1';
-export const MOCK = import.meta.env.VITE_MOCK === '1';
 
 export class ApiError extends Error {
   constructor(status, cuerpo = {}) {
@@ -78,10 +76,6 @@ async function leerCuerpo(res) {
  */
 export async function peticion(metodo, ruta, op = {}) {
   const url = BASE + ruta + construirQuery(op.query);
-  if (MOCK) {
-    const { responderMock } = await import('../mock/servidor.js');
-    return responderMock(metodo, ruta, op);
-  }
   const hacer = () => {
     const headers = { Accept: 'application/json' };
     if (metodo !== 'GET') headers['X-EDISYS'] = '1';
@@ -124,14 +118,6 @@ export const api = {
  * No reintenta respuestas 4xx: esas son del usuario, no de la red.
  */
 export async function subir(ruta, form, { metodo = 'POST', onProgreso, intentos = 3 } = {}) {
-  if (MOCK) {
-    const { responderMock } = await import('../mock/servidor.js');
-    for (let p = 20; p <= 100; p += 40) {
-      onProgreso?.(p);
-      await new Promise((r) => setTimeout(r, 120));
-    }
-    return responderMock(metodo, ruta, { form });
-  }
   let ultimoError;
   for (let i = 0; i < intentos; i++) {
     try {

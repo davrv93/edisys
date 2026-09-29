@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useSesion } from './Sesion.jsx';
-import { menuPara, NOMBRE_ROL, ROLES } from '../lib/permisos.js';
+import { menuPara, NOMBRE_ROL } from '../lib/permisos.js';
 import { ruta } from '../lib/nav.jsx';
 import { BotonIcono, Icono, Isotipo, Logo, Modal, SelectorEdificio, Tooltip } from '../ui/index.js';
 
@@ -136,11 +136,6 @@ export default function Armazon({ pagina, children }) {
             })}
           </nav>
           <div className="flex flex-col gap-3">
-            {s.mock && (
-              <div className={L.abierto}>
-                <CambiarRolMock />
-              </div>
-            )}
             <div className={`${L.abierto} items-center gap-3 px-1`}>
               <Avatar iniciales={s.usuario.iniciales} oscuro />
               <span className="flex min-w-0 flex-1 flex-col">
@@ -239,7 +234,6 @@ export default function Armazon({ pagina, children }) {
               );
             })}
           </nav>
-          {s.mock && <CambiarRolMock claro />}
           <div className="mt-auto flex flex-col gap-2 border-t border-borde pt-4">
             <div className="flex items-center gap-3">
               <Avatar iniciales={s.usuario.iniciales} />
@@ -263,30 +257,5 @@ function Avatar({ iniciales, oscuro = false }) {
     <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-chip text-sm font-semibold text-white ${oscuro ? 'bg-superficie-oscura-2' : 'bg-tinta'}`} aria-hidden="true">
       {iniciales}
     </span>
-  );
-}
-
-/** Solo con VITE_MOCK=1: cambia el rol de la sesión de prueba para revisar cada menú. */
-function CambiarRolMock({ claro = false }) {
-  const s = useSesion();
-  const cambiar = (rol) => {
-    try {
-      window.localStorage.setItem('edisys.mock.rol', rol);
-    } catch {
-      /* sin almacenamiento */
-    }
-    window.location.assign(ruta('inicio'));
-  };
-  return (
-    <label className={`flex flex-col gap-1 rounded-control border border-dashed p-2 text-xs ${claro ? 'border-aviso-borde bg-aviso-suave text-aviso-texto' : 'border-superficie-oscura-2 text-texto-tenue'}`}>
-      Modo demostración (mock): ver como
-      <select className="h-9 rounded bg-superficie px-2 text-sm text-tinta" value={s.rol} onChange={(e) => cambiar(e.target.value)}>
-        {ROLES.filter((r) => r !== 'superadmin').map((r) => (
-          <option key={r} value={r}>
-            {NOMBRE_ROL[r]}
-          </option>
-        ))}
-      </select>
-    </label>
   );
 }

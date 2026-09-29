@@ -5,7 +5,6 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "dev:mock": "VITE_MOCK=1 astro dev",
     "build": "astro build",
     "preview": "astro preview",
     "lint": "eslint src",

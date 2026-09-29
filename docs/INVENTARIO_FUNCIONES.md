@@ -22,10 +22,10 @@ contra el recorrido `scripts/recorrido-ui.cjs` (3 roles, 18 vistas, 0 errores). 
 | A5 | Selector de edificio (solo si hay más de uno; si no, tarjeta con nombre y n.º de unidades) | — | ➜ en el lateral abierto y en el cajón (tablet/móvil); en modo iconos, el botón «Abrir el menú completo» lo muestra |
 | A6 | Bloque de usuario (iniciales, nombre, rol) | — | ✅ |
 | A7 | Cerrar sesión | — | ✅ (lateral y «Más») |
-| A8 | Cambiar de rol en modo mock (`VITE_MOCK=1`) | `s.mock` | ✅ |
+| A8 | Cambiar de rol en modo mock (`VITE_MOCK=1`) | `s.mock` | ✚ eliminado 29-09: sin mock, todo sale al API con la semilla; cada rol se prueba con su usuario demo |
 | A9 | Cabecera móvil con logo, edificio, rol e iniciales que abre «Más opciones» | — | ➜ misma cabecera; el botón de edificio/usuario y el nuevo botón ☰ abren el cajón |
 | A10 | Barra inferior móvil con las pestañas del rol + «Más» | `menu.movil`, `menu.mas` | ✅ con los accesos del plan (admin: Resumen · Recibos · Mantenim. · WhatsApp · Más; «Más» siempre, también para operario y técnico). Balance pasó a «Más» en el admin |
-| A11 | Hoja «Más opciones»: edificio, secciones que no caben, usuario, correo, salir | — | ➜ cajón a la izquierda (`Modal cajon`) con TODAS las secciones, edificio, modo mock, usuario, correo y Cerrar sesión |
+| A11 | Hoja «Más opciones»: edificio, secciones que no caben, usuario, correo, salir | — | ➜ cajón a la izquierda (`Modal cajon`) con TODAS las secciones, edificio, usuario, correo y Cerrar sesión (el modo mock se eliminó) |
 | A12 | Modo tarea (`useModoTarea`): oculta cabecera y barra en pantallas de una tarea; modo `cabecera` en el portal | — | ✅ (misma API) |
 | A13 | Aterrizaje por rol (`/app/` redirige si no tiene `dashboard.ver`) | `destinoPorRol` | ✅ |
 | A14 | Pantalla sin permiso → `SinPermiso` con el permiso que falta | `RutaProtegida`, `Isla` | ✅ |

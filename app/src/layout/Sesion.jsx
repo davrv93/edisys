@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { api, irAlLogin, MOCK } from '../lib/api.js';
+import { api, irAlLogin } from '../lib/api.js';
 import { normalizarYo, tienePermiso } from '../lib/sesion.js';
 import { CargandoApp, ErrorCarga, SinPermiso } from '../ui/index.js';
 
@@ -48,7 +48,6 @@ export function SesionProvider({ children }) {
     if (!sesion) return null;
     return {
       ...sesion,
-      mock: MOCK,
       tiene: (p) => tienePermiso(sesion, p),
       cambiarEdificio: (id) => {
         escribirLocal(CLAVE_EDIFICIO, String(id));
@@ -61,7 +60,7 @@ export function SesionProvider({ children }) {
         } catch {
           /* aunque falle, se sale */
         }
-        window.location.assign(MOCK ? '/app/' : '/login/');
+        window.location.assign('/login/');
       },
     };
   }, [sesion, cargar]);
