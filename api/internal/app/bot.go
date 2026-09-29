@@ -123,6 +123,10 @@ func (s *Server) Responder(ctx context.Context, eid int64, tel, texto string) (*
 			_ = json.Unmarshal(b, &meses)
 			for _, m := range meses {
 				saldo := int64(m["saldo_cts"].(float64))
+				if m["origen"] == "deuda_inicial" {
+					lineas = append(lineas, fmt.Sprintf("• Dpto %s · deuda anterior de %s: %s", d["unidad"], P.NombrePeriodo(m["periodo"].(string)), P.Soles(saldo)))
+					continue
+				}
 				lineas = append(lineas, fmt.Sprintf("• Dpto %s · %s: %s (vence %s)", d["unidad"], P.NombrePeriodo(m["periodo"].(string)), P.Soles(saldo), fechaCorta(m["vence"])))
 			}
 		}

@@ -163,7 +163,8 @@ func (s *Server) verUnidad(w http.ResponseWriter, r *http.Request) {
 		P.Fallo(w, r, err)
 		return
 	}
-	deuda, err := db.Filas(ctx, s.DB, `SELECT id, periodo, monto_cts FROM deuda_inicial WHERE unidad_id=$1 ORDER BY periodo`, uid)
+	deuda, err := db.Filas(ctx, s.DB, `SELECT d.id, d.periodo, d.monto_cts, d.recibo_id, COALESCE(r.total_cts - r.pagado_cts, 0) AS saldo_cts
+		FROM deuda_inicial d LEFT JOIN recibo r ON r.id = d.recibo_id WHERE d.unidad_id=$1 ORDER BY d.periodo`, uid)
 	if err != nil {
 		P.Fallo(w, r, err)
 		return
@@ -979,6 +980,10 @@ func (s *Server) aplicarPadron(ctx context.Context, eid int64, padron []FilaPadr
 	for _, d := range deudas {
 		if _, err := tx.Exec(ctx, `INSERT INTO deuda_inicial (unidad_id, periodo, monto_cts) VALUES ($1,$2,$3) ON CONFLICT (unidad_id, periodo) DO UPDATE SET monto_cts=EXCLUDED.monto_cts`,
 			ids[d.Codigo], d.Periodo, d.MontoCts); err != nil {
+			return nil, err
+		}
+		// La deuda entra en la cuenta corriente de la unidad como cargo vencido (0008).
+		if _, err := tx.Exec(ctx, `SELECT cargar_deuda_inicial($1,$2,$3)`, ids[d.Codigo], d.Periodo, d.MontoCts); err != nil {
 			return nil, err
 		}
 		cargadas++

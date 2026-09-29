@@ -117,6 +117,8 @@ func Traducir(err error) error {
 			return Prohibido("MOROSO", "La unidad tiene deuda vencida y no puede reservar.")
 		case "ED004":
 			return Conflicto("TRANSICION_INVALIDA", strings.TrimPrefix(pg.Message, "TRANSICION_INVALIDA: "))
+		case "ED005":
+			return Conflicto("DEUDA_MENOR_A_LO_PAGADO", strings.TrimPrefix(pg.Message, "DEUDA_MENOR_A_LO_PAGADO: "))
 		case "23505":
 			switch pg.ConstraintName {
 			case "pago_operacion_uq":

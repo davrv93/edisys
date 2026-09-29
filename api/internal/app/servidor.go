@@ -225,6 +225,8 @@ func (s *Server) rutasEdificio(r chi.Router) {
 	r.With(q("pagos.validar")).Get("/pagos", s.listarPagos)
 	r.With(q("pagos.validar")).Patch("/pagos/{pid}", s.validarPago)
 	r.With(q("morosidad.ver")).Get("/morosidad", s.morosidad)
+	r.With(q("pagos.registrar")).Post("/unidades/{uid}/pagos", s.pagoACuenta)
+	r.With(q("recibos.ver")).Get("/unidades/{uid}/cuenta", s.cuentaCorriente)
 
 	// 07 · reservas
 	r.With(q("reservas.ver")).Get("/areas", s.listarAreas)

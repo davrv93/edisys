@@ -387,7 +387,7 @@ func (s *Server) aprobarReparto(w http.ResponseWriter, r *http.Request) {
 	}
 	pid, _ := periodoID(ctx, tx, e.ID, periodo)
 	var emitidos int
-	_ = tx.QueryRow(ctx, `SELECT count(*) FROM recibo WHERE periodo_id=$1 AND estado NOT IN ('borrador','anulado')`, pid).Scan(&emitidos)
+	_ = tx.QueryRow(ctx, `SELECT count(*) FROM recibo WHERE periodo_id=$1 AND origen='periodo' AND estado NOT IN ('borrador','anulado')`, pid).Scan(&emitidos)
 	if emitidos > 0 {
 		P.Fallo(w, r, P.Conflicto("YA_EMITIDO", "Los recibos del periodo ya se emitieron: el reparto no se puede cambiar."))
 		return
