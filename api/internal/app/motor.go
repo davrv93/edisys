@@ -79,21 +79,12 @@ const motorTimeout = 90 * time.Second
 // LLM local tarda mucho más en una pregunta larga.
 var clienteMotor = &http.Client{Timeout: motorTimeout + 5*time.Second}
 
-// preguntaMotor manda la conversación al motor local. Devuelve la respuesta,
-// las sugerencias (F7) y si el motor está caído/apagado (ok=false, sin error
-// para el usuario: el chatbot sigue con su menú).
-func (s *Server) preguntaMotor(ctx context.Context, eid int64, mensajes []map[string]string, sugerencias bool) (texto string, lista []string, ok bool) {
-	modo := s.ajusteMotor(ctx, eid)
-	if modo == "off" || s.Cfg.MotorURL == "" {
-		return "", nil, false
-	}
-	cuerpo, _ := json.Marshal(map[string]any{
-		"mensajes":          mensajes,
-		"pedir_sugerencias": sugerencias,
-	})
+// pideMotor hace el POST /v1/chat al motor y decodifica la respuesta.
+func (s *Server) pideMotor(ctx context.Context, cuerpo map[string]any) (texto string, sugerencias []string, ok bool) {
+	cuerpoJSON, _ := json.Marshal(cuerpo)
 	cta, cancel := context.WithTimeout(ctx, motorTimeout)
 	defer cancel()
-	peticion, err := http.NewRequestWithContext(cta, http.MethodPost, s.Cfg.MotorURL+"/v1/chat", bytes.NewReader(cuerpo))
+	peticion, err := http.NewRequestWithContext(cta, http.MethodPost, s.Cfg.MotorURL+"/v1/chat", bytes.NewReader(cuerpoJSON))
 	if err != nil {
 		return "", nil, false
 	}
@@ -119,6 +110,95 @@ func (s *Server) preguntaMotor(ctx context.Context, eid int64, mensajes []map[st
 		return "", nil, false
 	}
 	return fuera.Respuesta, fuera.Sugerencias, true
+}
+
+// preguntaMotor manda la conversación al motor tal cual (sin golden).
+func (s *Server) preguntaMotor(ctx context.Context, eid int64, mensajes []map[string]string, sugerencias bool) (texto string, lista []string, ok bool) {
+	if s.ajusteMotor(ctx, eid) == "off" || s.Cfg.MotorURL == "" {
+		return "", nil, false
+	}
+	return s.pideMotor(ctx, map[string]any{"mensajes": mensajes, "pedir_sugerencias": sugerencias})
+}
+
+// preguntaMotorGolden: además recupera golden parecidos por embeddings (e5 en el
+// motor). Si el mejor cuadra (sim ≥ 0,80), lo EJECUTA con las guardas y manda las
+// filas reales al prompt; los parecidos (≥ 0,60) van como ejemplos few-shot. El
+// modelo nunca inventa ni ejecuta SQL: solo explica las filas que le pasamos.
+func (s *Server) preguntaMotorGolden(ctx context.Context, eid int64, mensajes []map[string]string, sugerencias bool) (texto string, lista []string, ok bool, goldenID int64) {
+	if s.ajusteMotor(ctx, eid) == "off" || s.Cfg.MotorURL == "" {
+		return "", nil, false, 0
+	}
+	consulta := ""
+	if len(mensajes) > 0 {
+		consulta = mensajes[len(mensajes)-1]["content"]
+	}
+	datos := map[string]any{}
+	if consulta != "" {
+		if dorados, err := s.goldenCandidatos(ctx, eid); err == nil && len(dorados) > 0 {
+			candidatos := make([]map[string]any, 0, len(dorados))
+			for _, g := range dorados {
+				candidatos = append(candidatos, map[string]any{"id": g["id"], "pregunta": g["pregunta"], "sql": g["sql"]})
+			}
+			orden := s.recuperaGolden(ctx, consulta, candidatos)
+			ejemplos := []map[string]any{}
+			for i, g := range orden {
+				sim, _ := g["sim"].(float64)
+				if i == 0 && sim >= 0.80 {
+					if filas, err := s.ejecutaGolden(ctx, eid, g["id"].(int64), g["pregunta"].(string), g["sql"].(string), ""); err == nil {
+						if len(filas) > 8 {
+							filas = filas[:8]
+						}
+						datos["filas"] = filas
+						goldenID = g["id"].(int64)
+					}
+				}
+				if sim >= 0.60 {
+					ejemplos = append(ejemplos, map[string]any{"pregunta": g["pregunta"]})
+				}
+			}
+			if len(ejemplos) > 0 {
+				datos["golden"] = ejemplos
+			}
+		}
+	}
+	texto, lista, ok = s.pideMotor(ctx, map[string]any{"mensajes": mensajes, "pedir_sugerencias": sugerencias, "datos": datos})
+	return texto, lista, ok, goldenID
+}
+
+// recuperaGolden pide al motor (POST /v1/recuperar) el orden por similaridad e5
+// de los golden con la pregunta. Cualquier fallo → nil (el chat sigue sin golden).
+func (s *Server) recuperaGolden(ctx context.Context, consulta string, candidatos []map[string]any) []map[string]any {
+	cuerpo, _ := json.Marshal(map[string]any{"consulta": consulta, "candidatos": candidatos})
+	cta, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+	peticion, err := http.NewRequestWithContext(cta, http.MethodPost, s.Cfg.MotorURL+"/v1/recuperar", bytes.NewReader(cuerpo))
+	if err != nil {
+		return nil
+	}
+	peticion.Header.Set("Content-Type", "application/json")
+	if s.Cfg.MotorToken != "" {
+		peticion.Header.Set("Authorization", "Bearer "+s.Cfg.MotorToken)
+	}
+	resp, err := clienteMotor.Do(peticion)
+	if err != nil {
+		return nil
+	}
+	defer resp.Body.Close()
+	var fuera struct {
+		Golden []map[string]any `json:"golden"`
+	}
+	if err := json.NewDecoder(io.LimitReader(resp.Body, 1<<20)).Decode(&fuera); err != nil {
+		return nil
+	}
+	// JSON decodifica los números como float64; los golden los usamos como int64.
+	salida := make([]map[string]any, 0, len(fuera.Golden))
+	for _, g := range fuera.Golden {
+		id, _ := g["id"].(float64)
+		pregunta, _ := g["pregunta"].(string)
+		sql, _ := g["sql"].(string)
+		salida = append(salida, map[string]any{"id": int64(id), "pregunta": pregunta, "sql": sql, "sim": g["sim"]})
+	}
+	return salida
 }
 
 // ---------- GoldenSQL (F8) ----------
@@ -252,18 +332,23 @@ func (s *Server) motorConsulta(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// 2) Motor conversacional (F1): pregunta y puntúa.
-	resp, sug, ok := s.preguntaMotor(r.Context(), eid, []map[string]string{{"role": "user", "content": pregunta}}, false)
+	// 2) Motor conversacional (F1): pregunta y puntúa; la orquestación de golden
+	// (recuperar → ejecutar si cuadra → few-shot) va dentro.
+	resp, sug, ok, gid := s.preguntaMotorGolden(r.Context(), eid, []map[string]string{{"role": "user", "content": pregunta}}, false)
 	if !ok {
 		P.Fallo(w, r, P.Err(http.StatusServiceUnavailable, "MOTOR_NO_DISPONIBLE",
 			"El motor no está disponible: revisa docker compose ps en el servicio motor."))
 		return
 	}
-	P.JSON(w, http.StatusOK, map[string]any{
+	fuera := map[string]any{
 		"respuesta":   resp,
 		"sugerencias": sug,
 		"puntaje":     evaluaMotor(pregunta, resp, in.Esperado),
-	})
+	}
+	if gid > 0 {
+		fuera["golden"] = gid
+	}
+	P.JSON(w, http.StatusOK, fuera)
 }
 
 // ---------- pantalla Motor (F8): administración ----------

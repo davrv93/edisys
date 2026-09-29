@@ -84,6 +84,15 @@ var reglas = []regla{
 // opcionesMenu: si el mensaje es solo un número, se toma como opción del menú.
 var opcionesMenu = map[int]string{1: Saldo, 2: UltimoRecibo, 3: Pagar, 4: Reservar, 5: Reportar, 6: Horarios, 7: HablarAdmin}
 
+// clavesEdificio: la pregunta habla del EDIFICIO (datos agregados), no del saldo
+// personal de quien escribe. Aunque «cuánto» las capture, se dejan caer al motor
+// conversacional, que tiene golden SQL con las cifras reales del edificio.
+var clavesEdificio = []string{
+	"morosidad", "por cobrar", "recaud", "presupuesto", "banco del", "cuenta del edificio",
+	"del edificio", "en el edificio", "todo el edificio", "todos los departamentos",
+	"todos los dptos", "de todos los", "areas comunes", "gastos del", "gasto del", "entrado por",
+}
+
 // Clasificar devuelve la intención del mensaje. hoy se usa para resolver «mañana», «sábado», «5/10».
 func Clasificar(texto string, hoy time.Time) Resultado {
 	n := Normalizar(texto)
@@ -103,6 +112,12 @@ func Clasificar(texto string, hoy time.Time) Resultado {
 			res.Intencion = rg.intencion
 			break
 		}
+	}
+	// «¿Cuánto debo?» es personal; «¿cuánto queda por cobrar en el edificio?» no.
+	// Las intenciones personales ceden ante las preguntas de alcance edificio.
+	if (res.Intencion == Saldo || res.Intencion == UltimoRecibo || res.Intencion == Pagar) &&
+		contiene(n, clavesEdificio) {
+		res.Intencion = NoEntendi
 	}
 	// «¿Está libre la parrilla?» o «parrilla el sábado» sin verbo: si nombra un área y una fecha, es reserva.
 	if (res.Intencion == NoEntendi || res.Intencion == Saludo) && res.Area != "" && res.Fecha != nil {

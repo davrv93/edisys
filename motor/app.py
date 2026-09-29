@@ -233,6 +233,31 @@ def _guardar_correccion(pregunta: str, respuesta: str, confirmada: bool):
     _guardar_json(INDICE / "memoria.json", memoria)  # _indexar() completa el vector
 
 
+# ---------- recuperación few-shot de golden (Go trae candidatos, Python ordena por e5) ----------
+_vector_golden = {}   # id → vector (caché; los golden cambian poco)
+
+
+def _vec_golden(gid: int, texto: str) -> np.ndarray:
+    with _candado:
+        v = _vector_golden.get(gid)
+    if v is None:
+        v = _e5([PREFIJO_P + texto])[0]
+        with _candado:
+            _vector_golden[gid] = v
+    return v
+
+
+def _recuperar_golden(consulta: str, candidatos: list[dict], k: int = 3) -> list[dict]:
+    """Ordena los golden por similaridad e5 con la pregunta. Devuelve [{id, pregunta, sql, sim}]."""
+    if not candidatos:
+        return []
+    q = _e5([PREFIJO_Q + consulta])[0]
+    pares = [(float(np.dot(q, _vec_golden(g["id"], g["pregunta"]))), g) for g in candidatos]
+    pares.sort(key=lambda x: -x[0])
+    return [{"id": g["id"], "pregunta": g["pregunta"], "sql": g.get("sql", ""),
+             "sim": round(s, 3)} for s, g in pares[:k] if s >= 0.45]
+
+
 # ---------- system prompt ----------
 SYSTEM = (
     "Eres el asistente de EDISYS, software de administración de edificios en Perú. "
@@ -244,14 +269,26 @@ SYSTEM = (
 )
 
 
-def _ensamblar(mensajes: list[dict], frag: list, mem: list) -> list[dict]:
+def _ensamblar(mensajes: list[dict], frag: list, mem: list, datos: dict | None = None) -> list[dict]:
     partes = [SYSTEM]
+    datos = datos or {}
     if frag:
         partes.append("Contexto del edificio (puede estar vacío o no servir):\n" +
                       "\n---\n".join(f["texto"] for f in frag))
     if mem:
         partes.append("Correcciones aprendidas de la administración:\n" +
                       "\n".join(f"P: {m['texto']}\nR: {m['respuesta']}" for m in mem))
+    ejemplos = datos.get("golden") or []
+    if ejemplos:
+        # Few-shot de dominio: patrón pregunta→SQL verificado del edificio. El modelo
+        # NO debe inventar cifras: si hay filas, vienen aparte y son las de verdad.
+        partes.append("Ejemplos de preguntas que SÍ sabes responder (con su consulta interna):\n" +
+                      "\n".join(f"P: {g['pregunta']}" for g in ejemplos) +
+                      "\nSi la pregunta del usuario se parece a alguna, respóndela con datos del contexto o di que la administración la ve en la app.")
+    filas = datos.get("filas")
+    if filas:
+        partes.append("Datos reales ya calculados para esta pregunta (usa SOLO estos números, en soles con coma decimal):\n" +
+                      json.dumps(filas, ensure_ascii=False)[:1800])
     fuera = sum(len(p) for p in partes)
     historial = []
     for m in reversed(mensajes[:-1]):
@@ -273,6 +310,7 @@ class PeticionChat(BaseModel):
     mensajes: list[Mensaje]
     pedir_sugerencias: bool = True
     memoria: bool = True
+    datos: dict = {}   # Go manda filas reales (golden ejecutado) y/o ejemplos few-shot
 
 
 class Correccion(BaseModel):
@@ -285,6 +323,17 @@ class Correccion(BaseModel):
 class PeticionSugerencias(BaseModel):
     consulta: str = ""
     usadas: list[str] = []
+
+
+class GoldenCandidato(BaseModel):
+    id: int
+    pregunta: str
+    sql: str = ""
+
+
+class PeticionRecuperar(BaseModel):
+    consulta: str
+    candidatos: list[GoldenCandidato]
 
 
 # ---------- endpoints ----------
@@ -314,7 +363,7 @@ def chat(p: PeticionChat, request: Request):
 
     entradas = [{"role": m.role, "content": m.content} for m in p.mensajes]
     try:
-        texto, uso = _llama(_ensamblar(entradas, frag, mem))
+        texto, uso = _llama(_ensamblar(entradas, frag, mem, p.datos))
     except Exception as e:
         raise HTTPException(502, f"llama-server no respondió: {e}")
 
@@ -332,7 +381,7 @@ def chat(p: PeticionChat, request: Request):
 
     sugerencias = _sugerencias(consulta, [m.content for m in p.mensajes if m.role == "user"]) \
         if p.pedir_sugerencias else []
-    intencion = "falla" if frag else "conversa"
+    intencion = "golden" if p.datos.get("filas") else ("falla" if frag else "conversa")
 
     with _candado:
         _log.append({"cuando": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -371,6 +420,12 @@ def feedback(c: Correccion):
         return {"ok": True, "memoria": "propuesta_pendiente"}
     _votar_filtro([{"id": ""}], +1)  # 👍 sin contexto: refuerzo genérico
     return {"ok": True, "memoria": "reforzado"}
+
+
+@app.post("/v1/recuperar")
+def recuperar(p: PeticionRecuperar):
+    """Ordena golden candidatos por similaridad e5 con la pregunta (Go decide si ejecutar)."""
+    return {"golden": _recuperar_golden(p.consulta.strip(), [c.model_dump() for c in p.candidatos])}
 
 
 @app.post("/v1/sugerencias")

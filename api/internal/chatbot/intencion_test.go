@@ -42,6 +42,20 @@ func TestIntenciones(t *testing.T) {
 			t.Errorf("%q → %s, quiero %s (normalizado %q)", c.texto, r.Intencion, c.quiero, r.Texto)
 		}
 	}
+	// Preguntas del EDIFICIO caen al motor aunque «cuánto» las capture: el saldo de
+	// la regla es el personal; estas son cifras agregadas que viven en los golden.
+	for _, texto := range []string{
+		"¿cuánto queda por cobrar en el edificio?",
+		"cuánto ha entrado por el alquiler de las áreas comunes en lo que va del mes",
+		"¿cuál es la morosidad del edificio?",
+		"¿cuánto hay en la cuenta del edificio?",
+		"gastos del mes del edificio",
+		"¿cuántos departamentos están morosos en todo el edificio?",
+	} {
+		if r := Clasificar(texto, hoy); r.Intencion != NoEntendi {
+			t.Errorf("%q debería caer al motor (no_entendi), dio %q", texto, r.Intencion)
+		}
+	}
 }
 
 func TestNormalizar(t *testing.T) {
