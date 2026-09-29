@@ -17,6 +17,7 @@ export const NOMBRE_ROL = {
 // (y en el modo mock). El API es quien manda.
 const TODOS = [
   'analitica.ver', 'areas.administrar', 'auditoria.ver', 'balance.conciliar', 'balance.ver', 'balance.ver_documentos', 'chatbot.probar',
+  'comprobantes.emitir', 'facturacion.configurar',
   'dashboard.ver', 'edificio.editar', 'edificio.ver', 'egresos.registrar', 'incidencias.reportar', 'incidencias.validar',
   'incidencias.ver', 'lecturas.aprobar_reparto', 'lecturas.corregir', 'lecturas.registrar', 'lecturas.ver', 'morosidad.ver',
   'pagos.informar', 'pagos.registrar', 'pagos.validar', 'periodos.administrar', 'portal.ver', 'recibos.emitir', 'recibos.ver',
@@ -77,13 +78,14 @@ const ITEMS = {
   whatsapp: { pagina: 'whatsapp', etiqueta: 'WhatsApp', corta: 'WhatsApp', icono: 'whatsapp', permiso: 'whatsapp.ver' },
   chatbot: { pagina: 'chatbot', etiqueta: 'Simulador del chatbot', corta: 'Chatbot', icono: 'robot', permiso: 'chatbot.probar' },
   analitica: { pagina: 'analitica', etiqueta: 'Analítica', corta: 'Analítica', icono: 'grafico', permiso: 'analitica.ver' },
+  configuracion: { pagina: 'configuracion', etiqueta: 'Configuración', corta: 'Config.', icono: 'engranaje', permiso: 'facturacion.configurar' },
   conciliacion: { pagina: 'conciliacion', etiqueta: 'Conciliación bancaria', corta: 'Banco', icono: 'balance', permiso: 'balance.conciliar' },
   roles: { pagina: 'roles', etiqueta: 'Roles y permisos', corta: 'Roles', icono: 'llave', permiso: 'roles.administrar' },
 };
 
 const MENU_POR_ROL = {
   administrador: {
-    lateral: ['inicio', 'balance', 'conciliacion', 'recibos', 'unidades', 'reservas', 'medidores', 'mantenimiento', 'whatsapp', 'chatbot', 'analitica', 'roles'],
+    lateral: ['inicio', 'balance', 'conciliacion', 'recibos', 'unidades', 'reservas', 'medidores', 'mantenimiento', 'whatsapp', 'chatbot', 'analitica', 'roles', 'configuracion'],
     movil: ['inicio', 'balance', 'recibos', 'mantenimiento'],
   },
   junta: {

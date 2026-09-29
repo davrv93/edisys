@@ -19,6 +19,7 @@ export const PAGINAS = {
   chatbot: '/chatbot/',
   analitica: '/analitica/',
   conciliacion: '/conciliacion/',
+  configuracion: '/configuracion/',
 };
 
 function qs(query) {
