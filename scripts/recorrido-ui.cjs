@@ -2,7 +2,7 @@ const { chromium } = require('/Users/david.roncal/Downloads/PjgFactSalud_complet
 const OUT='/private/tmp/claude-501/-Users-david-roncal-Downloads-PjgFactSalud-completo/4c23383a-64b3-46c0-9c9d-3200e232fa65/scratchpad/edisys-shots';
 const B='http://localhost:4700';
 const casos=[
- {u:'admin@demo.pe',w:1440,h:950,rutas:['','balance','recibos','unidades','unidades?id=1','recibos?id=1','balance?abrir=egresos','reservas','mantenimiento','roles','whatsapp','chatbot','analitica']},
+ {u:'admin@demo.pe',w:1440,h:950,rutas:['','balance','recibos','unidades','unidades?id=1','recibos?id=1','balance?abrir=egresos','reservas','mantenimiento','roles','whatsapp','chatbot','analitica','conciliacion','configuracion','medidores']},
  {u:'propietario201@demo.pe',w:390,h:844,rutas:['portal','reservas','mantenimiento?reportar=1','recibos']},
  {u:'operario@demo.pe',w:390,h:844,rutas:['medidores']},
 ];
