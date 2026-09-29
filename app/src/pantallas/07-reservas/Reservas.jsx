@@ -7,7 +7,7 @@ import { ruta, useQuery } from '../../lib/nav.jsx';
 import { useEid, useSesion, Guarda } from '../../layout/Sesion.jsx';
 import { veCalendarioReservas } from '../../lib/permisos.js';
 import Encabezado, { Contenido } from '../../layout/Encabezado.jsx';
-import { Boton, Calendario, LeyendaCalendario, ErrorCarga, Esqueleto, Icono, Insignia, Modal, Vacio, useDialog, useToast } from '../../ui/index.js';
+import { Boton, Calendario, LeyendaCalendario, ErrorCarga, Esqueleto, Icono, Insignia, Modal, Vacio, useDialog, useToast, BotonIcono } from '../../ui/index.js';
 import NuevaReserva from './NuevaReserva.jsx';
 import { nombreUnidad } from '../../lib/unidad.js';
 
@@ -102,15 +102,11 @@ function CalendarioAdmin() {
   const acciones = (
     <>
       <div className="flex items-center gap-2">
-        <button type="button" onClick={() => semana(-1)} className="flex h-11 w-11 items-center justify-center rounded-control border border-borde-fuerte bg-superficie lg:h-10 lg:w-10" aria-label="Semana anterior">
-          <Icono nombre="izq" tam={18} />
-        </button>
+        <BotonIcono variante="secundario" icono="izq" etiqueta="Semana anterior" onClick={() => semana(-1)} />
         <span className="min-w-[150px] text-center text-base font-semibold" aria-live="polite">
           {rangoSemana(lunes)}
         </span>
-        <button type="button" onClick={() => semana(1)} className="flex h-11 w-11 items-center justify-center rounded-control border border-borde-fuerte bg-superficie lg:h-10 lg:w-10" aria-label="Semana siguiente">
-          <Icono nombre="der" tam={18} />
-        </button>
+        <BotonIcono variante="secundario" icono="der" etiqueta="Semana siguiente" onClick={() => semana(1)} />
       </div>
       <Guarda permiso="reservas.administrar">
         <Boton icono="mas_signo" href={ruta('reservas', { nueva: 1 })}>

@@ -8,7 +8,7 @@ import { ruta, useQuery } from '../../lib/nav.jsx';
 import { useEid, useSesion, Guarda } from '../../layout/Sesion.jsx';
 import { useModoTarea } from '../../layout/Armazon.jsx';
 import { usePeriodo } from '../../layout/usePeriodo.js';
-import { Boton, ErrorCarga, Esqueleto, Icono, Insignia, SubirFoto, useDialog, useToast } from '../../ui/index.js';
+import { Boton, ErrorCarga, Esqueleto, Icono, Insignia, SubirFoto, useDialog, useToast, BotonIcono } from '../../ui/index.js';
 import Reparto from './Reparto.jsx';
 import { nombreUnidad } from '../../lib/unidad.js';
 
@@ -41,9 +41,7 @@ function Ronda() {
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
           {actual && (
-            <button type="button" onClick={() => setQuery({ medidor: null })} className="-ml-2 flex h-11 w-11 items-center justify-center rounded-control hover:bg-superficie-oscura" aria-label="Volver a la lista">
-              <Icono nombre="volver" />
-            </button>
+            <BotonIcono etiqueta="Volver a la lista" icono="volver" variante="oscuro" lado="abajo" onClick={() => setQuery({ medidor: null })} className="-ml-2" />
           )}
           <div className="flex min-w-0 flex-col">
             <span className="text-lg font-semibold">Lectura de agua</span>

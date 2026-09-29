@@ -7,7 +7,7 @@ import { ruta, useQuery } from '../../lib/nav.jsx';
 import { useEid, useSesion, Guarda } from '../../layout/Sesion.jsx';
 import { usePeriodo } from '../../layout/usePeriodo.js';
 import Encabezado, { Contenido } from '../../layout/Encabezado.jsx';
-import { Boton, TarjetaKPI, NodoDesplegable, SelectorPeriodo, ErrorCarga, Vacio, Esqueleto, Modal, Icono, Campo, SubirArchivo, useToast } from '../../ui/index.js';
+import { Boton, TarjetaKPI, NodoDesplegable, SelectorPeriodo, ErrorCarga, Vacio, Esqueleto, Modal, Icono, Campo, SubirArchivo, useToast, BotonIcono } from '../../ui/index.js';
 
 /** Ancestros de un nodo con id legible: «egr.administracion.conserjeria» → [egr, egr.administracion, …]. */
 export function ancestros(id) {
@@ -279,9 +279,7 @@ function VisorDocumento({ doc, onCerrar, sinCabecera = false }) {
       {!sinCabecera && (
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold">Documento de sustento</h2>
-          <button type="button" onClick={onCerrar} aria-label="Cerrar" className="flex h-9 w-9 items-center justify-center rounded-control bg-superficie-2 text-egreso hover:bg-borde">
-            <Icono nombre="cerrar" tam={18} />
-          </button>
+          <BotonIcono etiqueta="Cerrar documento" icono="cerrar" variante="suave" lado="izquierda" onClick={onCerrar} />
         </div>
       )}
       {doc.bloqueado ? (

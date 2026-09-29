@@ -1,21 +1,17 @@
-import Icono from './Icono.jsx';
+import { BotonIcono } from './Tooltip.jsx';
 import { nombrePeriodo, sumarMeses } from '../lib/fechas.js';
 
 /** Mes y año («2026-09») con flechas. */
 export function SelectorPeriodo({ periodo, onCambio, max, oscuro = false }) {
   const puedeSiguiente = !max || periodo < max;
-  const btn = `flex h-11 w-11 lg:h-10 lg:w-10 items-center justify-center rounded-control border ${oscuro ? 'border-superficie-oscura-2 text-white hover:bg-superficie-oscura' : 'border-borde-fuerte bg-superficie hover:bg-fondo'} disabled:opacity-40`;
+  const variante = oscuro ? 'oscuro' : 'secundario';
   return (
-    <div className="flex items-center gap-2" role="group" aria-label="Periodo">
-      <button type="button" className={btn} onClick={() => onCambio(sumarMeses(periodo, -1))} aria-label="Mes anterior">
-        <Icono nombre="izq" tam={18} />
-      </button>
-      <span className={`min-w-[132px] text-center text-sm font-semibold tabular-nums ${oscuro ? 'text-white' : 'text-tinta'}`} aria-live="polite">
+    <div className="flex items-center gap-1" role="group" aria-label="Periodo">
+      <BotonIcono variante={variante} icono="izq" etiqueta="Mes anterior" onClick={() => onCambio(sumarMeses(periodo, -1))} />
+      <span className={`min-w-[120px] text-center text-sm font-semibold tabular-nums ${oscuro ? 'text-white' : 'text-tinta'}`} aria-live="polite">
         {nombrePeriodo(periodo)}
       </span>
-      <button type="button" className={btn} onClick={() => onCambio(sumarMeses(periodo, 1))} disabled={!puedeSiguiente} aria-label="Mes siguiente">
-        <Icono nombre="der" tam={18} />
-      </button>
+      <BotonIcono variante={variante} icono="der" etiqueta="Mes siguiente" onClick={() => onCambio(sumarMeses(periodo, 1))} disabled={!puedeSiguiente} />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import Icono from './Icono.jsx';
+import { BotonIcono } from './Tooltip.jsx';
 
 // Pila global: solo el modal de arriba responde a Escape y atrapa el foco.
 const pila = [];
@@ -88,14 +88,7 @@ export default function Modal({ abierto, onCerrar, titulo, children, pie, ancho 
               {titulo}
             </h2>
             {cerrable && (
-              <button
-                type="button"
-                onClick={onCerrar}
-                aria-label="Cerrar"
-                className="-mr-2 -mt-1 flex h-11 w-11 sm:h-9 sm:w-9 items-center justify-center rounded-control bg-superficie-2 text-egreso hover:bg-borde"
-              >
-                <Icono nombre="cerrar" tam={18} />
-              </button>
+              <BotonIcono etiqueta="Cerrar" icono="cerrar" variante="suave" lado="abajo" onClick={onCerrar} className="-mr-2 -mt-1" />
             )}
           </div>
         )}

@@ -14,3 +14,6 @@ export { Vacio, ErrorCarga, SinPermiso, Esqueleto, CargandoApp } from './Estados
 export { SelectorPeriodo, SelectorEdificio } from './Selectores.jsx';
 export { default as Icono } from './Icono.jsx';
 export { default as Logo, Isotipo } from './Logo.jsx';
+export { Tooltip, BotonIcono } from './Tooltip.jsx';
+export { MenuAcciones, Desplegable } from './Menu.jsx';
+export { ICONOS, existeIcono } from './Icono.jsx';
