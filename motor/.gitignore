@@ -1,0 +1,10 @@
+# Los GGUF y el ONNX no entran al repo (2+ GB): los baja scripts/descargar-modelos.sh
+models/
+resultados/
+.env
+__pycache__/
+# Artefactos del entrenamiento (F4)
+entrenar/adapters/
+entrenar/fusionado/
+entrenar/gguf/
+entrenar/.llama-cpp/

@@ -19,6 +19,7 @@ const PANTALLAS = {
   roles: { permiso: 'roles.administrar', C: lazy(() => import('../pantallas/11-roles/Roles.jsx')) },
   whatsapp: { permiso: 'whatsapp.ver', C: lazy(() => import('../pantallas/12-whatsapp/WhatsApp.jsx')) },
   chatbot: { permiso: 'chatbot.probar', C: lazy(() => import('../pantallas/12-whatsapp/Chatbot.jsx')) },
+  motor: { permiso: 'motor.administrar', C: lazy(() => import('../pantallas/12-whatsapp/Motor.jsx')) },
   analitica: { permiso: 'analitica.ver', C: lazy(() => import('../pantallas/13-analitica/Analitica.jsx')) },
   conciliacion: { permiso: 'balance.conciliar', C: lazy(() => import('../pantallas/14-conciliacion/Conciliacion.jsx')) },
   configuracion: { permiso: 'facturacion.configurar', C: lazy(() => import('../pantallas/configuracion/Configuracion.jsx')) },

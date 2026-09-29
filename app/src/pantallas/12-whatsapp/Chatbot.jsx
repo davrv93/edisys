@@ -17,6 +17,7 @@ export default function Chatbot() {
   const [telefono, setTelefono] = useState('');
   const [texto, setTexto] = useState('');
   const [chat, setChat] = useState([]);
+  const [dinamicas, setDinamicas] = useState([]); // sugerencias del motor (F7)
   const [pensando, setPensando] = useState(false);
   const fin = useRef(null);
 
@@ -38,6 +39,7 @@ export default function Chatbot() {
     try {
       const r = await api.post('/chatbot/mensaje', { telefono: telefono.replace(/\D/g, ''), texto: msg });
       setChat((c) => [...c, { de: 'bot', texto: r?.respuesta || '(sin respuesta)', intencion: r?.intencion, datos: r?.datos, hora: new Date() }]);
+      setDinamicas(Array.isArray(r?.datos?.sugerencias) ? r.datos.sugerencias.slice(0, 3) : []);
     } catch (err) {
       setChat((c) => [...c, { de: 'error', texto: err.message, hora: new Date() }]);
     } finally {
@@ -97,7 +99,7 @@ export default function Chatbot() {
             <div ref={fin} />
           </div>
           <div className="flex gap-2 overflow-x-auto border-t border-borde px-3 py-2">
-            {SUGERENCIAS.map((sug) => (
+            {(dinamicas.length ? dinamicas : SUGERENCIAS).map((sug) => (
               <button key={sug} type="button" onClick={() => mandar(sug)} disabled={!telefono || pensando} className="h-9 shrink-0 rounded-chip border border-acento-borde bg-acento-suave px-3 text-sm text-acento transition-[background-color,transform] duration-rapida hover:bg-acento-borde active:scale-97 disabled:opacity-50">
                 {sug}
               </button>

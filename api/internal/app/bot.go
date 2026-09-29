@@ -270,6 +270,16 @@ func (s *Server) Responder(ctx context.Context, eid int64, tel, texto string) (*
 
 	default:
 		res.Intencion = chatbot.NoEntendi
+		// Motor conversacional local (F1): si está activado y disponible, responde él
+		// con lo que las reglas no entendieron. Si no, menú de siempre (cero regresión).
+		if resp, sug, ok := s.preguntaMotor(ctx, q.edificioID, []map[string]string{{"role": "user", "content": texto}}, true); ok && strings.TrimSpace(resp) != "" {
+			res.Intencion = "motor"
+			res.Respuesta = resp
+			if len(sug) > 0 {
+				res.Datos["sugerencias"] = sug
+			}
+			return res, nil
+		}
 		res.Respuesta = "No te entendí bien, " + nombre + ". " + menuBot
 	}
 	return res, nil

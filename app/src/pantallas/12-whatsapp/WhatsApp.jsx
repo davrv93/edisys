@@ -40,9 +40,14 @@ export default function WhatsApp() {
       <Encabezado
         titulo="WhatsApp"
         acciones={
-          <Boton variante="secundario" icono="chatbot" href={ruta('chatbot')}>
-            Simulador del chatbot
-          </Boton>
+          <>
+            <Boton variante="secundario" icono="chatbot" href={ruta('chatbot')}>
+              Simulador del chatbot
+            </Boton>
+            <Boton variante="secundario" icono="llave" href={ruta('motor')}>
+              Motor conversacional
+            </Boton>
+          </>
         }
       >
         {config.datos && simulado && (

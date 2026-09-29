@@ -141,7 +141,7 @@ func Sembrar(ctx context.Context, pool *pgxpool.Pool, alm archivo.Almacen, op Op
 	s.exec(`TRUNCATE chatbot_sesion, comprobante, comprobante_serie, facturacion_config, movimiento_banco, extracto, banco_mapeo, correo_adjunto, correo_mensaje, ajuste, whatsapp_mensaje, whatsapp_config, voto, incidencia_evidencia, incidencia_evento, incidencia, junta_miembro,
 		reparto_medidor, recibo_general, lectura, medidor, reserva, recurso, area, egreso, pago, recibo_linea, recibo, presupuesto, periodo,
 		concepto, rubro, importacion, deuda_inicial, unidad_persona, persona, unidad, auditoria, invitacion, sesion_refresh,
-		usuario_edificio_rol, rol_permiso_edificio, usuario, edificio, archivo, administradora, contacto RESTART IDENTITY CASCADE`)
+		usuario_edificio_rol, rol_permiso_edificio, usuario, edificio, archivo, administradora, contacto, motor_consulta, motor_golden_sql RESTART IDENTITY CASCADE`)
 	s.exec(`ALTER SEQUENCE recibo_correlativo_seq RESTART WITH 100`)
 
 	adm := s.id(`INSERT INTO administradora (nombre, ruc) VALUES ('Demo Administraciones SAC', '20600000001') RETURNING id`)
@@ -525,6 +525,16 @@ func Sembrar(ctx context.Context, pool *pgxpool.Pool, alm archivo.Almacen, op Op
 
 	// --- WhatsApp: configuración simulada y algunos mensajes de ejemplo.
 	s.exec(`INSERT INTO whatsapp_config (edificio_id, modo) VALUES ($1,'simulado')`, s.eid)
+	// GoldenSQL de arranque del motor (F8): preguntas que el chatbot por reglas
+	// no atiende. Los números salen de este mismo seed (los prueba el smoke).
+	s.exec(`INSERT INTO motor_golden_sql (edificio_id, pregunta, sql, tablas, fuente) VALUES
+		($1, '¿cuál es la morosidad del edificio?',
+		 'SELECT u.edificio_id, COALESCE(ROUND(100.0*SUM(r.total_cts-r.pagado_cts)/NULLIF(SUM(r.total_cts),0),1),0) AS pct, COALESCE(SUM(r.total_cts-r.pagado_cts),0) AS saldo_cts FROM recibo r JOIN unidad u ON u.id=r.unidad_id WHERE u.edificio_id = :edificio_id AND r.estado NOT IN (''borrador'',''anulado'') GROUP BY u.edificio_id', '{recibo,unidad}', 'manual'),
+		($1, '¿cuánto debe en total el dpto 402?',
+		 'SELECT u.codigo, COALESCE(SUM(r.total_cts-r.pagado_cts),0) AS saldo_cts FROM unidad u JOIN recibo r ON r.unidad_id=u.id WHERE u.edificio_id = :edificio_id AND u.codigo=''402'' AND r.estado NOT IN (''borrador'',''anulado'') GROUP BY u.codigo', '{unidad,recibo}', 'manual'),
+		($1, 'deuda por unidad',
+		 'SELECT u.codigo, COALESCE(SUM(r.total_cts-r.pagado_cts),0) AS saldo_cts FROM unidad u LEFT JOIN recibo r ON r.unidad_id=u.id AND r.estado NOT IN (''borrador'',''anulado'') WHERE u.edificio_id = :edificio_id GROUP BY u.codigo ORDER BY saldo_cts DESC', '{unidad,recibo}', 'manual')`, s.eid)
+
 	msgs := []struct{ uni, tel, plantilla, texto, estado, dir, origen, intencion, cuando string }{
 		{"201", "51900000201", "recibo", "Hola María, tu recibo de agosto 2026 del Dpto 201 es de S/ 962,50 y vence el 10/08/2026. Ya está pagado, ¡gracias!", "simulado", "saliente", "recibo", "", "2026-08-01 09:30"},
 		{"402", "51900000402", "recordatorio_deuda", "Hola Luis, el Dpto 402 tiene un saldo pendiente de S/ 1.420,00. Puedes pagar por Yape al 987 654 321 o por transferencia y enviarnos el voucher desde la app. Si ya pagaste, no tomes en cuenta este mensaje. ¡Gracias!", "simulado", "saliente", "manual", "", "2026-09-26 10:00"},

@@ -1,0 +1,20 @@
+{"id": "faq_horarios_piscina", "categoria": "faq", "pregunta": "¿En qué horarios se puede usar la piscina del edificio?", "esperado": ""}
+{"id": "faq_reservar_parrilla", "categoria": "faq", "pregunta": "¿Cómo hago para reservar la parrilla del edificio?", "esperado": ""}
+{"id": "faq_reportar_fuga", "categoria": "faq", "pregunta": "Hay una fuga de agua en el pasadizo de mi piso, ¿qué hago?", "esperado": ""}
+{"id": "faq_aforo_piscina", "categoria": "faq", "pregunta": "¿Cuál es el aforo máximo de la piscina?", "esperado": "20"}
+{"id": "faq_pagar_cuota", "categoria": "faq", "pregunta": "¿Por dónde puedo pagar mi cuota de mantenimiento?", "esperado": "987654321"}
+{"id": "gestion_deuda_402", "categoria": "gestion", "pregunta": "¿Cuánto debe en total el Dpto 402?", "esperado": "1420"}
+{"id": "gestion_morosidad", "categoria": "gestion", "pregunta": "¿Cuál es la morosidad del edificio este mes?", "esperado": "13,1"}
+{"id": "gestion_saldo_banco", "categoria": "gestion", "pregunta": "¿Cuánto hay en la cuenta del banco del edificio?", "esperado": "34120"}
+{"id": "gestion_pago_201", "categoria": "gestion", "pregunta": "¿Cuánto pagó el Dpto 201 en setiembre y qué día?", "esperado": "990"}
+{"id": "gestion_reparto_medidores", "categoria": "gestion", "pregunta": "Explícame cómo funciona el reparto de consumo de medidores entre los departamentos.", "esperado": ""}
+{"id": "es_cuota_ordinaria", "categoria": "espanol", "pregunta": "Explícame en dos frases la diferencia entre cuota ordinaria y cuota extraordinaria.", "esperado": ""}
+{"id": "es_recordatorio_pago", "categoria": "espanol", "pregunta": "Redacta un recordatorio amable para los propietarios sobre el pago de la cuota de setiembre.", "esperado": ""}
+{"id": "es_inquilino_propietario", "categoria": "espanol", "pregunta": "En la administración de un edificio, ¿qué responsabilidades tiene un inquilino y cuáles siguen siendo del propietario?", "esperado": ""}
+{"id": "es_aviso_ascensor", "categoria": "espanol", "pregunta": "Escribe un aviso corto para el lobby: el ascensor estará en mantenimiento este sábado en la mañana.", "esperado": ""}
+{"id": "es_contenido_recibo", "categoria": "espanol", "pregunta": "¿Qué debe incluir el recibo mensual de mantenimiento de un departamento?", "esperado": ""}
+{"id": "rob_cuanto_debo_typos", "categoria": "robustez", "pregunta": "cto debo pa el mes", "esperado": ""}
+{"id": "rob_yape_typos", "categoria": "robustez", "pregunta": "oia, me pueden rekordar el numero de yape de la administracion?", "esperado": "987654321"}
+{"id": "rob_piscina_hora", "categoria": "robustez", "pregunta": "la piscina hasta que hora abre??", "esperado": "2000"}
+{"id": "rob_sum_domingo", "categoria": "robustez", "pregunta": "el SUM se puede reservar un domingo?", "esperado": ""}
+{"id": "rob_aforo_casual", "categoria": "robustez", "pregunta": "cuanta gente maximo caben en la piscina", "esperado": "20"}

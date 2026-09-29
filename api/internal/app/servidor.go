@@ -315,6 +315,13 @@ func (s *Server) rutasModulosNuevos(r chi.Router) {
 	r.With(q("whatsapp.configurar")).Put("/whatsapp/config", s.guardarConfigWhatsApp)
 	r.With(q("whatsapp.ver")).Get("/whatsapp/plantillas", s.listarPlantillas)
 	r.With(q("chatbot.probar")).Post("/chatbot/mensaje", s.chatbotMensaje)
+	r.With(q("motor.administrar")).Post("/motor/consulta", s.motorConsulta)
+	r.With(q("motor.administrar")).Get("/motor/admin", s.motorAdmin)
+	r.With(q("motor.administrar")).Post("/motor/golden", s.motorGolden)
+	r.With(q("motor.administrar")).Post("/motor/golden/{gid}/ejecutar", s.motorGoldenEjecutar)
+	r.With(q("motor.administrar")).Put("/motor/ajuste", s.motorAjuste)
+	r.With(q("motor.administrar")).Post("/motor/confirma", s.motorConfirma)
+
 	r.With(q("analitica.ver")).Get("/analitica/resumen", s.analitica)
 	r.With(q("incidencias.ver")).Get("/mantenimiento/incidencias", s.listarIncidencias)
 	r.With(q("incidencias.ver")).Patch("/mantenimiento/incidencias/{tid}/estado", s.cambiarEstadoIncidencia)

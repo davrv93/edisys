@@ -2,7 +2,7 @@
 COMPOSE := docker compose
 TEST_DB ?= postgres://edisys:edisys@localhost:4754/edisys_test?sslmode=disable
 
-.PHONY: up down logs seed seed-demo test test-unit ps smoke build api backup restore respaldos validar-ubl validar-deploy deploy-local peso
+.PHONY: up down logs seed seed-demo test test-unit ps smoke build api backup restore respaldos validar-ubl motor motor-on motor-off humo-motor validar-deploy deploy-local peso
 
 # Tope recomendado del dist en bytes: base 528950 (4e1acab) +30 %.
 PESO_TOPE ?= 688000
@@ -56,6 +56,22 @@ restore:       ## Restaura FECHA=AAAAMMDD-HHMM (o «ultimo») en una base tempor
 
 validar-ubl:   ## Valida boleta/factura/nota de crédito contra los XSD de UBL 2.1 y verifica la firma con xmlsec1
 	./scripts/validar-ubl.sh
+
+motor:         ## Baja los modelos del motor (~3 GB) y activa el servicio (descomenta MOTOR_URL)
+	./motor/scripts/descargar-modelos.sh motor/models
+	@sed -i.bak 's/^  # MOTOR_URL:/  MOTOR_URL:/' docker-compose.yml && rm -f docker-compose.yml.bak
+	@echo "Listo: make up levantará motor+llama. Motor ON: make motor-on · OFF: make motor-off"
+
+motor-on:      ## Enciende el motor para todos los edificios (motor_activado=todos)
+	docker compose --profile motor up -d motor
+	docker compose exec postgres psql -U edisys -d edisys -c "UPDATE edificio SET config_json = COALESCE(config_json,'{}'::jsonb) || '{\"motor_activado\":\"todos\"}'::jsonb"
+
+motor-off:     ## Apaga el motor (vuelve al chatbot por reglas)
+	docker compose exec postgres psql -U edisys -d edisys -c "UPDATE edificio SET config_json = COALESCE(config_json,'{}'::jsonb) || '{\"motor_activado\":\"off\"}'::jsonb"
+	docker compose --profile motor stop motor llama
+
+humo-motor:    ## Humo del motor: salud del motor y pregunta que las reglas no entienden
+	./scripts/humo-motor.sh
 
 validar-deploy: ## Pre-vuelo del despliegue sin remoto: sintaxis, compose, workflows y aviso de lo que falta (EC2)
 	bash -n scripts/desplegar.sh && echo "desplegar.sh: sintaxis OK"

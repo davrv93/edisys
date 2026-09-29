@@ -107,3 +107,21 @@ Todo bajo `/api/v1`, JSON en snake_case, dinero en céntimos, errores `{ "error"
 Con cookie, toda escritura exige la cabecera `X-EDISYS: 1` (CSRF); con `Authorization: Bearer` no.
 Los módulos nuevos (`/whatsapp/*`, `/chatbot/mensaje`, `/analitica/resumen`, `/mantenimiento/incidencias`) usan el primer
 edificio del usuario (o `?edificio_id=`), y también existen bajo `/edificios/{eid}/…`.
+
+## Motor conversacional (opcional, apagado por defecto)
+
+LLM local en español detrás del chatbot por reglas: cuando las reglas no entienden, el motor responde con un GGUF
+cuantizado servido con llama.cpp + RAG de embeddings (e5-small ONNX). Nada sale a internet. Ver
+[`PLAN_TRABAJO_EDISYS_MOTOR_CONVERSACIONAL.md`](../PLAN_TRABAJO_EDISYS_MOTOR_CONVERSACIONAL.md) y [`motor/`](motor/).
+
+```bash
+make motor        # baja los modelos (~3 GB) a motor/models/ y activa MOTOR_URL en el compose
+make motor-on     # enciende motor+llama y pone motor_activado=todos
+make humo-motor   # prueba de humo del motor
+make motor-off    # apaga: el chatbot por reglas vuelve a contestar todo
+```
+
+El ajuste es por edificio (`edificio.config_json->>'motor_activado'`: `off` | `solo_admin` | `todos`). Las consultas de
+datos pasan por **GoldenSQL** (`motor_golden_sql`, migración 0014): solo SELECT, lista blanca de tablas (fuera persona,
+usuario y correo: Ley 29733) y `edificio_id` obligatorio; todo queda auditado en `motor_consulta`. El entrenamiento
+QLoRA corre en tu Mac (`motor/entrenar/`), nunca en el servidor.

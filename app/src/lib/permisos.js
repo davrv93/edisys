@@ -19,7 +19,7 @@ const TODOS = [
   'analitica.ver', 'areas.administrar', 'auditoria.ver', 'balance.conciliar', 'balance.ver', 'balance.ver_documentos', 'chatbot.probar',
   'comprobantes.emitir', 'facturacion.configurar',
   'dashboard.ver', 'edificio.editar', 'edificio.ver', 'egresos.registrar', 'incidencias.reportar', 'incidencias.validar',
-  'incidencias.ver', 'lecturas.aprobar_reparto', 'lecturas.corregir', 'lecturas.registrar', 'lecturas.ver', 'morosidad.ver',
+  'incidencias.ver', 'lecturas.aprobar_reparto', 'lecturas.corregir',  'lecturas.registrar', 'lecturas.ver', 'motor.administrar', 'morosidad.ver',
   'pagos.informar', 'pagos.registrar', 'pagos.validar', 'periodos.administrar', 'portal.ver', 'recibos.emitir', 'recibos.ver',
   'reservas.administrar', 'reservas.crear', 'reservas.ver', 'roles.administrar', 'trabajos.aprobar', 'trabajos.ejecutar',
   'trabajos.presupuestar', 'trabajos.votar', 'unidades.editar', 'unidades.importar', 'unidades.ver', 'usuarios.ver',
@@ -79,6 +79,7 @@ export const ITEMS = {
   reportar: { pagina: 'mantenimiento', query: { reportar: 1 }, etiqueta: 'Reportar incidencia', corta: 'Reportar', icono: 'camara', permiso: 'incidencias.reportar' },
   whatsapp: { pagina: 'whatsapp', etiqueta: 'WhatsApp', corta: 'WhatsApp', icono: 'whatsapp', permiso: 'whatsapp.ver' },
   chatbot: { pagina: 'chatbot', etiqueta: 'Simulador del chatbot', corta: 'Chatbot', icono: 'robot', permiso: 'chatbot.probar' },
+  motor: { pagina: 'motor', etiqueta: 'Motor conversacional', corta: 'Motor', icono: 'llave', permiso: 'motor.administrar' },
   analitica: { pagina: 'analitica', etiqueta: 'Analítica', corta: 'Analítica', icono: 'grafico', permiso: 'analitica.ver' },
   configuracion: { pagina: 'configuracion', etiqueta: 'Configuración', corta: 'Config.', icono: 'engranaje', permiso: 'facturacion.configurar' },
   conciliacion: { pagina: 'conciliacion', etiqueta: 'Conciliación bancaria', corta: 'Banco', icono: 'balance', permiso: 'balance.conciliar' },
@@ -87,7 +88,7 @@ export const ITEMS = {
 
 export const MENU_POR_ROL = {
   administrador: {
-    lateral: ['inicio', 'balance', 'conciliacion', 'recibos', 'unidades', 'reservas', 'medidores', 'mantenimiento', 'whatsapp', 'chatbot', 'analitica', 'roles', 'configuracion'],
+    lateral: ['inicio', 'balance', 'conciliacion', 'recibos', 'unidades', 'reservas', 'medidores', 'mantenimiento', 'whatsapp', 'chatbot', 'motor', 'analitica', 'roles', 'configuracion'],
     movil: ['inicio', 'recibos', 'mantenimiento', 'whatsapp'],
   },
   junta: {

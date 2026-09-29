@@ -460,6 +460,7 @@ func (s *Server) chatbotMensaje(w http.ResponseWriter, r *http.Request) {
 		P.Fallo(w, r, err)
 		return
 	}
+	// El motor (F1) devuelve sugerencias de siguiente pregunta (F7) en datos.
 	P.JSON(w, http.StatusOK, map[string]any{"respuesta": res.Respuesta, "intencion": res.Intencion, "datos": res.Datos})
 }
 

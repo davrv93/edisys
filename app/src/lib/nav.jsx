@@ -17,6 +17,7 @@ export const PAGINAS = {
   roles: '/roles/',
   whatsapp: '/whatsapp/',
   chatbot: '/chatbot/',
+  motor: '/motor/',
   analitica: '/analitica/',
   conciliacion: '/conciliacion/',
   configuracion: '/configuracion/',

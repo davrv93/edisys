@@ -37,6 +37,10 @@ x-api-env: &api-env
   SMTP_PUERTO: ${SMTP_PUERTO:-1025}
   SMTP_USUARIO: ${SMTP_USUARIO:-}
   SMTP_CLAVE: ${SMTP_CLAVE:-}
+  # Motor conversacional local (F1): vacío = apagado (el chatbot por reglas responde todo).
+  # Para activarlo: make motor (baja modelos) y descomenta MOTOR_URL.
+  MOTOR_URL: http://motor:8080
+  # MOTOR_TOKEN:
   # SUNAT beta: credenciales de prueba del servidor (respaldan al edificio sin las suyas).
   SUNAT_BETA_URL: ${SUNAT_BETA_URL:-}
   SUNAT_BETA_USUARIO: ${SUNAT_BETA_USUARIO:-}
@@ -223,8 +227,46 @@ services:
     mem_limit: 128m
     restart: unless-stopped
 
+  # Motor conversacional local (F1): app.py (RAG + memoria + sugerencias) frente a
+  # llama-server con el GGUF local. Va apagado por defecto: `make motor` lo baja y
+  # descomenta MOTOR_URL. La API lo llama solo si MOTOR_URL está definido y el
+  # edificio tiene motor_activado.
+  llama:
+    profiles: [motor]
+    image: ghcr.io/ggml-org/llama.cpp:server
+    container_name: edisys_llama
+    <<: *logs
+    command: >-
+      -m ${MODELO_RUTA:-/models/qwen2.5-1.5b-instruct-q4_k_m.gguf}
+      --host 0.0.0.0 --port 8080
+      --ctx-size ${LLAMA_CTX:-2048}
+      --threads ${LLAMA_THREADS:-2}
+      --parallel 1
+      --temp 0.3
+    volumes: [./motor/models:/models:ro]
+    mem_limit: ${MEM_LLAMA:-1450m}
+    restart: unless-stopped
+
+  motor:
+    profiles: [motor]
+    build: ./motor
+    image: ${EDISYS_REGISTRO:-edisys}/motor:${EDISYS_TAG:-local}
+    container_name: edisys_motor
+    <<: *logs
+    environment:
+      E5_RUTA: /models/e5-model_quantized.onnx
+      E5_TOK: /models/e5-tokenizer.json
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ./motor/models:/models:ro
+      - motor_indice:/motor/indice
+    mem_limit: 400m
+    depends_on: [llama]
+    restart: unless-stopped
+
 volumes:
   pgdata:
   s3meta:
   s3data:
   respaldos:
+  motor_indice:

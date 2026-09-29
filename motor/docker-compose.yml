@@ -1,0 +1,49 @@
+# EDISYS · motor conversacional (F0). Proyecto «edisys_motor», contenedores edisys_motor_*.
+# Compose separado del de la app a propósito: vive en su propio EC2 de 3 GB.
+#   llama  · llama.cpp llama-server con el GGUF elegido, techo de RAM por .env
+#   eval   · perfil «eval»: el evaluador del benchmark (solo con `docker compose run`)
+# El puerto queda en 127.0.0.1: en F1 caddy lo publica con TLS + MOTOR_TOKEN.
+name: edisys_motor
+
+x-logs: &logs
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "3" }
+
+services:
+  llama:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    container_name: edisys_motor_llama
+    <<: *logs
+    # La imagen trae llama-server como ENTRYPOINT: command son solo los argumentos.
+    # Sin -ngl (no hay GPU) y sin --mlock: en 3 GB conviene que el núcleo pueda
+    # reclaimar las páginas mmap del modelo en vez de quedarse sin memoria.
+    command: >-
+      -m ${MODELO_RUTA:-/models/qwen2.5-1.5b-instruct-q4_k_m.gguf}
+      --host 0.0.0.0 --port 8080
+      --ctx-size ${LLAMA_CTX:-2048}
+      --threads ${LLAMA_THREADS:-2}
+      --parallel 1
+      --temp 0.3
+    volumes:
+      - ./models:/models:ro
+    ports:
+      - "127.0.0.1:${LLAMA_PORT:-8081}:8080"
+    mem_limit: ${MEM_LLAMA:-1450m}
+    restart: unless-stopped
+
+  # Solo para el benchmark: `docker compose run --rm evaluador python3 /scripts/evaluar.py …`
+  # No instalamos nada: evaluar.py va con la biblioteca estándar a propósito.
+  evaluador:
+    image: python:3.12-slim
+    container_name: edisys_motor_eval
+    <<: *logs
+    profiles: [eval]
+    volumes:
+      - ./scripts:/scripts:ro
+      - ./benchmark:/benchmark:ro
+      - ./resultados:/resultados
+    environment:
+      PYTHONUNBUFFERED: "1"
+    mem_limit: 128m
+    restart: "no"
