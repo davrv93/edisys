@@ -252,18 +252,21 @@ services:
 
   motor:
     profiles: [motor]
-    build: ./motor
-    image: ${EDISYS_REGISTRO:-edisys}/motor:${EDISYS_TAG:-local}
+    build:
+      context: ./motor-go
+      additional_contexts:
+        indice: ./motor/indice      # semilla faq.json para volúmenes nuevos
+    image: ${EDISYS_REGISTRO:-edisys}/motor-go:${EDISYS_TAG:-local}
     container_name: edisys_motor
     <<: *logs
     environment:
       E5_RUTA: /models/e5-model_quantized.onnx
       E5_TOK: /models/e5-tokenizer.json
-      PYTHONUNBUFFERED: "1"
+      LLAMA_URL: http://llama:8080
     volumes:
       - ./motor/models:/models:ro
       - motor_indice:/motor/indice
-    mem_limit: 400m
+    mem_limit: 320m      # motor Go: 267 MB de pico, 185 MB en uso (Python: 442 / 384)
     depends_on: [llama]
     restart: unless-stopped
 

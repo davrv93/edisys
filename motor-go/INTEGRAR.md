@@ -1,4 +1,4 @@
-# Integrar el motor Go en el compose (pendiente de decisión del dueño)
+# Integrar el motor Go en el compose — APLICADO el 29-09-2026
 
 Nada de esto está aplicado: el `docker-compose.yml` sigue construyendo `./motor`
 (Python). El índice (`motor_indice`) es compatible en los dos sentidos, así que
