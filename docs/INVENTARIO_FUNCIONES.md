@@ -16,7 +16,8 @@ contra el recorrido `scripts/recorrido-ui.cjs` (3 roles, 18 vistas, 0 errores). 
 | # | Función | Permiso / condición | Ahora |
 |---|---|---|---|
 | A1 | Enlace «Saltar al contenido» | — | ✅ |
-| A2 | Menú lateral con las secciones del rol, filtrado por permisos | `menuPara(rol, tiene)` | ➜ lateral en 3 estados: abierto ≥ 1280 (220 px), solo iconos 1024–1279 (64 px, nombre en tooltip), cajón < 1024; plegar/abrir se recuerda (`edisys.menu`). Mismos ítems (`ITEMS` / `MENU_POR_ROL`, ahora exportados) |
+| A2 | Menú lateral con las secciones del rol, filtrado por permisos | `menuPara(rol, tiene)` | ➜ lateral en 3 estados: abierto ≥ 1280 (220 px), solo iconos 1024–1279 (64 px, nombre en tooltip), cajón < 1024; plegar/abrir se recuerda (`edisys.menu`). Mismos ítems (`ITEMS` / `MENU_POR_ROL`, ahora exportados). ✚ 29-09: agrupado y plegable por grupos (`GRUPOS`, se recuerda en `edisys.grupos`) |
+| A2b | Migas Grupo › Sección › Subnivel en cada pantalla | — | ✚ 29-09: automáticas desde la URL (`lib/migas.js`), en el encabezado |
 | A3 | Ítem activo según página + query (`?reportar=1`) | — | ✅ (`esActivo`, sin cambios) |
 | A4 | Logo que lleva al inicio | — | ✅ |
 | A5 | Selector de edificio (solo si hay más de uno; si no, tarjeta con nombre y n.º de unidades) | — | ➜ en el lateral abierto y en el cajón (tablet/móvil); en modo iconos, el botón «Abrir el menú completo» lo muestra |

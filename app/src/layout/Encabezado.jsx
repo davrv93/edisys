@@ -1,4 +1,5 @@
 import { BotonIcono, MenuAcciones } from '../ui/index.js';
+import Migas from './Migas.jsx';
 
 /**
  * Cabecera de pantalla (v2): 56 px en escritorio. Título de 22 px a la izquierda; a la derecha,
@@ -18,7 +19,8 @@ export default function Encabezado({ titulo, subtitulo, acciones, secundarias, v
       <div className="flex flex-col gap-2 px-4 py-3 lg:min-h-topbar lg:flex-row lg:items-center lg:justify-between lg:gap-4 lg:px-6 lg:py-2">
         <div className="flex min-w-0 items-center gap-1">
           {volver && <BotonIcono href={volver} etiqueta="Volver" icono="volver" lado="abajo" className="-ml-2" />}
-          <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <Migas />
             <h1 className="truncate font-titulo text-titulo-pantalla font-semibold">{titulo}</h1>
             {subtitulo && <p className="truncate text-xs text-texto-apoyo">{subtitulo}</p>}
           </div>

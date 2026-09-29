@@ -13,8 +13,8 @@ export const NOMBRE_ROL = {
   tecnico: 'Técnico',
 };
 
-// Espejo de la semilla del API (api/migrations/0001_base.sql). Solo se usa si /yo no trae permisos
-// (y en el modo mock). El API es quien manda.
+// Espejo de la semilla del API (api/migrations/0001_base.sql). Solo se usa si /yo no trae permisos.
+// El API es quien manda.
 const TODOS = [
   'analitica.ver', 'areas.administrar', 'auditoria.ver', 'balance.conciliar', 'balance.ver', 'balance.ver_documentos', 'chatbot.probar',
   'comprobantes.emitir', 'facturacion.configurar',
@@ -113,6 +113,26 @@ export const MENU_POR_ROL = {
   },
 };
 MENU_POR_ROL.superadmin = MENU_POR_ROL.administrador;
+
+/** Grupos del lateral: accesos comunes juntos y plegables. Todo ítem de ITEMS vive en un grupo. */
+export const GRUPOS = [
+  { id: 'panel', etiqueta: 'Panel', items: ['inicio', 'portal'] },
+  { id: 'finanzas', etiqueta: 'Finanzas', items: ['balance', 'conciliacion', 'recibos', 'unidades', 'analitica'] },
+  { id: 'operacion', etiqueta: 'Operación', items: ['reservas', 'reservar', 'medidores', 'mantenimiento', 'aprobaciones', 'trabajos', 'reportar'] },
+  { id: 'comunicacion', etiqueta: 'Comunicación', items: ['whatsapp', 'chatbot', 'motor'] },
+  { id: 'ajustes', etiqueta: 'Ajustes', items: ['roles', 'configuracion'] },
+];
+
+/** Ítems ya filtrados por rol, repartidos en sus grupos (solo grupos con algo visible). */
+export function gruposPara(items) {
+  const porId = new Map(items.map((i) => [i.id, i]));
+  const out = [];
+  for (const g of GRUPOS) {
+    const sus = g.items.map((id) => porId.get(id)).filter(Boolean);
+    if (sus.length) out.push({ id: g.id, etiqueta: g.etiqueta, items: sus });
+  }
+  return out;
+}
 
 /**
  * Menú del rol, filtrado por los permisos efectivos.

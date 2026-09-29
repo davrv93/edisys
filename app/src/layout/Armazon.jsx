@@ -1,11 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, Fragment, useCallback, useContext, useEffect, useState } from 'react';
 import { useSesion } from './Sesion.jsx';
-import { menuPara, NOMBRE_ROL } from '../lib/permisos.js';
+import { menuPara, gruposPara, NOMBRE_ROL } from '../lib/permisos.js';
 import { ruta } from '../lib/nav.jsx';
 import { BotonIcono, Icono, Isotipo, Logo, Modal, SelectorEdificio, Tooltip } from '../ui/index.js';
 
 const ArmazonCtx = createContext({ setModoTarea: () => {} });
 const CLAVE_MENU = 'edisys.menu'; // 'abierto' | 'iconos' (elección del usuario en escritorio)
+const CLAVE_GRUPOS = 'edisys.grupos'; // ids de grupos plegados
 
 function leerPreferencia() {
   try {
@@ -57,7 +58,27 @@ export default function Armazon({ pagina, children }) {
   const [modoTarea, setModoTarea] = useState(false);
   const [cajon, setCajon] = useState(false);
   const [pref, setPref] = useState(leerPreferencia);
+  const [cerrados, setCerrados] = useState(() => {
+    try {
+      const v = JSON.parse(window.localStorage.getItem(CLAVE_GRUPOS));
+      return Array.isArray(v) ? v : [];
+    } catch {
+      return [];
+    }
+  });
+  const alternarGrupo = useCallback((id) => {
+    setCerrados((c) => {
+      const n = c.includes(id) ? c.filter((x) => x !== id) : [...c, id];
+      try {
+        window.localStorage.setItem(CLAVE_GRUPOS, JSON.stringify(n));
+      } catch {
+        /* sin almacenamiento */
+      }
+      return n;
+    });
+  }, []);
   const menu = menuPara(s.rol, s.tiene);
+  const grupos = gruposPara(menu.lateral);
   const query = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
   // Si hay dos ítems de la misma página (p. ej. mantenimiento y reportar), gana el que coincide con la query.
   const activoId = (lista) => {
@@ -89,6 +110,23 @@ export default function Armazon({ pagina, children }) {
     iconos: { ancho: 'lg:w-sidebar-iconos', texto: 'hidden', tip: '', abierto: 'hidden', iconos: 'flex' },
   }[pref || 'auto'];
 
+  const enlaceLateral = (it) => {
+    const activo = it.id === idLateral;
+    return (
+      <Tooltip key={it.id} texto={it.etiqueta} lado="derecha" className={L.tip}>
+        <a
+          href={ruta(it.pagina, it.query)}
+          aria-current={activo ? 'page' : undefined}
+          aria-label={it.etiqueta}
+          className={`flex h-10 w-full items-center gap-3 rounded-control px-3 text-sm transition-colors duration-rapida ${activo ? 'bg-acento font-semibold text-white hover:text-white' : 'text-texto-claro hover:bg-superficie-oscura hover:text-white'}`}
+        >
+          <Icono nombre={it.icono} tam={18} />
+          <span className={`truncate ${L.texto}`}>{it.etiqueta}</span>
+        </a>
+      </Tooltip>
+    );
+  };
+
   return (
     <ArmazonCtx.Provider value={{ setModoTarea }}>
       <div className="min-h-screen bg-fondo text-tinta lg:flex">
@@ -117,23 +155,36 @@ export default function Armazon({ pagina, children }) {
               <SelectorEdificio edificios={s.edificios} actual={s.edificio.id} onCambio={s.cambiarEdificio} />
             </div>
           </div>
-          <nav className="flex flex-1 flex-col gap-0.5" aria-label="Menú principal">
-            {menu.lateral.map((it) => {
-              const activo = it.id === idLateral;
-              return (
-                <Tooltip key={it.id} texto={it.etiqueta} lado="derecha" className={L.tip}>
-                  <a
-                    href={ruta(it.pagina, it.query)}
-                    aria-current={activo ? 'page' : undefined}
-                    aria-label={it.etiqueta}
-                    className={`flex h-10 w-full items-center gap-3 rounded-control px-3 text-sm transition-colors duration-rapida ${activo ? 'bg-acento font-semibold text-white hover:text-white' : 'text-texto-claro hover:bg-superficie-oscura hover:text-white'}`}
-                  >
-                    <Icono nombre={it.icono} tam={18} />
-                    <span className={`truncate ${L.texto}`}>{it.etiqueta}</span>
-                  </a>
-                </Tooltip>
-              );
-            })}
+          <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto" aria-label="Menú principal">
+            {/* Abierto: grupos plegables con los accesos comunes juntos */}
+            <div className={`${L.abierto} flex-col gap-4`}>
+              {grupos.map((g) => {
+                const plegado = cerrados.includes(g.id);
+                return (
+                  <section key={g.id} aria-label={g.etiqueta} className="flex flex-col gap-0.5">
+                    <button
+                      type="button"
+                      onClick={() => alternarGrupo(g.id)}
+                      aria-expanded={!plegado}
+                      className="flex items-center justify-between px-3 pb-0.5 text-[11px] font-semibold uppercase tracking-wider text-texto-tenue transition-colors duration-rapida hover:text-white"
+                    >
+                      {g.etiqueta}
+                      <Icono nombre={plegado ? 'abajo' : 'arriba'} tam={12} />
+                    </button>
+                    {!plegado && g.items.map((it) => enlaceLateral(it))}
+                  </section>
+                );
+              })}
+            </div>
+            {/* Solo iconos: plano con separadores por grupo */}
+            <div className={`${L.iconos} flex-col gap-0.5`}>
+              {grupos.map((g, gi) => (
+                <Fragment key={g.id}>
+                  {gi > 0 && <div className="mx-3 my-1 border-t border-superficie-oscura" aria-hidden="true" />}
+                  {g.items.map((it) => enlaceLateral(it))}
+                </Fragment>
+              ))}
+            </div>
           </nav>
           <div className="flex flex-col gap-3">
             <div className={`${L.abierto} items-center gap-3 px-1`}>
@@ -218,21 +269,26 @@ export default function Armazon({ pagina, children }) {
             <BotonIcono etiqueta="Cerrar el menú" icono="cerrar" variante="suave" lado="izquierda" onClick={() => setCajon(false)} />
           </div>
           <SelectorEdificio edificios={s.edificios} actual={s.edificio.id} onCambio={s.cambiarEdificio} oscuro={false} />
-          <nav className="flex flex-col gap-0.5" aria-label="Secciones">
-            {menu.lateral.map((it) => {
-              const activo = it.id === idLateral || it.id === idMovil;
-              return (
-                <a
-                  key={it.id}
-                  href={ruta(it.pagina, it.query)}
-                  aria-current={activo ? 'page' : undefined}
-                  className={`flex min-h-[44px] items-center gap-3 rounded-control px-3 text-base transition-colors duration-rapida ${activo ? 'bg-acento-suave font-semibold text-acento' : 'text-tinta hover:bg-fondo hover:text-tinta'}`}
-                >
-                  <Icono nombre={it.icono} tam={20} />
-                  {it.etiqueta}
-                </a>
-              );
-            })}
+          <nav className="flex flex-col gap-3" aria-label="Secciones">
+            {grupos.map((g) => (
+              <section key={g.id} aria-label={g.etiqueta} className="flex flex-col gap-0.5">
+                <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-texto-apoyo">{g.etiqueta}</p>
+                {g.items.map((it) => {
+                  const activo = it.id === idLateral || it.id === idMovil;
+                  return (
+                    <a
+                      key={it.id}
+                      href={ruta(it.pagina, it.query)}
+                      aria-current={activo ? 'page' : undefined}
+                      className={`flex min-h-[44px] items-center gap-3 rounded-control px-3 text-base transition-colors duration-rapida ${activo ? 'bg-acento-suave font-semibold text-acento' : 'text-tinta hover:bg-fondo hover:text-tinta'}`}
+                    >
+                      <Icono nombre={it.icono} tam={20} />
+                      {it.etiqueta}
+                    </a>
+                  );
+                })}
+              </section>
+            ))}
           </nav>
           <div className="mt-auto flex flex-col gap-2 border-t border-borde pt-4">
             <div className="flex items-center gap-3">
