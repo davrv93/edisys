@@ -63,12 +63,15 @@
   --color-ingreso: var(--color-acento);
   --color-egreso: #334155;         /* slate-700: gastar no es un error */
 
-  /* Series de gráfico: siempre en este orden; se distinguen también por luminosidad */
-  --color-serie-1: #0e7490;        /* cyan-700 (petróleo) */
-  --color-serie-2: #22d3ee;        /* cyan-400 */
-  --color-serie-3: #818cf8;        /* indigo-400 */
-  --color-serie-4: #f59e0b;        /* amber-500 */
-  --color-serie-5: #94a3b8;        /* slate-400 */
+  /* Series de gráfico: siempre en este orden; se distinguen también por luminosidad.
+     El plan pedía cyan-400 / indigo-400 / amber-500 / slate-400, que no llegan a 3:1 sobre blanco
+     (WCAG 1.4.11). Se bajó un tono cada uno para que TODAS las marcas pasen 3:1, y los gráficos
+     llevan además etiqueta directa y tabla. */
+  --color-serie-1: #164e63;        /* cyan-900 (petróleo oscuro) · 9,1:1 */
+  --color-serie-2: #0891b2;        /* cyan-600 · 3,7:1 */
+  --color-serie-3: #6366f1;        /* indigo-500 · 4,5:1 */
+  --color-serie-4: #d97706;        /* amber-600 · 3,2:1 */
+  --color-serie-5: #64748b;        /* slate-500 · 4,8:1 */
 
   /* ---------- Densidad ---------- */
   --alto-control: 36px;            /* escritorio */
