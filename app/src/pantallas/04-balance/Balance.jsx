@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { api } from '../../lib/api.js';
+import { api, urlApi } from '../../lib/api.js';
 import { useCarga } from '../../lib/useCarga.js';
 import { formatearSoles, formatearPct } from '../../lib/dinero.js';
 import { formatearFecha, mesDePeriodo } from '../../lib/fechas.js';
@@ -147,7 +147,10 @@ export default function Balance() {
       <Boton variante="secundario" onClick={expandirTodo} disabled={!raiz}>
         Expandir todo
       </Boton>
-      <Boton variante="secundario" icono="descargar" onClick={() => window.print()} className="hidden sm:inline-flex">
+      <Boton variante="secundario" icono="descargar" href={urlApi(`/edificios/${eid}/balance/${periodo}.pdf`)} target="_blank" rel="noopener">
+        Descargar PDF
+      </Boton>
+      <Boton variante="fantasma" onClick={() => window.print()} className="hidden sm:inline-flex">
         Imprimir
       </Boton>
       <Guarda permiso="egresos.registrar">
