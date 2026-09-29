@@ -20,6 +20,7 @@ import (
 
 	"edisys/api/internal/archivo"
 	"edisys/api/internal/auth"
+	"edisys/api/internal/conciliacion"
 	P "edisys/api/internal/plataforma"
 	"edisys/api/internal/reparto"
 )
@@ -137,7 +138,7 @@ func Sembrar(ctx context.Context, pool *pgxpool.Pool, alm archivo.Almacen, op Op
 	s := &sembrador{ctx: ctx, tx: tx, alm: alm, unidades: map[string]int64{}, medidor: map[string]int64{}, usuarios: map[string]int64{},
 		rubros: map[string]int64{}, concepto: map[string]int64{}, recurso: map[string]int64{}, periodo: map[string]int64{}}
 
-	s.exec(`TRUNCATE whatsapp_mensaje, whatsapp_config, voto, incidencia_evidencia, incidencia_evento, incidencia, junta_miembro,
+	s.exec(`TRUNCATE chatbot_sesion, comprobante, comprobante_serie, facturacion_config, movimiento_banco, extracto, banco_mapeo, correo_adjunto, correo_mensaje, ajuste, whatsapp_mensaje, whatsapp_config, voto, incidencia_evidencia, incidencia_evento, incidencia, junta_miembro,
 		reparto_medidor, recibo_general, lectura, medidor, reserva, recurso, area, egreso, pago, recibo_linea, recibo, presupuesto, periodo,
 		concepto, rubro, importacion, deuda_inicial, unidad_persona, persona, unidad, auditoria, invitacion, sesion_refresh,
 		usuario_edificio_rol, rol_permiso_edificio, usuario, edificio, archivo, administradora, contacto RESTART IDENTITY CASCADE`)
@@ -183,7 +184,7 @@ func Sembrar(ctx context.Context, pool *pgxpool.Pool, alm archivo.Almacen, op Op
 			s.eid, c, piso, part, c == "302")
 		s.unidades[c] = uid
 		var usuario *int64
-		correo := ""
+		correo := "propietario" + c + "@demo.pe" // Mailpit en local: nada sale a terceros
 		if c == "201" {
 			v := s.usuarios["propietario201@demo.pe"]
 			usuario = &v
@@ -541,6 +542,16 @@ func Sembrar(ctx context.Context, pool *pgxpool.Pool, alm archivo.Almacen, op Op
 		COALESCE((SELECT SUM(pg.monto_cts) FROM pago pg JOIN recibo r ON r.id=pg.recibo_id JOIN periodo p ON p.id=r.periodo_id
 		          WHERE pg.edificio_id=$1 AND pg.estado='validado' AND p.periodo <= '2026-09'),0)
 		- COALESCE((SELECT SUM(monto_cts) FROM egreso WHERE edificio_id=$1 AND periodo <= '2026-09'),0)) WHERE id=$1`, s.eid)
+
+	// --- Facturación electrónica en modo simulado (no sale nada a SUNAT). RUC de demostración válido.
+	s.exec(`INSERT INTO facturacion_config (edificio_id, ruc, razon_social, direccion, ubigeo, modo, actualizado_por)
+		VALUES ($1,'20600000005','Junta de Propietarios del Edificio Demo','Av. José Larco 1234, Miraflores, Lima','150122','simulado',$2)`, s.eid, s.usuarios["admin@demo.pe"])
+
+	// --- Conciliación: extracto de setiembre del BCP ya cargado (2 movimientos sin pareja a propósito).
+	adminID := s.usuarios["admin@demo.pe"]
+	if _, err := conciliacion.CargarDemo(ctx, tx, s.eid, "2026-09", 3412000, &adminID); err != nil {
+		return nil, fmt.Errorf("extracto demo: %w", err)
+	}
 
 	if err := tx.Commit(ctx); err != nil {
 		return nil, err

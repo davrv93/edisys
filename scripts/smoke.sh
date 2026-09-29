@@ -27,8 +27,18 @@ st=$(pedir GET '/api/v1/edificios/1/dashboard?periodo=2026-09'); revisar "dashbo
 st=$(pedir GET '/api/v1/edificios/1/balance?periodo=2026-09'); revisar "balance (banco 34.120)" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"banco_cts":3412000'
 st=$(pedir GET '/api/v1/edificios/1/lecturas?periodo=2026-09'); revisar "lecturas" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"avance"'
 st=$(pedir POST '/api/v1/edificios/1/periodos/2026-09/reparto-medidores/calcular'); revisar "reparto 5.000/4.800/200" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"diferencia_cts":20000'
+st=$(pedir GET '/api/v1/edificios/1/morosidad?periodo=2026-09'); revisar "morosidad del mes e histórica" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"historica":{'
+st=$(pedir GET '/api/v1/edificios/1/ajustes?pendientes=1'); revisar "ajustes de lecturas corregidas" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"datos"'
+st=$(curl -s -o /tmp/edisys_smoke_pdf -w '%{http_code}' -b "$JAR" "$BASE/api/v1/edificios/1/balance/2026-09.pdf"); [ "$st" = 200 ] && head -c 5 /tmp/edisys_smoke_pdf | grep -q '%PDF-' && ok "PDF del balance" || mal "PDF del balance" "$st"
+st=$(curl -s -o /tmp/edisys_smoke_pdf -w '%{http_code}' -b "$JAR" "$BASE/api/v1/edificios/1/balance/2026-09/informe-junta.pdf"); [ "$st" = 200 ] && head -c 5 /tmp/edisys_smoke_pdf | grep -q '%PDF-' && ok "PDF del informe a la junta" || mal "PDF informe junta" "$st"
+st=$(pedir GET '/api/v1/edificios/1/correo/mensajes'); revisar "bandeja de correo" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"modo"'
+st=$(curl -s -o /dev/null -w '%{http_code}' "${MAILPIT:-http://localhost:4726}/api/v1/info"); [ "$st" = 200 ] && ok "Mailpit (4726)" || mal "Mailpit" "$st"
+st=$(pedir GET '/api/v1/edificios/1/conciliacion?periodo=2026-09'); revisar "conciliación bancaria" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"saldo_sistema_cts"'
+st=$(pedir GET '/api/v1/edificios/1/facturacion/config'); revisar "facturación electrónica (sin secretos)" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"tiene_certificado"'
 st=$(pedir GET '/api/v1/analitica/resumen?desde=2026-04&hasta=2026-09'); revisar "analítica" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"cobranza_mensual"'
 st=$(pedir POST /api/v1/chatbot/mensaje '{"telefono":"51900000201","texto":"¿cuánto debo?"}'); revisar "chatbot «cuánto debo» (201)" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"intencion":"saldo"'
+st=$(pedir POST /api/v1/chatbot/mensaje '{"telefono":"51900000201","texto":"quiero reservar la parrilla el sábado"}'); revisar "chatbot reserva: franjas numeradas" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"paso":"elegir_franja"'
+st=$(pedir POST /api/v1/chatbot/mensaje '{"telefono":"51900000201","texto":"cancelar"}'); revisar "chatbot «cancelar» vuelve al menú" 200 "$st" "$(cat /tmp/edisys_smoke_body)" 'cancelé'
 st=$(pedir POST /api/v1/whatsapp/enviar '{"telefono":"51900000201","plantilla":"libre","variables":{"texto":"Prueba de humo"}}'); revisar "whatsapp simulado" 201 "$st" "$(cat /tmp/edisys_smoke_body)" '"estado":"simulado"'
 st=$(pedir GET /api/v1/whatsapp/config); revisar "whatsapp config sin apikey" 200 "$st" "$(cat /tmp/edisys_smoke_body)" '"tiene_apikey"'
 st=$(curl -s -o /dev/null -w '%{http_code}' "$BASE/login/"); [ "$st" = 200 ] && ok "login Qwik /login/" || mal "login Qwik" "$st"

@@ -23,7 +23,7 @@ const ANCHOS = (process.env.EDISYS_ANCHOS || '').split(',').map(Number).filter(B
 const CON_360 = process.env.EDISYS_360 === '1';
 
 const casos = [
-  { u: 'admin@demo.pe', w: 1440, h: 950, rutas: ['', 'balance', 'recibos', 'unidades', 'unidades?id=1', 'recibos?id=1', 'balance?abrir=egresos', 'reservas', 'mantenimiento', 'roles', 'whatsapp', 'chatbot', 'analitica'] },
+  { u: 'admin@demo.pe', w: 1440, h: 950, rutas: ['', 'balance', 'recibos', 'unidades', 'unidades?id=1', 'recibos?id=1', 'balance?abrir=egr', 'reservas', 'mantenimiento', 'roles', 'whatsapp', 'chatbot', 'analitica', 'conciliacion', 'configuracion', 'medidores'] },
   { u: 'propietario201@demo.pe', w: 390, h: 844, rutas: ['portal', 'reservas', 'mantenimiento?reportar=1', 'recibos'] },
   { u: 'operario@demo.pe', w: 390, h: 844, rutas: ['medidores'] },
 ];

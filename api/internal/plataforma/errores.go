@@ -117,6 +117,8 @@ func Traducir(err error) error {
 			return Prohibido("MOROSO", "La unidad tiene deuda vencida y no puede reservar.")
 		case "ED004":
 			return Conflicto("TRANSICION_INVALIDA", strings.TrimPrefix(pg.Message, "TRANSICION_INVALIDA: "))
+		case "ED005":
+			return Conflicto("DEUDA_MENOR_A_LO_PAGADO", strings.TrimPrefix(pg.Message, "DEUDA_MENOR_A_LO_PAGADO: "))
 		case "23505":
 			switch pg.ConstraintName {
 			case "pago_operacion_uq":
@@ -133,6 +135,8 @@ func Traducir(err error) error {
 				return Conflicto("CORREO_EXISTE", "Ya hay un usuario con ese correo.")
 			case "recibo_unidad_periodo_uq":
 				return Conflicto("YA_EMITIDO", "La unidad ya tiene recibo en ese periodo.")
+			case "movimiento_banco_pago_uq", "movimiento_banco_egreso_uq":
+				return Conflicto("YA_CONCILIADO", "Ese pago o egreso ya está conciliado con otro movimiento del banco.")
 			case "recibo_general_periodo_id_tipo_key":
 				return Conflicto("RECIBO_GENERAL_EXISTE", "Ya se registró el recibo general de ese periodo.")
 			}

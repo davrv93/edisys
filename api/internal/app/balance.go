@@ -36,11 +36,17 @@ type Nodo struct {
 	orden                int
 }
 
-// Morosidad del periodo: saldo pendiente ÷ emitido (§3 · 05).
+// Morosidad del periodo. «Del mes» (pct, monto_cts, unidades): saldo de los recibos del periodo ÷ emitido
+// del periodo (§3 · 05). «Histórica»: toda la deuda vencida de la cuenta corriente —recibos anteriores y la
+// deuda inicial importada— ÷ emitido del periodo.
 type Morosidad struct {
-	Pct      float64 `json:"pct"`
-	Unidades int     `json:"unidades"`
-	MontoCts int64   `json:"monto_cts"`
+	Pct               float64 `json:"pct"`
+	Unidades          int     `json:"unidades"`
+	MontoCts          int64   `json:"monto_cts"`
+	HistoricaPct      float64 `json:"historica_pct"`
+	HistoricaMontoCts int64   `json:"historica_monto_cts"`
+	HistoricaUnidades int     `json:"historica_unidades"`
+	DeudaInicialCts   int64   `json:"deuda_inicial_cts"`
 }
 
 // KPIs: los mismos 4 en 03, 04 y 10 (más emitido y banco).
@@ -117,7 +123,7 @@ func (s *Server) ArbolBalance(ctx context.Context, q db.Q, eid int64, periodo st
 			          WHERE up.unidad_id = u.id AND up.rol = 'propietario' AND up.hasta IS NULL LIMIT 1), ''),
 			(SELECT pg.voucher_id FROM pago pg WHERE pg.recibo_id = r.id AND pg.estado = 'validado' AND pg.voucher_id IS NOT NULL ORDER BY pg.fecha DESC, pg.id DESC LIMIT 1)
 		FROM recibo r JOIN periodo p ON p.id = r.periodo_id JOIN unidad u ON u.id = r.unidad_id
-		WHERE r.edificio_id = $1 AND p.periodo = $2 AND r.estado NOT IN ('borrador','anulado')
+		WHERE r.edificio_id = $1 AND p.periodo = $2 AND r.origen = 'periodo' AND r.estado NOT IN ('borrador','anulado')
 		ORDER BY u.codigo`, eid, periodo)
 	if err != nil {
 		return nil, err
@@ -260,7 +266,36 @@ func (s *Server) ArbolBalance(ctx context.Context, q db.Q, eid int64, periodo st
 		a.HayDatos = true
 	}
 	fr.Close()
-	for _, g := range []string{"cuotas", "agua", "reservas"} {
+	// Deuda anterior recuperada: lo cobrado en el mes sobre los cargos de deuda inicial.
+	rubrosIng["deuda"] = &Nodo{ID: "ing.deuda", Tipo: "rubro", Nombre: "Deuda anterior recuperada", orden: 4}
+	fd, err := q.Query(ctx, `SELECT pg.id, r.id, r.unidad_id, u.codigo, COALESCE(r.numero,''), pg.monto_cts, to_char(pg.fecha,'YYYY-MM-DD'), pg.voucher_id
+		FROM pago pg JOIN recibo r ON r.id = pg.recibo_id JOIN unidad u ON u.id = r.unidad_id
+		WHERE pg.edificio_id=$1 AND pg.estado='validado' AND r.origen='deuda_inicial' AND to_char(pg.fecha,'YYYY-MM') = $2
+		ORDER BY pg.fecha, pg.id`, eid, periodo)
+	if err != nil {
+		return nil, err
+	}
+	for fd.Next() {
+		var pid, rid, uid, monto int64
+		var ucod, numero, fecha string
+		var voucher *int64
+		if err := fd.Scan(&pid, &rid, &uid, &ucod, &numero, &monto, &fecha, &voucher); err != nil {
+			fd.Close()
+			return nil, err
+		}
+		n := &Nodo{ID: fmt.Sprintf("ing.deuda.p%d", pid), Tipo: "documento", Nombre: "Cobro de " + numero + " · Dpto " + ucod, TotalCts: monto,
+			DocumentoTipo: "voucher", Fecha: fecha, Origen: "deuda inicial"}
+		if !v.soloLoSuyo || v.propias[uid] {
+			n.DocumentoID = voucher
+		} else if voucher != nil {
+			n.DocumentoRestringido = true
+		}
+		rubrosIng["deuda"].Hijos = append(rubrosIng["deuda"].Hijos, n)
+		rubrosIng["deuda"].TotalCts += monto
+		a.HayDatos = true
+	}
+	fd.Close()
+	for _, g := range []string{"cuotas", "agua", "reservas", "deuda"} {
 		if rubrosIng[g].TotalCts > 0 {
 			ing.Hijos = append(ing.Hijos, rubrosIng[g])
 			ing.TotalCts += rubrosIng[g].TotalCts
@@ -328,11 +363,24 @@ func (s *Server) ArbolBalance(ctx context.Context, q db.Q, eid int64, periodo st
 	a.KPIs.SaldoCts = raiz.TotalCts
 	a.KPIs.Morosidad.Pct = pct(a.KPIs.Morosidad.MontoCts, a.KPIs.EmitidoCts)
 
+	// Morosidad histórica: deuda vencida (hora de Lima) de los recibos hasta el periodo y de toda la deuda inicial.
+	if err := q.QueryRow(ctx, `SELECT COALESCE(sum(r.total_cts - r.pagado_cts),0)::bigint, count(DISTINCT r.unidad_id)::int,
+			COALESCE(sum(r.total_cts - r.pagado_cts) FILTER (WHERE r.origen='deuda_inicial'),0)::bigint
+		FROM recibo r JOIN periodo p ON p.id = r.periodo_id JOIN edificio e ON e.id = r.edificio_id
+		WHERE r.edificio_id=$1 AND r.estado IN ('emitido','pagado_parcial') AND r.total_cts > r.pagado_cts
+		  AND (r.origen = 'deuda_inicial' OR p.periodo <= $2)
+		  AND r.vence IS NOT NULL AND r.vence + e.dias_gracia < (now() AT TIME ZONE 'America/Lima')::date`, eid, periodo).
+		Scan(&a.KPIs.Morosidad.HistoricaMontoCts, &a.KPIs.Morosidad.HistoricaUnidades, &a.KPIs.Morosidad.DeudaInicialCts); err != nil {
+		return nil, err
+	}
+	a.KPIs.Morosidad.HistoricaPct = pct(a.KPIs.Morosidad.HistoricaMontoCts, a.KPIs.EmitidoCts)
+
 	// Banco acumulado = saldo inicial + todo lo cobrado − todo lo gastado hasta el periodo.
 	var cobrado, reservasInm, gastado int64
 	if err := q.QueryRow(ctx, `SELECT
 		COALESCE((SELECT SUM(pg.monto_cts) FROM pago pg JOIN recibo r ON r.id = pg.recibo_id JOIN periodo p ON p.id = r.periodo_id
-		          WHERE pg.edificio_id=$1 AND pg.estado='validado' AND p.periodo <= $2),0),
+		          WHERE pg.edificio_id=$1 AND pg.estado='validado'
+		            AND ((r.origen = 'periodo' AND p.periodo <= $2) OR (r.origen = 'deuda_inicial' AND to_char(pg.fecha,'YYYY-MM') <= $2))),0),
 		COALESCE((SELECT SUM(total_cts) FROM reserva WHERE edificio_id=$1 AND modo_cobro='pago_inmediato' AND pago_validado AND estado='confirmada'
 		          AND to_char(inicio AT TIME ZONE 'America/Lima','YYYY-MM') <= $2),0),
 		COALESCE((SELECT SUM(monto_cts) FROM egreso WHERE edificio_id=$1 AND periodo <= $2),0)`, eid, periodo).Scan(&cobrado, &reservasInm, &gastado); err != nil {
@@ -418,6 +466,7 @@ func (s *Server) balance(w http.ResponseWriter, r *http.Request) {
 		P.Fallo(w, r, err)
 		return
 	}
+	conc, _ := s.EstadoConciliacion(r.Context(), e.ID, periodo)
 	raiz := plano(a.Raiz)
 	for _, h := range a.Raiz.Hijos {
 		ph := plano(h)
@@ -427,7 +476,7 @@ func (s *Server) balance(w http.ResponseWriter, r *http.Request) {
 		raiz.Hijos = append(raiz.Hijos, ph)
 	}
 	P.JSON(w, http.StatusOK, map[string]any{
-		"periodo": periodo, "kpis": a.KPIs, "raiz": raiz, "hay_datos": a.HayDatos,
+		"periodo": periodo, "kpis": a.KPIs, "raiz": raiz, "hay_datos": a.HayDatos, "conciliacion": conc,
 		"nota_ingresos": "Los ingresos cuentan lo cobrado. Lo emitido y no cobrado es la morosidad.",
 	})
 }
@@ -545,7 +594,7 @@ func (s *Server) dashboard(w http.ResponseWriter, r *http.Request) {
 	var emitidos, pagados, parciales, pendientes int
 	if err := s.DB.QueryRow(ctx, `SELECT count(*), count(*) FILTER (WHERE r.estado='pagado'), count(*) FILTER (WHERE r.estado='pagado_parcial'),
 		count(*) FILTER (WHERE r.estado='emitido') FROM recibo r JOIN periodo p ON p.id=r.periodo_id
-		WHERE r.edificio_id=$1 AND p.periodo=$2 AND r.estado NOT IN ('borrador','anulado')`, e.ID, periodo).Scan(&emitidos, &pagados, &parciales, &pendientes); err != nil {
+		WHERE r.edificio_id=$1 AND p.periodo=$2 AND r.origen='periodo' AND r.estado NOT IN ('borrador','anulado')`, e.ID, periodo).Scan(&emitidos, &pagados, &parciales, &pendientes); err != nil {
 		P.Fallo(w, r, err)
 		return
 	}

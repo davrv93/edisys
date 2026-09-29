@@ -101,6 +101,14 @@ func escapar(s string) string {
 			b.WriteByte(0xB7)
 		case r == '–' || r == '—':
 			b.WriteByte('-')
+		case r == '…':
+			b.WriteByte(0x85)
+		case r == '«' || r == '»':
+			b.WriteByte(byte(r))
+		case r == '−':
+			b.WriteByte('-')
+		case r == '✓':
+			b.WriteByte('v')
 		case r < 256:
 			b.WriteByte(byte(r))
 		default:
@@ -108,4 +116,116 @@ func escapar(s string) string {
 		}
 	}
 	return b.String()
+}
+
+// Hoja escribe de arriba abajo y pasa de página sola; cada página lleva el pie con su número.
+type Hoja struct {
+	D      *Doc
+	Y      float64
+	Pie    string
+	pagina int
+}
+
+// NuevaHoja abre un documento con un pie común.
+func NuevaHoja(pie string) *Hoja {
+	return &Hoja{D: Nuevo(), Y: 800, Pie: pie, pagina: 1}
+}
+
+func (h *Hoja) pie() {
+	h.D.Color(0.39, 0.45, 0.55)
+	h.D.Texto(40, 28, 8, false, h.Pie)
+	h.D.TextoDerecha(555, 28, 8, false, fmt.Sprintf("Página %d", h.pagina))
+	h.D.Color(0.06, 0.09, 0.16)
+}
+
+// Reservar asegura alto puntos libres en la página; si no caben, abre otra.
+func (h *Hoja) Reservar(alto float64) {
+	if h.Y-alto < 56 {
+		h.pie()
+		h.D.NuevaPagina()
+		h.pagina++
+		h.Y = 800
+	}
+}
+
+// Titulo de sección con una línea debajo.
+func (h *Hoja) Titulo(s string) {
+	h.Reservar(44)
+	h.Y -= 8
+	h.D.Texto(40, h.Y, 13, true, s)
+	h.D.Linea(40, h.Y-6, 555, h.Y-6)
+	h.Y -= 22
+}
+
+// Fila: texto a la izquierda (con sangría) y cifra a la derecha.
+func (h *Hoja) Fila(sangria, tam float64, negrita bool, izq, der string) {
+	h.Reservar(tam + 6)
+	h.D.Texto(40+sangria, h.Y, tam, negrita, recorte(izq, int((515-sangria-float64(len([]rune(der)))*tam*0.55)/(tam*0.5))))
+	if der != "" {
+		h.D.TextoDerecha(555, h.Y, tam, negrita, der)
+	}
+	h.Y -= tam + 6
+}
+
+// Columnas escribe una fila de tabla: x de cada columna (las que empiezan con «>» se alinean a la derecha).
+func (h *Hoja) Columnas(tam float64, negrita bool, xs []float64, textos []string) {
+	h.Reservar(tam + 6)
+	for i, t := range textos {
+		if i >= len(xs) {
+			break
+		}
+		if strings.HasPrefix(t, ">") {
+			h.D.TextoDerecha(xs[i], h.Y, tam, negrita, strings.TrimPrefix(t, ">"))
+		} else {
+			h.D.Texto(xs[i], h.Y, tam, negrita, t)
+		}
+	}
+	h.Y -= tam + 6
+}
+
+// Parrafo parte el texto en líneas de hasta ~ancho caracteres.
+func (h *Hoja) Parrafo(tam float64, texto string) {
+	max := int(515 / (tam * 0.5))
+	for _, l := range partir(texto, max) {
+		h.Reservar(tam + 5)
+		h.D.Texto(40, h.Y, tam, false, l)
+		h.Y -= tam + 5
+	}
+}
+
+// Espacio baja el cursor.
+func (h *Hoja) Espacio(pt float64) { h.Y -= pt }
+
+// Bytes cierra la última página (con su pie) y arma el PDF.
+func (h *Hoja) Bytes() []byte {
+	h.pie()
+	return h.D.Bytes()
+}
+
+func recorte(s string, n int) string {
+	r := []rune(s)
+	if n < 4 || len(r) <= n {
+		return s
+	}
+	return string(r[:n-1]) + "…"
+}
+
+func partir(s string, max int) []string {
+	var out []string
+	for _, par := range strings.Split(s, "\n") {
+		linea := ""
+		for _, p := range strings.Fields(par) {
+			if linea != "" && len([]rune(linea))+1+len([]rune(p)) > max {
+				out = append(out, linea)
+				linea = p
+				continue
+			}
+			if linea != "" {
+				linea += " "
+			}
+			linea += p
+		}
+		out = append(out, linea)
+	}
+	return out
 }

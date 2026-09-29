@@ -77,7 +77,7 @@ export default function Dashboard() {
                 icono: 'moroso',
                 tono: 'alerta',
                 valor: k ? formatearPct(k.morosidad?.pct) : '',
-                nota: k ? `${k.morosidad?.unidades} unidades · ${formatearSoles(k.morosidad?.monto_cts)}` : '',
+                nota: k ? `${k.morosidad?.unidades} unidades · ${formatearSoles(k.morosidad?.monto_cts)} · histórica ${formatearPct(k.morosidad?.historica_pct ?? k.morosidad?.pct)}` : '',
                 to: ruta('recibos', { periodo, estado: 'vencido' }),
               }}
               items={[

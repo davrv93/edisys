@@ -35,7 +35,8 @@ func (s *Server) listarPeriodos(w http.ResponseWriter, r *http.Request) {
 		count(rc.id) FILTER (WHERE rc.estado='borrador') AS borradores,
 		COALESCE(sum(rc.total_cts) FILTER (WHERE rc.estado NOT IN ('borrador','anulado')),0) AS emitido_cts,
 		(SELECT COALESCE(sum(monto_cts),0) FROM presupuesto pr WHERE pr.periodo_id=p.id) AS presupuesto_cts
-		FROM periodo p LEFT JOIN recibo rc ON rc.periodo_id=p.id WHERE p.edificio_id=$1 GROUP BY p.id ORDER BY p.periodo DESC`, edf(r).ID)
+		FROM periodo p LEFT JOIN recibo rc ON rc.periodo_id=p.id AND rc.origen='periodo'
+		WHERE p.edificio_id=$1 AND NOT p.historico GROUP BY p.id ORDER BY p.periodo DESC`, edf(r).ID)
 	if err != nil {
 		P.Fallo(w, r, err)
 		return
@@ -70,8 +71,14 @@ func (s *Server) abrirPeriodo(w http.ResponseWriter, r *http.Request) {
 		}
 		fc = fmt.Sprintf("%s-%02d", in.Periodo, dia)
 	}
+	// Si el periodo existía solo como «histórico» (deuda inicial importada), se abre de verdad.
 	fila, err := db.Fila(ctx, s.DB, `INSERT INTO periodo (edificio_id, periodo, fecha_corte) VALUES ($1,$2,$3)
+		ON CONFLICT (edificio_id, periodo) DO UPDATE SET historico=false, estado='abierto', fecha_corte=EXCLUDED.fecha_corte WHERE periodo.historico
 		RETURNING id, periodo, to_char(fecha_corte,'YYYY-MM-DD') AS fecha_corte, estado`, e.ID, in.Periodo, fc)
+	if errors.Is(err, pgx.ErrNoRows) {
+		P.Fallo(w, r, P.Conflicto("PERIODO_EXISTE", "El periodo "+in.Periodo+" ya está abierto."))
+		return
+	}
 	if err != nil {
 		P.Fallo(w, r, err)
 		return
@@ -157,6 +164,7 @@ type lineaRecibo struct {
 	MontoCts    int64  `json:"monto_cts"`
 	ReservaID   *int64 `json:"reserva_id,omitempty"`
 	LecturaID   *int64 `json:"lectura_id,omitempty"`
+	AjusteID    *int64 `json:"ajuste_id,omitempty"`
 }
 
 // Generar arma los borradores del periodo con el motor de reparto (mayor residuo).
@@ -166,7 +174,7 @@ func (s *Server) Generar(ctx context.Context, tx pgx.Tx, eid int64, periodo stri
 		return nil, err
 	}
 	var emitidos int
-	if err := tx.QueryRow(ctx, `SELECT count(*) FROM recibo WHERE periodo_id=$1 AND estado NOT IN ('borrador','anulado')`, pid).Scan(&emitidos); err != nil {
+	if err := tx.QueryRow(ctx, `SELECT count(*) FROM recibo WHERE periodo_id=$1 AND origen='periodo' AND estado NOT IN ('borrador','anulado')`, pid).Scan(&emitidos); err != nil {
 		return nil, err
 	}
 	if emitidos > 0 {
@@ -267,6 +275,22 @@ func (s *Server) Generar(ctx context.Context, tx pgx.Tx, eid int64, periodo stri
 		lineas[uid] = append(lineas[uid], lineaRecibo{Tipo: "reserva", Descripcion: "Reserva " + codigo + " " + recurso, MontoCts: total, ReservaID: &id})
 	}
 	fr.Close()
+	// Ajustes pendientes (notas de cargo/abono por correcciones de periodos ya emitidos, 0009).
+	fa, err := tx.Query(ctx, `SELECT id, unidad_id, monto_cts, motivo FROM ajuste WHERE edificio_id=$1 AND recibo_id IS NULL AND periodo_origen < $2 ORDER BY id`, eid, periodo)
+	if err != nil {
+		return nil, err
+	}
+	for fa.Next() {
+		var aid, uid, monto int64
+		var motivo string
+		if err := fa.Scan(&aid, &uid, &monto, &motivo); err != nil {
+			fa.Close()
+			return nil, err
+		}
+		id := aid
+		lineas[uid] = append(lineas[uid], lineaRecibo{Tipo: "ajuste", Descripcion: descAjuste(motivo, monto), MontoCts: monto, AjusteID: &id})
+	}
+	fa.Close()
 
 	var recibos []map[string]any
 	var totalPeriodo int64
@@ -276,15 +300,33 @@ func (s *Server) Generar(ctx context.Context, tx pgx.Tx, eid int64, periodo stri
 		for _, l := range ls {
 			total += l.MontoCts
 		}
+		if total < 0 {
+			// Un abono no puede dejar el recibo en negativo: los ajustes esperan al siguiente periodo.
+			var sin []lineaRecibo
+			total = 0
+			for _, l := range ls {
+				if l.Tipo != "ajuste" {
+					sin = append(sin, l)
+					total += l.MontoCts
+				}
+			}
+			ls = sin
+			advertencias = append(advertencias, "Unidad "+u.codigo+": el abono pendiente supera el recibo; se aplicará el mes siguiente.")
+		}
 		var rid int64
 		if err := tx.QueryRow(ctx, `INSERT INTO recibo (edificio_id, periodo_id, unidad_id, estado, total_cts) VALUES ($1,$2,$3,'borrador',$4) RETURNING id`,
 			eid, pid, u.id, total).Scan(&rid); err != nil {
 			return nil, err
 		}
 		for i, l := range ls {
-			if _, err := tx.Exec(ctx, `INSERT INTO recibo_linea (recibo_id, tipo, descripcion, monto_cts, orden, reserva_id, lectura_id) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-				rid, l.Tipo, l.Descripcion, l.MontoCts, i+1, l.ReservaID, l.LecturaID); err != nil {
+			if _, err := tx.Exec(ctx, `INSERT INTO recibo_linea (recibo_id, tipo, descripcion, monto_cts, orden, reserva_id, lectura_id, ajuste_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+				rid, l.Tipo, l.Descripcion, l.MontoCts, i+1, l.ReservaID, l.LecturaID, l.AjusteID); err != nil {
 				return nil, err
+			}
+			if l.AjusteID != nil {
+				if _, err := tx.Exec(ctx, `UPDATE ajuste SET recibo_id=$2 WHERE id=$1`, *l.AjusteID, rid); err != nil {
+					return nil, err
+				}
 			}
 		}
 		if ls == nil {
@@ -339,7 +381,7 @@ func (s *Server) emitirRecibos(w http.ResponseWriter, r *http.Request) {
 	var cobraAgua, hayReparto bool
 	if err := tx.QueryRow(ctx, `SELECT count(*) FILTER (WHERE estado NOT IN ('borrador','anulado')), count(*) FILTER (WHERE estado='borrador'),
 		(SELECT cobra_agua FROM edificio WHERE id=$2), EXISTS (SELECT 1 FROM reparto_medidor WHERE periodo_id=$1 AND tipo='agua')
-		FROM recibo WHERE periodo_id=$1`, pid, e.ID).Scan(&emitidos, &borradores, &cobraAgua, &hayReparto); err != nil {
+		FROM recibo WHERE periodo_id=$1 AND origen='periodo'`, pid, e.ID).Scan(&emitidos, &borradores, &cobraAgua, &hayReparto); err != nil {
 		P.Fallo(w, r, err)
 		return
 	}
@@ -425,7 +467,7 @@ func (s *Server) listarRecibos(w http.ResponseWriter, r *http.Request) {
 			COALESCE((SELECT pe.nombre FROM unidad_persona up JOIN persona pe ON pe.id=up.persona_id WHERE up.unidad_id=u.id AND up.rol='propietario' AND up.hasta IS NULL LIMIT 1),'') AS propietario,
 			r.total_cts, r.pagado_cts, (r.total_cts - r.pagado_cts) AS saldo_cts, r.estado, to_char(r.vence,'YYYY-MM-DD') AS vence,
 			(r.estado IN ('emitido','pagado_parcial') AND r.vence < (now() AT TIME ZONE 'America/Lima')::date) AS vencido,
-			(SELECT count(*) FROM pago pg WHERE pg.recibo_id=r.id AND pg.estado='pendiente_validacion') AS pagos_por_validar
+			(SELECT count(*) FROM pago pg WHERE pg.recibo_id=r.id AND pg.estado='pendiente_validacion') AS pagos_por_validar, r.origen
 		FROM recibo r JOIN periodo p ON p.id=r.periodo_id JOIN unidad u ON u.id=r.unidad_id
 		WHERE `+where+fmt.Sprintf(` ORDER BY p.periodo DESC, u.codigo LIMIT $%d OFFSET $%d`, len(args)-1, len(args)), args...)
 	if err != nil {
@@ -437,7 +479,7 @@ func (s *Server) listarRecibos(w http.ResponseWriter, r *http.Request) {
 
 // reciboVisible carga un recibo del edificio; al propietario ajeno le responde 404 (no 403).
 func (s *Server) reciboVisible(ctx context.Context, e *Edificio, rid int64) (map[string]any, error) {
-	rc, err := db.Fila(ctx, s.DB, `SELECT r.id, r.numero, r.correlativo, p.periodo, p.id AS periodo_id, r.estado, r.total_cts, r.pagado_cts,
+	rc, err := db.Fila(ctx, s.DB, `SELECT r.id, r.numero, r.correlativo, p.periodo, p.id AS periodo_id, r.estado, r.total_cts, r.pagado_cts, r.origen,
 			(r.total_cts - r.pagado_cts) AS saldo_cts, to_char(r.vence,'YYYY-MM-DD') AS vence, r.emitido_en, r.anulado_motivo,
 			u.id AS unidad_id, u.codigo AS unidad, u.participacion_pct::float8 AS participacion_pct,
 			COALESCE((SELECT pe.nombre FROM unidad_persona up JOIN persona pe ON pe.id=up.persona_id WHERE up.unidad_id=u.id AND up.rol='propietario' AND up.hasta IS NULL LIMIT 1),'') AS propietario,
@@ -515,10 +557,21 @@ func (s *Server) pdfRecibo(w http.ResponseWriter, r *http.Request) {
 		P.Fallo(w, r, err)
 		return
 	}
-	lineas, err := db.Filas(ctx, s.DB, `SELECT descripcion, monto_cts FROM recibo_linea WHERE recibo_id=$1 ORDER BY orden, id`, rid)
+	datos, err := s.reciboPDF(ctx, rc, rid)
 	if err != nil {
 		P.Fallo(w, r, err)
 		return
+	}
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=\"recibo-%v.pdf\"", val(rc["numero"])))
+	_, _ = w.Write(datos)
+}
+
+// reciboPDF dibuja el recibo (cargado con reciboVisible) en una hoja A4.
+func (s *Server) reciboPDF(ctx context.Context, rc map[string]any, rid int64) ([]byte, error) {
+	lineas, err := db.Filas(ctx, s.DB, `SELECT descripcion, monto_cts FROM recibo_linea WHERE recibo_id=$1 ORDER BY orden, id`, rid)
+	if err != nil {
+		return nil, err
 	}
 	d := pdf.Nuevo()
 	d.Rect(0, 770, 595, 72, 0.082, 0.369, 0.459)
@@ -553,9 +606,7 @@ func (s *Server) pdfRecibo(w http.ResponseWriter, r *http.Request) {
 		d.Texto(40, y, 10, false, "Paga por Yape al "+yp+" con el concepto «Dpto "+rc["unidad"].(string)+" "+rc["periodo"].(string)+"» y sube tu voucher en la app.")
 	}
 	d.Texto(40, 40, 8, false, "Recibo interno de mantenimiento (no es comprobante SUNAT). Generado por EDISYS el "+time.Now().In(P.Lima).Format("02/01/2006 15:04")+".")
-	w.Header().Set("Content-Type", "application/pdf")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=\"recibo-%v.pdf\"", val(rc["numero"])))
-	_, _ = w.Write(d.Bytes())
+	return d.Bytes(), nil
 }
 
 func val(v any) string {
@@ -565,17 +616,31 @@ func val(v any) string {
 	return fmt.Sprint(v)
 }
 
-// enviarRecibos: POST /recibos/enviar {recibo_ids} → 202 {en_cola}. Sale por la bandeja de WhatsApp
-// (en modo simulado solo se registra); el correo queda para después.
+// enviarRecibos: POST /recibos/enviar {recibo_ids, canal?: correo|whatsapp} → 202 {en_cola}. Por defecto va por
+// correo con el PDF adjunto (bandeja correo_mensaje); con canal=whatsapp, por la bandeja de WhatsApp.
 func (s *Server) enviarRecibos(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		ReciboIDs []int64 `json:"recibo_ids"`
+		Canal     string  `json:"canal"`
 	}
 	if err := P.Leer(r, &in); err != nil {
 		P.Fallo(w, r, err)
 		return
 	}
 	e := edf(r)
+	if in.Canal != "whatsapp" {
+		if len(in.ReciboIDs) == 0 {
+			P.Fallo(w, r, P.Validacion("Indica los recibos.").Campo("recibo_ids", "Obligatorio."))
+			return
+		}
+		res, err := s.CorreoRecibos(r.Context(), e, ses(r).UsuarioID, "", in.ReciboIDs)
+		if err != nil {
+			P.Fallo(w, r, err)
+			return
+		}
+		P.JSON(w, http.StatusAccepted, res)
+		return
+	}
 	res, err := s.encolarRecibos(r.Context(), e.ID, ses(r).UsuarioID, "", in.ReciboIDs)
 	if err != nil {
 		P.Fallo(w, r, err)
@@ -844,8 +909,11 @@ func (s *Server) morosidad(w http.ResponseWriter, r *http.Request) {
 		P.Fallo(w, r, err)
 		return
 	}
-	P.JSON(w, http.StatusOK, map[string]any{"periodo": periodo, "indice_pct": a.KPIs.Morosidad.Pct, "monto_cts": a.KPIs.Morosidad.MontoCts,
-		"emitido_cts": a.KPIs.EmitidoCts, "unidades_con_saldo": a.KPIs.Morosidad.Unidades, "unidades": unidades})
+	m := a.KPIs.Morosidad
+	P.JSON(w, http.StatusOK, map[string]any{"periodo": periodo, "indice_pct": m.Pct, "monto_cts": m.MontoCts,
+		"emitido_cts": a.KPIs.EmitidoCts, "unidades_con_saldo": m.Unidades, "unidades": unidades,
+		"del_mes":   map[string]any{"pct": m.Pct, "monto_cts": m.MontoCts, "unidades": m.Unidades},
+		"historica": map[string]any{"pct": m.HistoricaPct, "monto_cts": m.HistoricaMontoCts, "unidades": m.HistoricaUnidades, "deuda_inicial_cts": m.DeudaInicialCts}})
 }
 
 // deudaPorUnidad: saldo pendiente por unidad y por mes. unidades=nil → todas las del edificio.
@@ -856,7 +924,8 @@ func (s *Server) deudaPorUnidad(ctx context.Context, eid int64, unidades []int64
 			deuda_vencida_cts(u.id) AS deuda_vencida_cts,
 			es_moroso(u.id) AS moroso,
 			GREATEST(0, ((now() AT TIME ZONE 'America/Lima')::date - min(r.vence)))::int AS antiguedad_dias,
-			json_agg(json_build_object('periodo', p.periodo, 'recibo_id', r.id, 'saldo_cts', r.total_cts - r.pagado_cts, 'vence', to_char(r.vence,'YYYY-MM-DD')) ORDER BY p.periodo) AS meses
+			COALESCE(sum(r.total_cts - r.pagado_cts) FILTER (WHERE r.origen='deuda_inicial'),0)::bigint AS deuda_inicial_cts,
+			json_agg(json_build_object('periodo', p.periodo, 'recibo_id', r.id, 'saldo_cts', r.total_cts - r.pagado_cts, 'vence', to_char(r.vence,'YYYY-MM-DD'), 'origen', r.origen) ORDER BY r.vence, p.periodo) AS meses
 		FROM recibo r JOIN unidad u ON u.id=r.unidad_id JOIN periodo p ON p.id=r.periodo_id
 		WHERE r.edificio_id=$1 AND r.estado IN ('emitido','pagado_parcial') AND r.total_cts > r.pagado_cts
 		  AND ($2::bigint[] IS NULL OR u.id = ANY($2))

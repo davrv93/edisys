@@ -189,51 +189,6 @@ func (s *Server) registrarLectura(w http.ResponseWriter, r *http.Request) {
 	P.JSON(w, http.StatusCreated, f)
 }
 
-// corregirLectura: PUT /lecturas/{lid} {valor, motivo} — queda en auditoría; la foto original no se borra.
-func (s *Server) corregirLectura(w http.ResponseWriter, r *http.Request) {
-	lid, err := idRuta(r, "lid")
-	if err != nil {
-		P.Fallo(w, r, err)
-		return
-	}
-	var in struct {
-		Valor  string `json:"valor"`
-		Motivo string `json:"motivo"`
-	}
-	if err := P.Leer(r, &in); err != nil {
-		P.Fallo(w, r, err)
-		return
-	}
-	valor, err := P.Milesimas(in.Valor)
-	if err != nil || valor < 0 || strings.TrimSpace(in.Motivo) == "" {
-		P.Fallo(w, r, P.Validacion("Escribe el valor corregido y el motivo.").Campo("valor", "m³ con hasta 3 decimales.").Campo("motivo", "Obligatorio."))
-		return
-	}
-	ctx := r.Context()
-	e := edf(r)
-	antes, err := db.Fila(ctx, s.DB, `SELECT l.valor::text AS valor, l.consumo::text AS consumo, l.anterior::text AS anterior, l.alerta FROM lectura l JOIN medidor m ON m.id=l.medidor_id
-		WHERE l.id=$1 AND m.edificio_id=$2`, lid, e.ID)
-	if err != nil {
-		P.Fallo(w, r, P.NoEncontrado("la lectura"))
-		return
-	}
-	anterior, _ := P.Milesimas(antes["anterior"].(string))
-	consumo := valor - anterior
-	var alerta *string
-	if consumo < 0 {
-		a := "NEGATIVO"
-		alerta = &a
-	}
-	f, err := db.Fila(ctx, s.DB, `UPDATE lectura SET valor=$2::numeric, consumo=$3::numeric, alerta=$4, motivo=$5 WHERE id=$1
-		RETURNING id, valor::text AS valor, consumo::text AS consumo, alerta, motivo`, lid, P.TextoMilesimas(valor), P.TextoMilesimas(consumo), alerta, in.Motivo)
-	if err != nil {
-		P.Fallo(w, r, err)
-		return
-	}
-	s.auditarCambio(ctx, s.DB, r, "lecturas", "corregir", "lectura", lid, antes, f)
-	P.JSON(w, http.StatusOK, f)
-}
-
 // registrarReciboGeneral: POST /periodos/{p}/recibo-general (multipart {tipo, monto_cts, consumo_total, foto_recibo}).
 func (s *Server) registrarReciboGeneral(w http.ResponseWriter, r *http.Request) {
 	fotos, err := archivosDeForm(r, "foto_recibo", "foto")
@@ -387,7 +342,7 @@ func (s *Server) aprobarReparto(w http.ResponseWriter, r *http.Request) {
 	}
 	pid, _ := periodoID(ctx, tx, e.ID, periodo)
 	var emitidos int
-	_ = tx.QueryRow(ctx, `SELECT count(*) FROM recibo WHERE periodo_id=$1 AND estado NOT IN ('borrador','anulado')`, pid).Scan(&emitidos)
+	_ = tx.QueryRow(ctx, `SELECT count(*) FROM recibo WHERE periodo_id=$1 AND origen='periodo' AND estado NOT IN ('borrador','anulado')`, pid).Scan(&emitidos)
 	if emitidos > 0 {
 		P.Fallo(w, r, P.Conflicto("YA_EMITIDO", "Los recibos del periodo ya se emitieron: el reparto no se puede cambiar."))
 		return
@@ -403,25 +358,9 @@ func (s *Server) aprobarReparto(w http.ResponseWriter, r *http.Request) {
 	}
 	actualizados := 0
 	if tipo == "agua" {
-		for _, l := range res.Lineas {
-			var rid int64
-			if err := tx.QueryRow(ctx, `SELECT id FROM recibo WHERE periodo_id=$1 AND unidad_id=$2 AND estado='borrador'`, pid, l.UnidadID).Scan(&rid); err != nil {
-				continue
-			}
-			if _, err := tx.Exec(ctx, `DELETE FROM recibo_linea WHERE recibo_id=$1 AND tipo IN ('agua','agua_comun')`, rid); err != nil {
-				P.Fallo(w, r, err)
-				return
-			}
-			if _, err := tx.Exec(ctx, `INSERT INTO recibo_linea (recibo_id, tipo, descripcion, monto_cts, orden) VALUES ($1,'agua',$2,$3,2), ($1,'agua_comun','Áreas comunes (agua)',$4,3)`,
-				rid, "Agua (consumo propio "+strings.Replace(l.Consumo, ".", ",", 1)+" m³)", l.PropioCts, l.ComunCts); err != nil {
-				P.Fallo(w, r, err)
-				return
-			}
-			if _, err := tx.Exec(ctx, `UPDATE recibo SET total_cts=(SELECT COALESCE(sum(monto_cts),0) FROM recibo_linea WHERE recibo_id=$1) WHERE id=$1`, rid); err != nil {
-				P.Fallo(w, r, err)
-				return
-			}
-			actualizados++
+		if actualizados, err = aguaEnBorradores(ctx, tx, pid, res.Lineas); err != nil {
+			P.Fallo(w, r, err)
+			return
 		}
 	}
 	if err := tx.Commit(ctx); err != nil {
@@ -431,4 +370,27 @@ func (s *Server) aprobarReparto(w http.ResponseWriter, r *http.Request) {
 	out["aprobado"] = true
 	out["recibos_actualizados"] = actualizados
 	P.JSON(w, http.StatusOK, out)
+}
+
+// aguaEnBorradores reescribe las líneas de agua de los recibos en borrador del periodo con el reparto dado.
+func aguaEnBorradores(ctx context.Context, tx pgx.Tx, pid int64, lineas []reparto.Linea) (int, error) {
+	n := 0
+	for _, l := range lineas {
+		var rid int64
+		if err := tx.QueryRow(ctx, `SELECT id FROM recibo WHERE periodo_id=$1 AND unidad_id=$2 AND estado='borrador' AND origen='periodo'`, pid, l.UnidadID).Scan(&rid); err != nil {
+			continue
+		}
+		if _, err := tx.Exec(ctx, `DELETE FROM recibo_linea WHERE recibo_id=$1 AND tipo IN ('agua','agua_comun')`, rid); err != nil {
+			return n, err
+		}
+		if _, err := tx.Exec(ctx, `INSERT INTO recibo_linea (recibo_id, tipo, descripcion, monto_cts, orden) VALUES ($1,'agua',$2,$3,2), ($1,'agua_comun','Áreas comunes (agua)',$4,3)`,
+			rid, "Agua (consumo propio "+strings.Replace(l.Consumo, ".", ",", 1)+" m³)", l.PropioCts, l.ComunCts); err != nil {
+			return n, err
+		}
+		if _, err := tx.Exec(ctx, `UPDATE recibo SET total_cts=(SELECT COALESCE(sum(monto_cts),0) FROM recibo_linea WHERE recibo_id=$1) WHERE id=$1`, rid); err != nil {
+			return n, err
+		}
+		n++
+	}
+	return n, nil
 }

@@ -18,6 +18,8 @@ export const PAGINAS = {
   whatsapp: '/whatsapp/',
   chatbot: '/chatbot/',
   analitica: '/analitica/',
+  conciliacion: '/conciliacion/',
+  configuracion: '/configuracion/',
 };
 
 function qs(query) {

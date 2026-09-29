@@ -205,6 +205,21 @@ func (s *Server) rutasEdificio(r chi.Router) {
 	r.With(q("balance.ver")).Get("/balance", s.balance)
 	r.With(q("balance.ver")).Get("/balance/nodos/{nodo}", s.balanceNodo)
 	r.With(q("balance.ver")).Get("/balance/documentos/{doc}", s.balanceDocumento)
+	r.With(q("balance.ver")).Get("/balance/{periodo}.pdf", s.pdfBalance)
+	r.With(q("balance.ver")).Get("/balance/{periodo}/informe-junta.pdf", s.pdfInformeJunta)
+	r.With(q("recibos.emitir")).Post("/balance/{periodo}/enviar-correo", s.enviarBalanceCorreo)
+	r.With(q("recibos.emitir")).Get("/correo/mensajes", s.listarCorreos)
+
+	// 14 · conciliación bancaria
+	r.With(q("balance.conciliar")).Get("/conciliacion", s.verConciliacion)
+	r.With(q("balance.conciliar")).Get("/conciliacion/extracto-demo.csv", s.extractoDemo)
+	r.With(q("balance.conciliar")).Post("/conciliacion/columnas", s.columnasExtracto)
+	r.With(q("balance.conciliar")).Post("/conciliacion/extractos", s.subirExtracto)
+	r.With(q("balance.conciliar")).Post("/conciliacion/confirmar-sugeridos", s.confirmarSugeridos)
+	r.With(q("balance.conciliar")).Post("/conciliacion/movimientos/{mid}/confirmar", s.confirmarMovimiento)
+	r.With(q("balance.conciliar")).Post("/conciliacion/movimientos/{mid}/deshacer", s.deshacerMovimiento)
+	r.With(q("balance.conciliar")).Post("/conciliacion/movimientos/{mid}/crear-egreso", s.crearEgresoDesdeMovimiento)
+	r.With(q("balance.conciliar")).Post("/conciliacion/movimientos/{mid}/crear-ingreso", s.crearIngresoDesdeMovimiento)
 	r.With(q("balance.ver")).Get("/rubros", s.listarRubros)
 	r.With(q("balance.ver")).Get("/egresos", s.listarEgresos)
 	r.With(q("egresos.registrar")).Post("/egresos", s.crearEgreso)
@@ -222,9 +237,25 @@ func (s *Server) rutasEdificio(r chi.Router) {
 	r.With(q("recibos.emitir")).Post("/recibos/enviar", s.enviarRecibos)
 	r.Post("/recibos/{rid}/pagos", s.registrarPago) // pagos.registrar o pagos.informar (se valida dentro)
 	r.With(q("recibos.emitir")).Post("/recibos/{rid}/anular", s.anularRecibo)
+	r.With(q("recibos.emitir")).Post("/recibos/{rid}/enviar-correo", s.enviarRecibosCorreo) // {rid} = periodo AAAA-MM
+	r.With(q("recibos.ver")).Get("/recibos/{rid}/comprobante", s.comprobantesDeRecibo)
+	r.With(q("comprobantes.emitir")).Post("/recibos/{rid}/comprobante", s.emitirComprobante)
+
+	// SUNAT · facturación electrónica
+	r.With(q("facturacion.configurar")).Get("/facturacion/config", s.verConfigFacturacion)
+	r.With(q("facturacion.configurar")).Put("/facturacion/config", s.guardarConfigFacturacion)
+	r.With(q("facturacion.configurar")).Post("/facturacion/certificado", s.subirCertificado)
+	r.With(q("comprobantes.emitir")).Get("/comprobantes", s.listarComprobantes)
+	r.With(q("recibos.ver")).Get("/comprobantes/{cid}", s.verComprobante)
+	r.With(q("recibos.ver")).Get("/comprobantes/{cid}/xml", s.xmlComprobante)
+	r.With(q("recibos.ver")).Get("/comprobantes/{cid}/cdr", s.xmlComprobante)
+	r.With(q("recibos.ver")).Get("/comprobantes/{cid}/pdf", s.pdfComprobante)
+	r.With(q("comprobantes.emitir")).Post("/comprobantes/{cid}/anular", s.anularComprobante)
 	r.With(q("pagos.validar")).Get("/pagos", s.listarPagos)
 	r.With(q("pagos.validar")).Patch("/pagos/{pid}", s.validarPago)
 	r.With(q("morosidad.ver")).Get("/morosidad", s.morosidad)
+	r.With(q("pagos.registrar")).Post("/unidades/{uid}/pagos", s.pagoACuenta)
+	r.With(q("recibos.ver")).Get("/unidades/{uid}/cuenta", s.cuentaCorriente)
 
 	// 07 · reservas
 	r.With(q("reservas.ver")).Get("/areas", s.listarAreas)
@@ -242,6 +273,7 @@ func (s *Server) rutasEdificio(r chi.Router) {
 	r.With(q("lecturas.ver")).Get("/lecturas", s.listarLecturas)
 	r.With(q("lecturas.registrar")).Post("/medidores/{mid}/lecturas", s.registrarLectura)
 	r.With(q("lecturas.corregir")).Put("/lecturas/{lid}", s.corregirLectura)
+	r.With(q("recibos.emitir")).Get("/ajustes", s.listarAjustes)
 	r.With(q("lecturas.aprobar_reparto")).Post("/periodos/{p}/recibo-general", s.registrarReciboGeneral)
 	r.With(q("lecturas.aprobar_reparto")).Get("/periodos/{p}/recibo-general", s.verReciboGeneral)
 	r.With(q("lecturas.aprobar_reparto")).Post("/periodos/{p}/reparto-medidores/calcular", s.calcularReparto)
@@ -653,5 +685,5 @@ func (s *Server) salud(w http.ResponseWriter, r *http.Request) {
 	if !dbOK {
 		estado = http.StatusServiceUnavailable
 	}
-	P.JSON(w, estado, map[string]any{"ok": dbOK && s3OK, "version": s.Cfg.Version, "db": dbOK, "s3": s3OK, "whatsapp_modo": s.Cfg.WhatsAppModo})
+	P.JSON(w, estado, map[string]any{"ok": dbOK && s3OK, "version": s.Cfg.Version, "db": dbOK, "s3": s3OK, "whatsapp_modo": s.Cfg.WhatsAppModo, "correo_modo": s.Cfg.CorreoModo})
 }

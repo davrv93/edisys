@@ -1,0 +1,55 @@
+# EDISYS · despliegue al EC2. SOLO con disparo manual (workflow_dispatch): construye y publica las imágenes en
+# GHCR y ejecuta scripts/desplegar.sh en el servidor por ssh (pull, migraciones y up -d).
+# Secretos requeridos: EC2_HOST, EC2_USER, EC2_SSH_KEY (y en el servidor, su .env con las claves de producción).
+name: deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmar:
+        description: 'Escribe «desplegar» para confirmar'
+        required: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  imagenes:
+    if: github.event.inputs.confirmar == 'desplegar'
+    runs-on: ubuntu-latest
+    env:
+      EDISYS_REGISTRO: ghcr.io/${{ github.repository_owner }}/edisys
+      EDISYS_TAG: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Construir y publicar (api, login, edge, backup)
+        run: |
+          docker compose build migrate login edge backup
+          for s in api login edge backup; do
+            docker push "$EDISYS_REGISTRO/$s:$EDISYS_TAG"
+            docker tag "$EDISYS_REGISTRO/$s:$EDISYS_TAG" "$EDISYS_REGISTRO/$s:latest"
+            docker push "$EDISYS_REGISTRO/$s:latest"
+          done
+
+  servidor:
+    needs: imagenes
+    runs-on: ubuntu-latest
+    environment: produccion
+    steps:
+      - uses: actions/checkout@v4
+      - name: Desplegar por ssh
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          install -m 600 /dev/null ~/.ssh_edisys && printf '%s\n' "$EC2_SSH_KEY" > ~/.ssh_edisys
+          scp -i ~/.ssh_edisys -o StrictHostKeyChecking=accept-new docker-compose.yml scripts/desplegar.sh "$EC2_USER@$EC2_HOST:/opt/edisys/"
+          ssh -i ~/.ssh_edisys "$EC2_USER@$EC2_HOST" \
+            "cd /opt/edisys && EDISYS_REGISTRO=ghcr.io/${{ github.repository_owner }}/edisys EDISYS_TAG=${{ github.sha }} ./desplegar.sh"

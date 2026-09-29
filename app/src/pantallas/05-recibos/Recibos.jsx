@@ -9,6 +9,7 @@ import { usePeriodo } from '../../layout/usePeriodo.js';
 import Encabezado, { Contenido } from '../../layout/Encabezado.jsx';
 import { Boton, Tabla, Insignia, SelectorPeriodo, ErrorCarga, Vacio, Esqueleto, Icono, Chip, MenuAcciones, useDialog, useToast } from '../../ui/index.js';
 import PagoModal from './PagoModal.jsx';
+import Comprobante from './Comprobante.jsx';
 import { nombreUnidad } from '../../lib/unidad.js';
 
 const POR_PAGINA = 25;
@@ -279,6 +280,7 @@ export default function Recibos() {
           }
         />
       )}
+      {r && <Comprobante eid={eid} recibo={r} />}
     </section>
   );
 

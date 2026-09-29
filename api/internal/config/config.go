@@ -27,6 +27,13 @@ type Config struct {
 	EvolutionKey  string
 	WebhookToken  string
 	Tareas        bool // tareas programadas (liberar retenciones, reintentar outbox)
+	// Correo: simulado (por defecto, no sale nada) | smtp. En local el SMTP es Mailpit.
+	CorreoModo  string
+	CorreoDe    string
+	SMTPHost    string
+	SMTPPuerto  string
+	SMTPUsuario string
+	SMTPClave   string // nunca se registra ni se devuelve
 }
 
 func env(k, def string) string {
@@ -65,5 +72,11 @@ func Cargar() Config {
 		EvolutionKey:  env("EVOLUTION_APIKEY", ""),
 		WebhookToken:  env("WHATSAPP_WEBHOOK_TOKEN", ""),
 		Tareas:        envBool("TAREAS", true),
+		CorreoModo:    env("CORREO_MODO", "simulado"),
+		CorreoDe:      env("CORREO_DE", "EDISYS <no-responder@edisys.local>"),
+		SMTPHost:      env("SMTP_HOST", ""),
+		SMTPPuerto:    env("SMTP_PUERTO", "25"),
+		SMTPUsuario:   env("SMTP_USUARIO", ""),
+		SMTPClave:     env("SMTP_CLAVE", ""),
 	}
 }

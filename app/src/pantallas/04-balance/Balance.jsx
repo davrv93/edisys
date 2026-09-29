@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { api } from '../../lib/api.js';
+import { api, urlApi } from '../../lib/api.js';
 import { useCarga } from '../../lib/useCarga.js';
 import { formatearSoles, formatearSolesCorto, formatearPct } from '../../lib/dinero.js';
 import { formatearFecha, mesDePeriodo } from '../../lib/fechas.js';
@@ -175,6 +175,9 @@ export default function Balance() {
       <Boton variante="secundario" icono="abajo" onClick={expandirTodo} disabled={!raiz}>
         Expandir todo
       </Boton>
+      <Boton variante="secundario" icono="descargar" href={urlApi(`/edificios/${eid}/balance/${periodo}.pdf`)} target="_blank" rel="noopener">
+        Descargar PDF
+      </Boton>
       <Guarda permiso="egresos.registrar">
         <Boton icono="mas_signo" onClick={() => setEgresoAbierto(true)}>
           Registrar egreso
@@ -211,7 +214,7 @@ export default function Balance() {
                   titulo: 'Morosidad',
                   tono: 'alerta',
                   valor: k ? formatearPct(k.morosidad?.pct) : '',
-                  nota: k ? `${formatearSoles(k.morosidad?.monto_cts)} por cobrar` : '',
+                  nota: k ? `${formatearSoles(k.morosidad?.monto_cts)} por cobrar · histórica ${formatearPct(k.morosidad?.historica_pct ?? k.morosidad?.pct)}` : '',
                   to: s.tiene('recibos.ver') ? ruta('recibos', { periodo, estado: 'vencido' }) : undefined,
                 },
               ]}
