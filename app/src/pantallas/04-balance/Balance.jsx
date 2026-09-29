@@ -250,12 +250,7 @@ export default function Balance() {
                     </div>
                   )}
                 </div>
-                {resumen.datos?.conciliacion && (
-                  <div className="flex items-start gap-2 rounded-tarjeta border border-acento-borde bg-acento-suave p-3 text-sm text-acento-hover">
-                    <Icono nombre="check" tam={18} className="mt-0.5" />
-                    {resumen.datos.conciliacion}
-                  </div>
-                )}
+                {resumen.datos?.conciliacion && <NotaConciliacion c={resumen.datos.conciliacion} />}
                 <p className="text-xs text-texto-apoyo">Toca un nodo para bajar de lo general al documento. Con teclado: flechas para moverte y abrir, Enter para ver el documento.</p>
               </section>
 
@@ -289,6 +284,22 @@ export default function Balance() {
         }}
       />
     </>
+  );
+}
+
+/**
+ * Nota de conciliación bancaria. El API la mandaba como texto; ahora puede mandar un objeto
+ * { texto, conciliado, diferencia_cts, … }: se aceptan las dos formas.
+ */
+function NotaConciliacion({ c }) {
+  const texto = typeof c === 'string' ? c : c?.texto;
+  if (!texto) return null;
+  const ok = typeof c === 'string' || c.conciliado !== false;
+  return (
+    <div className={`flex items-start gap-2 rounded-tarjeta border p-3 text-sm ${ok ? 'border-acento-borde bg-acento-suave text-acento-hover' : 'border-aviso-borde bg-aviso-suave text-aviso-texto'}`} role="status">
+      <Icono nombre={ok ? 'check' : 'conciliacion'} tam={18} className="mt-0.5 shrink-0" />
+      {texto}
+    </div>
   );
 }
 

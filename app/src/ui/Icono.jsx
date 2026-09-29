@@ -4,12 +4,12 @@
 // el nombre de Lucide de los iconos registrados aquí (p. ej. «Landmark», «FileCheck2»).
 // Siempre acompañan a un texto o llevan aria-label en su botón: nunca son el único portador del significado.
 import {
-  Archive, ArrowDown, ArrowDownLeft, ArrowLeft, ArrowUp, ArrowUpRight, ArrowDownRight, BadgeCheck, Ban, Bot, Building2,
+  Archive, ArrowDownLeft, ArrowLeft, ArrowUpRight, ArrowDownRight, BadgeCheck, Ban, Bot, Building2,
   CalendarCheck, CalendarClock, CalendarDays, Camera, ChartColumn, Check, CheckCheck, ChevronDown, ChevronLeft,
   ChevronRight, ChevronUp, Circle, CircleAlert, CircleCheck, CircleDashed, CircleDot, CircleOff, CircleX, Clock, Copy,
-  Download, Ellipsis, ExternalLink, Eye, EyeOff, FileCheck2, FilePen, FileSpreadsheet, FileText, FlaskConical, Gauge,
+  Download, Ellipsis, Eye, FileCheck2, FilePen, FileSpreadsheet, FileText, FlaskConical, Gauge,
   GripVertical, Hourglass, Image, Inbox, Info, KeyRound, Landmark, LayoutDashboard, ListFilter, Loader, Lock, LogOut,
-  Mail, Menu, MessageCircle, Minus, PanelLeftClose, PanelLeftOpen, Plus, Printer, ReceiptText, RotateCcw, Scale, Search,
+  Mail, Menu, MessageCircle, Minus, PanelLeftClose, PanelLeftOpen, Plus, Printer, ReceiptText, Scale, Search,
   Send, Settings, ShieldCheck, SlidersHorizontal, Smartphone, Timer, TrendingDown, TrendingUp, TriangleAlert, Upload,
   User, UserX, Vote, Wrench, X,
 } from 'lucide-react';
@@ -57,11 +57,7 @@ export const ICONOS = {
   clave: KeyRound,
   correo: Mail,
   celular: Smartphone,
-  copiar: Copy,
-  enlace_externo: ExternalLink,
   ver: Eye,
-  ocultar: EyeOff,
-  reintentar: RotateCcw,
   engranaje: Settings,
   filtro: ListFilter,
   ajustes: SlidersHorizontal,
@@ -77,8 +73,6 @@ export const ICONOS = {
   der: ChevronRight,
   abajo: ChevronDown,
   arriba: ChevronUp,
-  flecha_abajo: ArrowDown,
-  flecha_arriba: ArrowUp,
   sube: ArrowUpRight,
   baja: ArrowDownRight,
   entrante: ArrowDownLeft,
@@ -112,7 +106,7 @@ export const ICONOS = {
 };
 
 // Los mismos componentes, también por su nombre de Lucide («Landmark», «FileCheck2», «Wrench»…).
-const POR_NOMBRE_LUCIDE = { Archive, ArrowDown, ArrowDownLeft, ArrowLeft, ArrowUp, ArrowUpRight, ArrowDownRight, BadgeCheck, Ban, Bot, Building2, CalendarCheck, CalendarClock, CalendarDays, Camera, ChartColumn, Check, CheckCheck, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Circle, CircleAlert, CircleCheck, CircleDashed, CircleDot, CircleOff, CircleX, Clock, Copy, Download, Ellipsis, ExternalLink, Eye, EyeOff, FileCheck2, FilePen, FileSpreadsheet, FileText, FlaskConical, Gauge, GripVertical, Hourglass, Image, Inbox, Info, KeyRound, Landmark, LayoutDashboard, ListFilter, Loader, Lock, LogOut, Mail, Menu, MessageCircle, Minus, PanelLeftClose, PanelLeftOpen, Plus, Printer, ReceiptText, RotateCcw, Scale, Search, Send, Settings, ShieldCheck, SlidersHorizontal, Smartphone, Timer, TrendingDown, TrendingUp, TriangleAlert, Upload, User, UserX, Vote, Wrench, X };
+const POR_NOMBRE_LUCIDE = { Archive, ArrowDownLeft, ArrowLeft, ArrowUpRight, ArrowDownRight, BadgeCheck, Ban, Bot, Building2, CalendarCheck, CalendarClock, CalendarDays, Camera, ChartColumn, Check, CheckCheck, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Circle, CircleAlert, CircleCheck, CircleDashed, CircleDot, CircleOff, CircleX, Clock, Download, Ellipsis, Eye, FileCheck2, FilePen, FileSpreadsheet, FileText, FlaskConical, Gauge, GripVertical, Hourglass, Image, Inbox, Info, KeyRound, Landmark, LayoutDashboard, ListFilter, Loader, Lock, LogOut, Mail, Menu, MessageCircle, Minus, PanelLeftClose, PanelLeftOpen, Plus, Printer, ReceiptText, Scale, Search, Send, Settings, ShieldCheck, SlidersHorizontal, Smartphone, Timer, TrendingDown, TrendingUp, TriangleAlert, Upload, User, UserX, Vote, Wrench, X };
 
 /** ¿Existe el icono? (acepta el nombre en español o el de Lucide). */
 export function existeIcono(nombre) {
