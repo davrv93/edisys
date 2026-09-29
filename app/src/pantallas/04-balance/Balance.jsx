@@ -184,6 +184,7 @@ export default function Balance() {
                 to={s.tiene('recibos.ver') ? ruta('recibos', { periodo, estado: 'vencido' }) : undefined}
               />
             </div>
+            {resumen.datos?.conciliacion && <p className={`text-sm ${resumen.datos.conciliacion.conciliado ? 'text-acento' : 'text-alerta'}`} role="status">{resumen.datos.conciliacion.texto}</p>}
 
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
               <section className="flex min-w-0 flex-1 flex-col gap-3">
