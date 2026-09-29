@@ -12,6 +12,8 @@ import Importar from './Importar.jsx';
 
 const POR_PAGINA = 25;
 
+const nombreDe = (p) => (p && typeof p === 'object' ? p.nombre : p) || '';
+
 /** 06 · Unidades y propietarios, con la importación desde Excel en la pestaña «Importar Excel» (?tab=importar). */
 export default function Unidades() {
   const eid = useEid();
@@ -63,11 +65,12 @@ export default function Unidades() {
 
   const columnas = [
     { clave: 'codigo', titulo: 'Unidad', render: (u) => `Dpto ${u.codigo}`, movil: 'titulo' },
-    { clave: 'propietario', titulo: 'Propietario', movil: 'sub' },
+    // El API manda propietario/inquilino como objeto { nombre, dni_ruc, celular, … }; el mock, como texto.
+    { clave: 'propietario', titulo: 'Propietario', movil: 'sub', render: (u) => nombreDe(u.propietario) },
     { clave: 'tipo', titulo: 'Tipo', render: (u) => (u.tipo ? u.tipo.charAt(0).toUpperCase() + u.tipo.slice(1) : '—'), movil: 'oculto' },
-    { clave: 'propietario_dni', titulo: 'DNI / RUC', render: (u) => enmascararDni(u.propietario_dni) },
-    { clave: 'celular', titulo: 'Celular', render: (u) => u.celular || '—', movil: 'oculto' },
-    { clave: 'inquilino', titulo: 'Inquilino', render: (u) => u.inquilino || <span className="text-texto-apoyo">—</span> },
+    { clave: 'propietario_dni', titulo: 'DNI / RUC', render: (u) => enmascararDni(u.propietario?.dni_ruc ?? u.propietario_dni) },
+    { clave: 'celular', titulo: 'Celular', render: (u) => u.propietario?.celular || u.celular || '—', movil: 'oculto' },
+    { clave: 'inquilino', titulo: 'Inquilino', render: (u) => nombreDe(u.inquilino) || <span className="text-texto-apoyo">—</span> },
     { clave: 'participacion_pct', titulo: 'Participación', alinear: 'der', render: (u) => formatearPct(u.participacion_pct, 2) },
     { clave: 'deuda_cts', titulo: 'Deuda', alinear: 'der', movil: 'valor', render: (u) => (u.deuda_cts > 0 ? <Insignia estado="moroso" texto={formatearSoles(u.deuda_cts)} /> : <Insignia estado="al_dia" />) },
   ];
