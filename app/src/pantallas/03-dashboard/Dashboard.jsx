@@ -90,9 +90,9 @@ export default function Dashboard() {
               <TarjetaKPI
                 cargando={!k}
                 tono="alerta"
-                titulo="Morosidad"
+                titulo="Morosidad del mes"
                 valor={k ? formatearPct(k.morosidad?.pct) : ''}
-                nota={k ? `${k.morosidad?.unidades} unidades · ${formatearSoles(k.morosidad?.monto_cts)}` : ''}
+                nota={k ? `${k.morosidad?.unidades} unidades · ${formatearSoles(k.morosidad?.monto_cts)} · histórica ${formatearPct(k.morosidad?.historica_pct ?? k.morosidad?.pct)}` : ''}
                 to={ruta('recibos', { periodo, estado: 'vencido' })}
               />
               <TarjetaKPI cargando={!k} titulo="Ingresos por reservas" valor={formatearSoles(d?.ingresos_reservas_cts ?? 0)} nota={d?.reservas_mes ? `${d.reservas_mes.cantidad} reservas · ${d.reservas_mes.detalle}` : 'parrillas y otras áreas'} to={ruta('reservas')} />

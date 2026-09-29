@@ -178,9 +178,9 @@ export default function Balance() {
               <TarjetaKPI
                 cargando={!k}
                 tono="alerta"
-                titulo="Morosidad"
+                titulo="Morosidad del mes"
                 valor={k ? formatearPct(k.morosidad?.pct) : ''}
-                nota={k ? `${formatearSoles(k.morosidad?.monto_cts)} emitido y no cobrado` : ''}
+                nota={k ? `${formatearSoles(k.morosidad?.monto_cts)} emitido y no cobrado · histórica ${formatearPct(k.morosidad?.historica_pct ?? k.morosidad?.pct)}` : ''}
                 to={s.tiene('recibos.ver') ? ruta('recibos', { periodo, estado: 'vencido' }) : undefined}
               />
             </div>
