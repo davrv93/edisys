@@ -9,6 +9,7 @@ import { useEid, useSesion, Guarda } from '../../layout/Sesion.jsx';
 import { useModoTarea } from '../../layout/Armazon.jsx';
 import { usePeriodo } from '../../layout/usePeriodo.js';
 import { Boton, ErrorCarga, Esqueleto, Icono, Insignia, SubirFoto, useDialog, useToast } from '../../ui/index.js';
+import CorregirLectura from './CorregirLectura.jsx';
 import Reparto from './Reparto.jsx';
 import { nombreUnidad } from '../../lib/unidad.js';
 
@@ -125,6 +126,7 @@ function Ronda() {
               </span>
               <Insignia estado={m.estado === 'alerta' ? m.alerta || 'alerta_lectura' : m.estado} />
             </button>
+            {m.lectura_id && <Guarda permiso="lecturas.corregir"><CorregirLectura eid={eid} medidor={m} onCorregida={recargar} /></Guarda>}
           </li>
         ))}
       </ul>
