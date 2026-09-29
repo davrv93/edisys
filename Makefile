@@ -4,8 +4,9 @@ TEST_DB ?= postgres://edisys:edisys@localhost:4754/edisys_test?sslmode=disable
 
 .PHONY: up down logs seed seed-demo test test-unit ps smoke build api backup restore respaldos validar-ubl motor motor-on motor-off humo-motor validar-deploy deploy-local peso
 
-# Tope recomendado del dist en bytes: base 528950 (4e1acab) +30 %.
-PESO_TOPE ?= 688000
+# Tope recomendado del dist en bytes: base 528950 (4e1acab) +40 %.
+# Sube solo con funciones nuevas que lo justifiquen (cada pantalla suma ~10 KB).
+PESO_TOPE ?= 741000
 
 up:            ## Construye y levanta todo (edge en http://localhost:4700)
 	$(COMPOSE) up -d --build

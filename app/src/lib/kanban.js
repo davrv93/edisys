@@ -37,6 +37,32 @@ export const COLUMNAS_FLUJO = COLUMNAS.filter((c) => !SALIDAS.includes(c.estado)
 /** Columnas de salida: en escritorio van en una franja secundaria, con las mismas acciones. */
 export const COLUMNAS_SALIDA = COLUMNAS.filter((c) => SALIDAS.includes(c.estado));
 
+/** Campos que la tarjeta puede mostrar (configurables por edificio). */
+export const CAMPOS_TARJETA = [
+  { valor: 'monto', etiqueta: 'Monto' },
+  { valor: 'responsable', etiqueta: 'Responsable' },
+  { valor: 'fotos', etiqueta: 'Fotos' },
+  { valor: 'votos', etiqueta: 'Votos de la junta' },
+  { valor: 'antiguedad', etiqueta: 'Antigüedad' },
+];
+
+/** Columnas efectivas según la configuración del edificio (orden suyo; lo desconocido se descarta). */
+export function columnasDesdeConfig(cfg) {
+  const estados = Array.isArray(cfg?.columnas) ? cfg.columnas : [];
+  const validas = estados.filter((e) => COLUMNAS.some((c) => c.estado === e));
+  const base = validas.length ? validas : COLUMNAS.map((c) => c.estado);
+  return base.map((e) => COLUMNAS.find((c) => c.estado === e));
+}
+
+/** Campos de tarjeta efectivos (todo visible por defecto). */
+export function tarjetaDesdeConfig(cfg) {
+  const d = { monto: true, responsable: true, fotos: true, votos: true, antiguedad: true };
+  if (cfg?.tarjeta && typeof cfg.tarjeta === 'object') {
+    for (const k of Object.keys(d)) if (typeof cfg.tarjeta[k] === 'boolean') d[k] = cfg.tarjeta[k];
+  }
+  return d;
+}
+
 /** Verbo del botón que lleva a cada estado. */
 export const ACCION_HACIA = {
   validado: 'Validar',

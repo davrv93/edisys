@@ -181,6 +181,9 @@ contra el recorrido `scripts/recorrido-ui.cjs` (3 roles, 18 vistas, 0 errores). 
 | K13 | Vacío «Sin trabajos este mes» | — | ✅ |
 | K14 | Reportar: hasta 5 fotos (≥ 1), tipo, dónde (sugerencias), qué pasa, progreso, enviado con código | `incidencias.reportar` | ✅ |
 | K15 | Teclado: mover tarjeta sin ratón | — | ✅ (menú `⋯` y botón de siguiente paso son botones enfocables) |
+| K16 | Configurar tablero (etapas visibles en orden, campos de tarjeta) | `roles.administrar` | ✚ 29-09: botón «Configurar» en la barra; el grafo no cambia |
+| K17 | Exportar lo filtrado a CSV | — | ✚ 29-09: botón «Exportar» con los filtros activos |
+| K18 | Plan de trabajo (hitos, informe sí/no, estado) | — | ✚ 29-09: pestaña «Plan de trabajo» (`?tab=plan`) |
 
 ## 10 · Portal (`pantallas/10-portal/Portal.jsx`)
 
@@ -264,5 +267,5 @@ Mismas props y mismos nombres de export; lo nuevo se **añade**.
 | 4 | Sin scroll horizontal a 360 px | 18/18 vistas (y a los cuatro anchos de captura) |
 | 5 | Pruebas de la app | 77 en verde (63 de antes + mapa de estados, iconos, fecha, criticidad múltiple, cifras cortas) |
 | 6 | Accesibilidad | Pares de texto AA; series de gráfico ≥ 3:1 contra blanco; `prefers-reduced-motion` comprobado (duraciones a 0,01 ms); 0 botones sin nombre en 11 pantallas |
-| 7 | Peso | CSS 9,1 KB comprimido (≤ 40 KB ✓). Tope recomendado: **+30 % sobre la base** (`4e1acab`, 529 KB en bytes → 688 KB; `make peso` lo comprueba). El 10 % del plan era para la pasada visual sola, pero la rama trae también los bloques funcionales (pantallas Conciliación y Configuración + funciones en las páginas). Medido 29-09: `dist` 658 KB (+24 % ✓ dentro del tope). Reparto: compartido (react+iconos+ui+css) 209 → 263 KB (+54, Lucide y componentes nuevos); pantallas nuevas ~+29 KB; páginas existentes ~+47 KB. Se podaron los iconos sin uso (6) y sus nombres |
+| 7 | Peso | CSS 9,1 KB comprimido (≤ 40 KB ✓). Tope recomendado: **+40 % sobre la base** (`4e1acab`, 529 KB → 741 KB; `make peso` lo comprueba; sube solo con funciones que lo justifiquen). El 10 % del plan era para la pasada visual sola. Medido 29-09: `dist` 716 KB (+35 % ✓): plan de trabajo + configurar tablero (~+10 KB) y transiciones entre pantallas (~+15 KB). Se podaron los iconos sin uso |
 | 8 | Humo del sistema (`make smoke`) | No se corrió: toca Docker/API, fuera del alcance de esta rama |

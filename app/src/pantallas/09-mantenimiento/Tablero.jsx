@@ -1,22 +1,25 @@
 import { useEffect, useMemo, useState } from 'react';
-import { api } from '../../lib/api.js';
+import { api, urlApi } from '../../lib/api.js';
 import { useCarga } from '../../lib/useCarga.js';
 import { formatearSoles, formatearSolesCorto } from '../../lib/dinero.js';
 import { formatearFecha, haceCuanto } from '../../lib/fechas.js';
 import {
-  ACCION_HACIA, CATEGORIAS, COLUMNAS, COLUMNAS_FLUJO, COLUMNAS_SALIDA, CRITICIDADES, agruparPorEstado, filtrarIncidencias, filtrosAURL, filtrosDesdeURL,
+  ACCION_HACIA, CATEGORIAS, COLUMNAS, CRITICIDADES, agruparPorEstado, filtrarIncidencias, filtrosAURL, filtrosDesdeURL,
   hayFiltros, normalizarIncidencia, puedeTransicionar, transicionesPermitidas, PERMISO_HACIA, esSalida, alternarCriticidad, criticidadesDe,
+  columnasDesdeConfig, tarjetaDesdeConfig,
 } from '../../lib/kanban.js';
 import { lista as aLista } from '../../lib/api.js';
 import { ruta, useQuery } from '../../lib/nav.jsx';
 import { useSesion, Guarda } from '../../layout/Sesion.jsx';
 import Encabezado, { Contenido } from '../../layout/Encabezado.jsx';
 import { Boton, Campo, Chip, Desplegable, ErrorCarga, Esqueleto, Icono, Insignia, MenuAcciones, Modal, PuntoEstado, Vacio, infoEstado, TONO_PUNTO, useDialog, useToast } from '../../ui/index.js';
+import ConfigurarTablero from './ConfigurarTablero.jsx';
 
 const TEXTO_CRIT = { critica: 'Crítico', media: 'Medio', baja: 'Bajo' };
 
-/** Tablero kanban por estado (v2): barra de filtros de una línea, tarjetas compactas, arrastre con movimiento. */
-export default function Tablero() {
+/** Tablero kanban por estado (v2): barra de filtros de una línea, tarjetas compactas, arrastre con movimiento.
+ *  Con sinMarco lo monta Mantenimiento (encabezado y pestañas comunes con el plan). */
+export default function Tablero({ sinMarco = false }) {
   const s = useSesion();
   const [q, setQuery] = useQuery();
   const { dialog, dialogEl } = useDialog();
@@ -30,7 +33,14 @@ export default function Tablero() {
   const [moviendo, setMoviendo] = useState(null);
   const [asentada, setAsentada] = useState(null); // tarjeta que acaba de caer en su columna
   const [rechazada, setRechazada] = useState(null); // tarjeta que el API devolvió (tiembla)
-  const colMovil = COLUMNAS.some((c) => c.estado === q.get('col')) ? q.get('col') : 'reportado';
+  const [configura, setConfigura] = useState(false);
+  // Configuración central del tablero (etapas visibles en orden + campos de tarjeta).
+  const conf = useCarga(() => api.get('/mantenimiento/tablero/config'), []);
+  const columnas = useMemo(() => columnasDesdeConfig(conf.datos), [conf.datos]);
+  const campos = useMemo(() => tarjetaDesdeConfig(conf.datos), [conf.datos]);
+  const flujo = useMemo(() => columnas.filter((c) => !esSalida(c.estado)), [columnas]);
+  const salidas = useMemo(() => columnas.filter((c) => esSalida(c.estado)), [columnas]);
+  const colMovil = columnas.some((c) => c.estado === q.get('col')) ? q.get('col') : (columnas[0]?.estado || 'reportado');
 
   const carga = useCarga(() => api.get('/mantenimiento/incidencias', filtros), [claveFiltros]);
   const incidencias = useMemo(() => aLista(carga.datos, 'incidencias').map(normalizarIncidencia), [carga.datos]);
@@ -168,6 +178,14 @@ export default function Tablero() {
             Limpiar
           </Boton>
         )}
+        <Boton variante="secundario" tamano="sm" icono="descargar" href={urlApi(`/mantenimiento/incidencias/exportar?${filtrosAURL(filtros).toString()}`)}>
+          Exportar
+        </Boton>
+        {s.tiene('roles.administrar') && (
+          <Boton variante="secundario" tamano="sm" icono="ajustes" onClick={() => setConfigura(true)}>
+            Configurar
+          </Boton>
+        )}
         <p className="ml-auto hidden text-xs text-texto-apoyo lg:block" aria-live="polite">
           {visibles.length} {visibles.length === 1 ? 'trabajo' : 'trabajos'}
           {hayFiltros(filtros) ? ' con estos filtros' : ''}
@@ -237,16 +255,18 @@ export default function Tablero() {
           </b>
         </button>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-texto-apoyo">
-          {monto != null && <span className="font-semibold tabular-nums text-texto-suave">{formatearSoles(monto)}</span>}
-          {inc.estado === 'terminado' && monto != null && <span>en balance</span>}
-          {inc.responsable_nombre && <span className="truncate">{inc.responsable_nombre}</span>}
-          {inc.votos && inc.estado === 'presupuestado' ? (
+          {campos.monto && monto != null && <span className="font-semibold tabular-nums text-texto-suave">{formatearSoles(monto)}</span>}
+          {inc.estado === 'terminado' && campos.monto && monto != null && <span>en balance</span>}
+          {campos.responsable && inc.responsable_nombre && <span className="truncate">{inc.responsable_nombre}</span>}
+          {campos.votos && inc.votos && inc.estado === 'presupuestado' ? (
             <span className="inline-flex items-center gap-1 font-semibold text-aviso-texto" title="Espera a la junta">
               <Icono nombre="junta" tam={13} /> {inc.votos.a_favor}/{inc.votos.necesarios ?? '?'} votos
             </span>
-          ) : monto == null ? (
+          ) : monto == null && (campos.fotos || campos.antiguedad) ? (
             <span className="inline-flex items-center gap-1">
-              <Icono nombre="camara" tam={13} /> {inc.n_fotos || 0} · {haceCuanto(inc.reportado_en)}
+              {campos.fotos && (<><Icono nombre="camara" tam={13} /> {inc.n_fotos || 0}</>)}
+              {campos.fotos && campos.antiguedad && <span aria-hidden="true">·</span>}
+              {campos.antiguedad && haceCuanto(inc.reportado_en)}
             </span>
           ) : null}
         </div>
@@ -324,21 +344,16 @@ export default function Tablero() {
     );
   };
 
-  return (
+  const acciones = (
+    <Guarda permiso="incidencias.reportar">
+      <Boton icono="camara" href={ruta('mantenimiento', { reportar: 1 })}>
+        Registrar incidencia
+      </Boton>
+    </Guarda>
+  );
+  const cuerpo = (
     <>
-      {dialogEl}
-      <Encabezado
-        titulo="Mantenimiento e incidencias"
-        acciones={
-          <Guarda permiso="incidencias.reportar">
-            <Boton icono="camara" href={ruta('mantenimiento', { reportar: 1 })}>
-              Registrar incidencia
-            </Boton>
-          </Guarda>
-        }
-      />
-      <Contenido className="lg:max-w-none">
-        {barraFiltros}
+      {barraFiltros}
         {carga.error ? (
           <ErrorCarga error={carga.error} onReintentar={carga.recargar} />
         ) : !carga.datos ? (
@@ -361,15 +376,17 @@ export default function Tablero() {
           <>
             {/* Tablet: columnas con desplazamiento horizontal e imán por columna */}
             <div className="carrusel -mx-4 hidden items-start gap-2 px-4 pb-2 md:flex lg:hidden" role="list" aria-label="Columnas del tablero">
-              {COLUMNAS.map((c, i) => columna(c, i))}
+              {columnas.map((c, i) => columna(c, i))}
             </div>
-            {/* Escritorio: las 6 del flujo en rejilla fluida (caben a 1440 sin scroll) y las salidas debajo */}
+            {/* Escritorio: el flujo en rejilla fluida y las salidas debajo (según la configuración) */}
             <div className="hidden items-start gap-2 lg:grid lg:grid-cols-6" role="list" aria-label="Columnas del tablero">
-              {COLUMNAS_FLUJO.map((c, i) => columna(c, i, false, false))}
+              {flujo.map((c, i) => columna(c, i, false, false))}
             </div>
-            <div className="hidden items-start gap-2 lg:grid lg:grid-cols-2" role="list" aria-label="Salidas del tablero">
-              {COLUMNAS_SALIDA.map((c, i) => columna(c, i, false, false))}
-            </div>
+            {salidas.length > 0 && (
+              <div className="hidden items-start gap-2 lg:grid lg:grid-cols-2" role="list" aria-label="Salidas del tablero">
+                {salidas.map((c, i) => columna(c, i, false, false))}
+              </div>
+            )}
             <p className="hidden text-xs text-texto-apoyo lg:block">Arrastra una tarjeta, usa «siguiente paso» o su menú ⋯ para cambiarla de columna.</p>
             {/* Móvil: pestañas por estado, con contador */}
             <div className="flex flex-col gap-3 md:hidden">
@@ -378,7 +395,7 @@ export default function Tablero() {
                 {hayFiltros(filtros) ? ' con estos filtros' : ''}
               </p>
               <div role="tablist" aria-label="Estado" className="carrusel -mx-4 gap-2 px-4 pb-1">
-                {COLUMNAS.map((c) => {
+                {columnas.map((c) => {
                   const n = (grupos[c.estado] || []).length;
                   const act = colMovil === c.estado;
                   return (
@@ -398,15 +415,37 @@ export default function Tablero() {
                 })}
               </div>
               {columna(
-                COLUMNAS.find((c) => c.estado === colMovil),
+                columnas.find((c) => c.estado === colMovil) || columnas[0],
                 0,
                 true,
               )}
             </div>
           </>
         )}
-      </Contenido>
+    </>
+  );
+  return (
+    <>
+      {dialogEl}
+      {sinMarco ? cuerpo : (
+        <>
+          <Encabezado titulo="Mantenimiento e incidencias" acciones={acciones} />
+          <Contenido className="lg:max-w-none">{cuerpo}</Contenido>
+        </>
+      )}
       <Detalle inc={detalle} onCerrar={() => setDetalle(null)} acciones={detalle ? permitidas(detalle) : []} onMover={mover} />
+      {configura && (
+        <ConfigurarTablero
+          columnas={columnas.map((c) => c.estado)}
+          tarjeta={campos}
+          onCerrar={() => setConfigura(false)}
+          onGuardar={async (cuerpo) => {
+            await api.put('/mantenimiento/tablero/config', cuerpo);
+            conf.recargar();
+            setConfigura(false);
+          }}
+        />
+      )}
     </>
   );
 }

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   puedeTransicionar, siguienteEstado, transicionesPermitidas, filtrosDesdeURL, filtrosAURL,
   filtrarIncidencias, agruparPorEstado, normalizarIncidencia, hayFiltros,
-  COLUMNAS, COLUMNAS_FLUJO, COLUMNAS_SALIDA,
+  COLUMNAS, COLUMNAS_FLUJO, COLUMNAS_SALIDA, columnasDesdeConfig, tarjetaDesdeConfig,
 } from './kanban.js';
 
 describe('columnas del tablero', () => {
@@ -10,6 +10,13 @@ describe('columnas del tablero', () => {
     expect(COLUMNAS_FLUJO.map((c) => c.estado)).toEqual(['reportado', 'validado', 'presupuestado', 'aprobado', 'en_ejecucion', 'terminado']);
     expect(COLUMNAS_SALIDA.map((c) => c.estado)).toEqual(['rechazado', 'descartado']);
     expect([...COLUMNAS_FLUJO, ...COLUMNAS_SALIDA].map((c) => c.estado).sort()).toEqual(COLUMNAS.map((c) => c.estado).sort());
+  });
+  it('la configuración manda en orden y cae a las 8', () => {
+    expect(columnasDesdeConfig({ columnas: ['terminado', 'reportado'] }).map((c) => c.estado)).toEqual(['terminado', 'reportado']);
+    expect(columnasDesdeConfig({ columnas: ['inventado'] })).toHaveLength(8);
+    expect(columnasDesdeConfig(null)).toHaveLength(8);
+    expect(tarjetaDesdeConfig({ tarjeta: { votos: false } })).toEqual({ monto: true, responsable: true, fotos: true, votos: false, antiguedad: true });
+    expect(tarjetaDesdeConfig(null).votos).toBe(true);
   });
 });
 
