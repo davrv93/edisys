@@ -220,6 +220,83 @@ func TestUnidadesFiltroMorosos(t *testing.T) {
 	}
 }
 
+// Tablero configurable + exportar + plan de trabajo (09).
+func TestTableroConfigurableExportarYPlan(t *testing.T) {
+	e := nuevo(t)
+	admin := e.login("admin@demo.pe")
+	// Config de fábrica: las 8 etapas y tarjeta completa.
+	_, c := e.pedir("GET", "/api/v1/mantenimiento/tablero/config", admin, nil)
+	if c["por_defecto"] != true || len(c["columnas"].([]any)) != 8 {
+		t.Fatalf("config de fábrica: %v", c)
+	}
+	// Inválidas: vacía, etapa que no existe, repetida, campo que no existe.
+	for _, cuerpo := range []map[string]any{
+		{"columnas": []string{}},
+		{"columnas": []string{"reportado", "inventado"}},
+		{"columnas": []string{"reportado", "reportado"}},
+		{"columnas": []string{"reportado"}, "tarjeta": map[string]bool{"inventado": true}},
+	} {
+		if st, _ := e.pedir("PUT", "/api/v1/mantenimiento/tablero/config", admin, cuerpo); st != 422 {
+			t.Errorf("config inválida aceptada: %v", cuerpo)
+		}
+	}
+	// Válida: las 6 del flujo, sin votos en la tarjeta.
+	seis := []string{"reportado", "validado", "presupuestado", "aprobado", "en_ejecucion", "terminado"}
+	st, c := e.pedir("PUT", "/api/v1/mantenimiento/tablero/config", admin,
+		map[string]any{"columnas": seis, "tarjeta": map[string]bool{"monto": true, "responsable": true, "fotos": true, "votos": false, "antiguedad": true}})
+	if st != 200 || c["por_defecto"] != false || len(c["columnas"].([]any)) != 6 {
+		t.Fatalf("guardar config: %d %v", st, c)
+	}
+	if c["tarjeta"].(map[string]any)["votos"] != false {
+		t.Errorf("tarjeta sin votos: %v", c["tarjeta"])
+	}
+	// Un propietario no configura.
+	if st, _ := e.pedir("PUT", "/api/v1/mantenimiento/tablero/config", e.login("propietario201@demo.pe"),
+		map[string]any{"columnas": seis}); st != 403 {
+		t.Errorf("propietario configura: %d", st)
+	}
+	// Exportar respeta filtros: solo reportados.
+	st, tipo, x := e.bajar("/api/v1/mantenimiento/incidencias/exportar?estado=reportado", admin)
+	if st != 200 || !strings.Contains(tipo, "csv") || !strings.Contains(string(x), "codigo,titulo,estado") {
+		t.Fatalf("exportar: %d %s", st, tipo)
+	}
+	lineas := strings.Split(strings.TrimSpace(string(x)), "\n")
+	if len(lineas) < 2 {
+		t.Fatalf("exportar vacío")
+	}
+	for _, l := range lineas[1:] {
+		if !strings.Contains(l, "reportado") {
+			t.Errorf("fila no reportada en el export: %s", l)
+		}
+	}
+	// Plan: sin terminados ni descartados, con informe técnico donde toca.
+	_, p := e.pedir("GET", "/api/v1/mantenimiento/plan", admin, nil)
+	datos := p["datos"].([]any)
+	if len(datos) == 0 {
+		t.Fatalf("plan vacío")
+	}
+	informes, vistos := 0, map[string]bool{}
+	for _, a := range datos {
+		u := a.(map[string]any)
+		vistos[u["estado"].(string)] = true
+		if u["estado"] == "terminado" || u["estado"] == "descartado" {
+			t.Errorf("estado final en el plan: %v", u["codigo"])
+		}
+		if u["tiene_informe"] == true {
+			informes++
+		}
+		if _, ok := u["avances"]; !ok {
+			t.Errorf("sin conteo de avances: %v", u["codigo"])
+		}
+	}
+	if informes == 0 {
+		t.Errorf("ningún trabajo con informe técnico")
+	}
+	if !vistos["reportado"] {
+		t.Errorf("el plan no trae reportados: %v", vistos)
+	}
+}
+
 // ---------- utilidades multipart ----------
 
 func pngChico() []byte {

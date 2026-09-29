@@ -315,6 +315,11 @@ func (s *Server) rutasModulosNuevos(r chi.Router) {
 	r.With(q("whatsapp.configurar")).Put("/whatsapp/config", s.guardarConfigWhatsApp)
 	r.With(q("whatsapp.ver")).Get("/whatsapp/plantillas", s.listarPlantillas)
 	r.With(q("chatbot.probar")).Post("/chatbot/mensaje", s.chatbotMensaje)
+	r.With(q("chatbot.probar")).Post("/chatbot/mensajes/{mid}/feedback", s.feedbackMensaje)
+	r.With(q("chatbot.probar")).Get("/chatbot/golden", s.listarGolden)
+	r.With(q("chatbot.probar")).Patch("/chatbot/golden/{gid}", s.cambiarGolden)
+	r.With(q("chatbot.probar")).Delete("/chatbot/golden/{gid}", s.borrarGolden)
+	r.With(q("chatbot.probar")).Get("/chatbot/aprendizaje", s.resumenAprendizaje)
 	r.With(q("motor.administrar")).Post("/motor/consulta", s.motorConsulta)
 	r.With(q("motor.administrar")).Get("/motor/admin", s.motorAdmin)
 	r.With(q("motor.administrar")).Post("/motor/golden", s.motorGolden)
@@ -325,6 +330,10 @@ func (s *Server) rutasModulosNuevos(r chi.Router) {
 	r.With(q("analitica.ver")).Get("/analitica/resumen", s.analitica)
 	r.With(q("incidencias.ver")).Get("/mantenimiento/incidencias", s.listarIncidencias)
 	r.With(q("incidencias.ver")).Patch("/mantenimiento/incidencias/{tid}/estado", s.cambiarEstadoIncidencia)
+	r.With(q("incidencias.ver")).Get("/mantenimiento/incidencias/exportar", s.exportarIncidencias)
+	r.With(q("incidencias.ver")).Get("/mantenimiento/plan", s.planTrabajos)
+	r.With(q("incidencias.ver")).Get("/mantenimiento/tablero/config", s.verConfigTablero)
+	r.With(q("roles.administrar")).Put("/mantenimiento/tablero/config", s.guardarConfigTablero)
 }
 
 // ---------- middleware ----------

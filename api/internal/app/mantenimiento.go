@@ -32,62 +32,7 @@ const sqlIncidencia = `SELECT i.id, i.codigo, i.titulo, i.descripcion, i.ubicaci
 // filtros: estado (lista con comas), criticidad, categoria, responsable_id, q, desde, hasta, mes.
 func (s *Server) listarIncidencias(w http.ResponseWriter, r *http.Request) {
 	e := edf(r)
-	q := r.URL.Query()
-	cond := []string{"i.edificio_id=$1"}
-	args := []any{e.ID}
-	add := func(c string, v any) {
-		args = append(args, v)
-		cond = append(cond, strings.ReplaceAll(c, "?", "$"+strconv.Itoa(len(args))))
-	}
-	lista := func(v string) []string {
-		var out []string
-		for _, x := range strings.Split(v, ",") {
-			if x = strings.TrimSpace(x); x != "" {
-				out = append(out, x)
-			}
-		}
-		return out
-	}
-	if v := lista(q.Get("estado")); len(v) > 0 {
-		add("i.estado = ANY(?)", v)
-	}
-	if v := lista(q.Get("criticidad")); len(v) > 0 {
-		add("i.criticidad = ANY(?)", v)
-	}
-	if v := lista(q.Get("categoria")); len(v) > 0 {
-		add("i.categoria = ANY(?)", v)
-	}
-	if v, err := strconv.ParseInt(q.Get("responsable_id"), 10, 64); err == nil {
-		add("i.responsable_id = ?", v)
-	}
-	if v := strings.TrimSpace(q.Get("q")); v != "" {
-		add("(i.codigo ILIKE ? OR i.titulo ILIKE ? OR i.descripcion ILIKE ? OR i.ubicacion ILIKE ?)", "%"+v+"%")
-	}
-	if t, err := parseFecha(q.Get("desde")); err == nil {
-		add("i.creado_en >= ?", t)
-	}
-	if t, err := parseFecha(q.Get("hasta")); err == nil {
-		add("i.creado_en < ?", t.AddDate(0, 0, 1))
-	}
-	if m := q.Get("mes"); P.PeriodoValido(m) {
-		ini, fin := P.RangoPeriodo(m)
-		add("(i.creado_en < ? ", fin)
-		cond[len(cond)-1] += fmt.Sprintf("AND (i.terminado_en IS NULL OR i.terminado_en >= $%d))", len(args)+1)
-		args = append(args, ini)
-	}
-	switch {
-	case e.Rol == "tecnico":
-		add("i.responsable_id = ?", ses(r).UsuarioID)
-	case e.SoloLoSuyo():
-		if q.Get("todos") == "1" {
-			cond = append(cond, "i.estado IN ('presupuestado','aprobado','en_ejecucion','terminado','rechazado')")
-		} else {
-			add("(i.reportado_por = ? OR i.unidad_id = ANY(", ses(r).UsuarioID)
-			args = append(args, e.Unidades)
-			cond[len(cond)-1] += fmt.Sprintf("$%d))", len(args))
-		}
-	}
-	where := strings.Join(cond, " AND ")
+	where, args := condIncidencias(e, r.URL.Query(), ses(r).UsuarioID)
 	ctx := r.Context()
 	filas, err := db.Filas(ctx, s.DB, sqlIncidencia+` WHERE `+where+`
 		ORDER BY CASE i.criticidad WHEN 'critica' THEN 0 WHEN 'media' THEN 1 WHEN 'baja' THEN 2 ELSE 3 END, i.numero DESC LIMIT 500`, args...)
