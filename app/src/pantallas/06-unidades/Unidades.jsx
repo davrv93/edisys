@@ -7,7 +7,7 @@ import { enmascararDni } from '../../lib/participacion.js';
 import { useQuery } from '../../lib/nav.jsx';
 import { useEid, Guarda } from '../../layout/Sesion.jsx';
 import Encabezado, { Contenido } from '../../layout/Encabezado.jsx';
-import { Boton, Tabla, Insignia, Modal, ErrorCarga, Esqueleto, Vacio, Icono } from '../../ui/index.js';
+import { Boton, Tabla, Insignia, Modal, ErrorCarga, Esqueleto, Vacio, Icono, Chip, PuntoEstado } from '../../ui/index.js';
 import Importar from './Importar.jsx';
 
 const POR_PAGINA = 25;
@@ -23,6 +23,7 @@ export default function Unidades() {
   const buscar = q.get('buscar') || '';
   const [texto, setTexto] = useState(buscar);
   const [detalleId, setDetalleId] = useState(null);
+  const soloMorosos = q.get('morosos') === '1';
 
   useEffect(() => {
     const t = setTimeout(() => texto !== buscar && setQuery({ buscar: texto, pagina: null }, { reemplazar: true }), 350);
@@ -31,7 +32,9 @@ export default function Unidades() {
   }, [texto]);
 
   const lista = useCarga(() => api.get(`/edificios/${eid}/unidades`, { buscar, pagina, por_pagina: POR_PAGINA }), [eid, buscar, pagina], { activo: tab === 'unidades' });
-  const filas = lista.datos?.datos || [];
+  const todas = lista.datos?.datos || [];
+  // «Solo morosos»: el API no tiene ese filtro; se aplica sobre la página cargada.
+  const filas = soloMorosos ? todas.filter((u) => u.deuda_cts > 0) : todas;
   const total = lista.datos?.total ?? filas.length;
 
   const pestanas = (
@@ -46,7 +49,7 @@ export default function Unidades() {
             role="tab"
             aria-selected={tab === t.id}
             onClick={() => setQuery({ tab: t.id === 'unidades' ? null : t.id })}
-            className={`h-12 whitespace-nowrap border-b-2 px-3 text-sm font-semibold ${tab === t.id ? 'border-acento text-acento' : 'border-transparent text-texto-suave hover:text-tinta'}`}
+            className={`h-11 whitespace-nowrap border-b-2 px-3 text-sm font-semibold transition-colors duration-rapida ${tab === t.id ? 'border-acento text-acento' : 'border-transparent text-texto-suave hover:text-tinta'}`}
           >
             {t.etiqueta}
           </button>
@@ -64,15 +67,27 @@ export default function Unidades() {
   );
 
   const columnas = [
-    { clave: 'codigo', titulo: 'Unidad', render: (u) => `Dpto ${u.codigo}`, movil: 'titulo' },
+    { clave: 'codigo', titulo: 'Unidad', render: (u) => `Dpto ${u.codigo}`, movil: 'titulo', className: 'whitespace-nowrap' },
     // El API manda propietario/inquilino como objeto { nombre, dni_ruc, celular, … }; el mock, como texto.
     { clave: 'propietario', titulo: 'Propietario', movil: 'sub', render: (u) => nombreDe(u.propietario) },
-    { clave: 'tipo', titulo: 'Tipo', render: (u) => (u.tipo ? u.tipo.charAt(0).toUpperCase() + u.tipo.slice(1) : '—'), movil: 'oculto' },
-    { clave: 'propietario_dni', titulo: 'DNI / RUC', render: (u) => enmascararDni(u.propietario?.dni_ruc ?? u.propietario_dni) },
-    { clave: 'celular', titulo: 'Celular', render: (u) => u.propietario?.celular || u.celular || '—', movil: 'oculto' },
-    { clave: 'inquilino', titulo: 'Inquilino', render: (u) => nombreDe(u.inquilino) || <span className="text-texto-apoyo">—</span> },
-    { clave: 'participacion_pct', titulo: 'Participación', alinear: 'der', render: (u) => formatearPct(u.participacion_pct, 2) },
-    { clave: 'deuda_cts', titulo: 'Deuda', alinear: 'der', movil: 'valor', render: (u) => (u.deuda_cts > 0 ? <Insignia estado="moroso" texto={formatearSoles(u.deuda_cts)} /> : <Insignia estado="al_dia" />) },
+    { clave: 'tipo', titulo: 'Tipo', render: (u) => (u.tipo ? u.tipo.charAt(0).toUpperCase() + u.tipo.slice(1) : '—'), movil: 'oculto', prioridad: 3 },
+    { clave: 'propietario_dni', titulo: 'DNI / RUC', render: (u) => enmascararDni(u.propietario?.dni_ruc ?? u.propietario_dni), prioridad: 2, className: 'whitespace-nowrap' },
+    { clave: 'celular', titulo: 'Celular', render: (u) => u.propietario?.celular || u.celular || '—', movil: 'oculto', prioridad: 3, className: 'whitespace-nowrap' },
+    { clave: 'inquilino', titulo: 'Inquilino', render: (u) => nombreDe(u.inquilino) || <span className="text-texto-apoyo">—</span>, prioridad: 2 },
+    { clave: 'participacion_pct', titulo: 'Particip.', alinear: 'der', render: (u) => formatearPct(u.participacion_pct, 2), className: 'whitespace-nowrap' },
+    {
+      clave: 'deuda_cts',
+      titulo: 'Deuda',
+      alinear: 'der',
+      movil: 'valor',
+      className: 'whitespace-nowrap',
+      render: (u) =>
+        u.deuda_cts > 0 ? (
+          <PuntoEstado estado="moroso" texto={<b className="tabular-nums text-alerta">{formatearSoles(u.deuda_cts)}</b>} className="justify-end" />
+        ) : (
+          <span className="text-texto-apoyo">Al día</span>
+        ),
+    },
   ];
 
   return (
@@ -85,11 +100,16 @@ export default function Unidades() {
           <Importar eid={eid} onVerUnidades={() => setQuery({ tab: null })} />
         ) : (
           <>
-            <label className="relative max-w-md">
-              <span className="sr-only">Buscar unidad o propietario</span>
-              <Icono nombre="buscar" tam={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-texto-apoyo" />
-              <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Buscar unidad o propietario" className="h-11 w-full rounded-control border border-borde-fuerte bg-superficie pl-9 pr-3 text-base focus:outline-none focus:ring-2 focus:ring-acento sm:text-sm" />
-            </label>
+            <div className="flex flex-wrap items-center gap-2" role="search" aria-label="Filtrar unidades">
+              <label className="relative min-w-[200px] max-w-md flex-1">
+                <span className="sr-only">Buscar unidad o propietario</span>
+                <Icono nombre="buscar" tam={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-texto-apoyo" />
+                <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Buscar unidad o propietario" className="h-11 w-full rounded-control border border-borde-fuerte bg-superficie pl-9 pr-3 text-base transition-colors duration-rapida focus:border-acento focus:outline-none focus:ring-2 focus:ring-acento lg:h-8 lg:text-sm" />
+              </label>
+              <Chip activo={soloMorosos} tono="alerta" onClick={() => setQuery({ morosos: soloMorosos ? null : 1 }, { reemplazar: true })}>
+                Solo morosos
+              </Chip>
+            </div>
             <div className="overflow-hidden rounded-tarjeta border border-borde bg-superficie">
               <Tabla
                 etiqueta="Unidades"
@@ -100,12 +120,12 @@ export default function Unidades() {
                 onReintentar={lista.recargar}
                 onFila={(u) => setDetalleId(u.id)}
                 vacio={
-                  buscar ? (
-                    <Vacio titulo="Ninguna unidad coincide" compacto />
+                  buscar || soloMorosos ? (
+                    <Vacio titulo={soloMorosos && !buscar ? 'Ninguna unidad morosa en esta página' : 'Ninguna unidad coincide'} texto="Prueba con otro filtro." icono="buscar" compacto />
                   ) : (
                     <Vacio titulo="Tu edificio aún no tiene unidades" texto="Cárgalas todas desde el Excel del padrón, sin registrar a nadie a mano." icono="edificio">
                       <Guarda permiso="unidades.importar">
-                        <Boton icono="subir" onClick={() => setQuery({ tab: 'importar' })}>
+                        <Boton icono="excel" onClick={() => setQuery({ tab: 'importar' })}>
                           Importar Excel
                         </Boton>
                       </Guarda>

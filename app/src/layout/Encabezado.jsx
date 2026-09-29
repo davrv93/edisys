@@ -4,11 +4,15 @@ import { BotonIcono, MenuAcciones } from '../ui/index.js';
  * Cabecera de pantalla (v2): 56 px en escritorio. Título de 22 px a la izquierda; a la derecha,
  * `acciones` (la principal y lo que deba verse) y el menú `⋯` con las `secundarias`
  * (Imprimir, Exportar…): ninguna acción se pierde, pasan al menú.
- * secundarias: [{ etiqueta, icono?, onClick?, href?, peligro?, oculto? }] (ver ui/Menu.jsx).
+ * secundarias: [{ etiqueta, icono?, onClick?, href?, peligro?, oculto?, soloMovil? }] (ver ui/Menu.jsx).
+ * `soloMovil`: la acción ya está a la vista en escritorio (en `acciones`) y en el celular pasa al menú.
  * En móvil: título y `⋯` en una fila; las acciones debajo, en una sola línea que se desliza si no cabe.
  */
 export default function Encabezado({ titulo, subtitulo, acciones, secundarias, volver, children }) {
-  const menu = secundarias?.some((x) => x && !x.oculto) ? <MenuAcciones items={secundarias} lado="abajo" /> : null;
+  const visibles = (secundarias || []).filter((x) => x && !x.oculto);
+  const escritorio = visibles.filter((x) => !x.soloMovil);
+  const menu = visibles.length ? <MenuAcciones items={visibles} lado="abajo" /> : null;
+  const menuEscritorio = escritorio.length ? <MenuAcciones items={escritorio} lado="abajo" /> : null;
   return (
     <header className="border-b border-borde bg-superficie">
       <div className="flex flex-col gap-2 px-4 py-3 lg:min-h-topbar lg:flex-row lg:items-center lg:justify-between lg:gap-4 lg:px-6 lg:py-2">
@@ -20,10 +24,10 @@ export default function Encabezado({ titulo, subtitulo, acciones, secundarias, v
           </div>
           {menu && <span className="lg:hidden">{menu}</span>}
         </div>
-        {(acciones || menu) && (
+        {(acciones || menuEscritorio) && (
           <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-0.5 lg:mx-0 lg:shrink-0 lg:overflow-visible lg:px-0 lg:pb-0">
             {acciones}
-            {menu && <span className="hidden lg:inline-flex">{menu}</span>}
+            {menuEscritorio && <span className="hidden lg:inline-flex">{menuEscritorio}</span>}
           </div>
         )}
       </div>

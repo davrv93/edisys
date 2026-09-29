@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../../lib/api.js';
 import { useCarga } from '../../lib/useCarga.js';
-import { formatearSoles, formatearPct } from '../../lib/dinero.js';
+import { formatearSoles, formatearSolesCorto, formatearPct } from '../../lib/dinero.js';
 import { formatearFecha, mesDePeriodo } from '../../lib/fechas.js';
 import { ruta, useQuery } from '../../lib/nav.jsx';
 import { useEid, useSesion, Guarda } from '../../layout/Sesion.jsx';
 import { usePeriodo } from '../../layout/usePeriodo.js';
 import Encabezado, { Contenido } from '../../layout/Encabezado.jsx';
-import { Boton, TarjetaKPI, NodoDesplegable, SelectorPeriodo, ErrorCarga, Vacio, Esqueleto, Modal, Icono, Campo, SubirArchivo, useToast, BotonIcono } from '../../ui/index.js';
+import { Boton, FranjaKPI, NodoDesplegable, SelectorPeriodo, ErrorCarga, Vacio, Esqueleto, Modal, Icono, Campo, SubirArchivo, useToast, BotonIcono } from '../../ui/index.js';
 
 /** Ancestros de un nodo con id legible: «egr.administracion.conserjeria» → [egr, egr.administracion, …]. */
 export function ancestros(id) {
@@ -66,7 +66,13 @@ export default function Balance() {
     const todos = [...new Set([...iniciales, ...extra])];
     setAbiertos(new Set(todos));
     (async () => {
-      for (const id of todos) if (id !== 'raiz' && !iniciales0[id]) await cargarHijos(id);
+      // Solo se piden los nodos que existen: «?abrir=egresos» (un id que no es) no debe dar 404.
+      const conocidos = new Set(['raiz', ...Object.values(iniciales0).flat().map((n) => n.id)]);
+      for (const id of todos) {
+        if (id === 'raiz' || iniciales0[id] || !conocidos.has(id)) continue;
+        const lista = await cargarHijos(id);
+        for (const n of lista || []) conocidos.add(n.id);
+      }
       if (abrir) setTimeout(() => document.querySelector(`[data-nodo="${CSS.escape(abrir)}"] [role="treeitem"]`)?.focus(), 50);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -116,20 +122,42 @@ export default function Balance() {
     }
   };
 
-  // Filas visibles del árbol (orden en profundidad).
-  const filas = useMemo(() => {
-    if (!raiz) return [];
-    const out = [{ nodo: { ...raiz, id: 'raiz', tiene_hijos: true }, nivel: 0 }];
-    const recorrer = (id, nivel) => {
-      if (!abiertos.has(id)) return;
-      for (const h of hijos[id] || []) {
-        out.push({ nodo: h, nivel });
-        if (h.tipo !== 'documento') recorrer(h.id, nivel + 1);
-      }
-    };
-    recorrer('raiz', 1);
-    return out;
-  }, [raiz, hijos, abiertos]);
+  // Árbol anidado: cada rama se despliega con grid-template-rows (0fr → 1fr, 200 ms).
+  // Las ramas plegadas quedan «inert» (fuera del foco y de los lectores) hasta que se abren.
+  const fila = (nodo, nivel) => (
+    <div data-nodo={nodo.id}>
+      <NodoDesplegable
+        nodo={nodo}
+        nivel={nivel}
+        raiz={nivel === 0}
+        abierto={abiertos.has(nodo.id)}
+        cargando={!!cargando[nodo.id]}
+        error={errores[nodo.id]}
+        onAlternar={() => (nivel === 0 ? null : alternar(nodo))}
+        onReintentar={() => cargarHijos(nodo.id)}
+        onDocumento={abrirDocumento}
+        seleccionado={doc?.nodo?.id === nodo.id}
+      />
+    </div>
+  );
+  const rama = (id, nivel) => {
+    const lista = hijos[id];
+    if (!lista) return null;
+    const abierta = abiertos.has(id);
+    return (
+      <div role="group" className="desplegable relative" data-abierto={abierta} inert={abierta ? undefined : ''}>
+        <div>
+          <span aria-hidden="true" className="pointer-events-none absolute bottom-2 top-0 z-10 w-px bg-borde" style={{ left: `${22 + Math.min(nivel - 1, 5) * 20}px` }} />
+          {lista.map((h) => (
+            <div key={h.id}>
+              {fila(h, nivel)}
+              {h.tipo !== 'documento' && rama(h.id, nivel + 1)}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   const migas = useMemo(() => {
     const sel = doc?.nodo?.id || q.get('abrir');
@@ -144,11 +172,8 @@ export default function Balance() {
   const acciones = (
     <>
       <SelectorPeriodo periodo={periodo} onCambio={setPeriodo} />
-      <Boton variante="secundario" onClick={expandirTodo} disabled={!raiz}>
+      <Boton variante="secundario" icono="abajo" onClick={expandirTodo} disabled={!raiz}>
         Expandir todo
-      </Boton>
-      <Boton variante="secundario" icono="descargar" onClick={() => window.print()} className="hidden sm:inline-flex">
-        Imprimir
       </Boton>
       <Guarda permiso="egresos.registrar">
         <Boton icono="mas_signo" onClick={() => setEgresoAbierto(true)}>
@@ -157,10 +182,11 @@ export default function Balance() {
       </Guarda>
     </>
   );
+  const secundarias = [{ etiqueta: 'Imprimir', icono: 'imprimir', onClick: () => window.print() }];
 
   return (
     <>
-      <Encabezado titulo="Balance por nodos" acciones={acciones} />
+      <Encabezado titulo="Balance por nodos" acciones={acciones} secundarias={secundarias} />
       <Contenido>
         {resumen.error ? (
           <ErrorCarga error={resumen.error} onReintentar={resumen.recargar} />
@@ -168,21 +194,24 @@ export default function Balance() {
           <Vacio titulo={`Sin movimientos en ${mesDePeriodo(periodo)}`} texto="Cuando se registren pagos y egresos del periodo, aparecerán aquí con su sustento." />
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-              <TarjetaKPI cargando={!k} titulo="Ingresos cobrados" valor={formatearSoles(k?.ingresos_cts)} nota="Cuenta lo cobrado, no lo emitido" />
-              <TarjetaKPI cargando={!k} titulo="Egresos" valor={formatearSoles(k?.egresos_cts)} nota={k?.banco_cts != null ? `Banco: ${formatearSoles(k.banco_cts)}` : undefined} />
-              <TarjetaKPI cargando={!k} tono="acento" titulo="Saldo del mes" valor={formatearSoles(k?.saldo_cts)} nota="Ingresos − egresos" />
-              <TarjetaKPI
-                cargando={!k}
-                tono="alerta"
-                titulo="Morosidad"
-                valor={k ? formatearPct(k.morosidad?.pct) : ''}
-                nota={k ? `${formatearSoles(k.morosidad?.monto_cts)} emitido y no cobrado` : ''}
-                to={s.tiene('recibos.ver') ? ruta('recibos', { periodo, estado: 'vencido' }) : undefined}
-              />
-            </div>
+            <FranjaKPI
+              etiqueta={`Balance de ${mesDePeriodo(periodo)}`}
+              cargando={!k}
+              principal={{ titulo: 'Saldo del mes', tono: 'acento', valor: formatearSoles(k?.saldo_cts), nota: 'Ingresos − egresos' }}
+              items={[
+                { titulo: 'Ingresos cobrados', valor: formatearSolesCorto(k?.ingresos_cts), valorCompleto: formatearSoles(k?.ingresos_cts), nota: 'Lo cobrado, no lo emitido' },
+                { titulo: 'Egresos', valor: formatearSolesCorto(k?.egresos_cts), valorCompleto: formatearSoles(k?.egresos_cts), nota: k?.banco_cts != null ? `Banco: ${formatearSolesCorto(k.banco_cts)}` : undefined },
+                {
+                  titulo: 'Morosidad',
+                  tono: 'alerta',
+                  valor: k ? formatearPct(k.morosidad?.pct) : '',
+                  nota: k ? `${formatearSoles(k.morosidad?.monto_cts)} por cobrar` : '',
+                  to: s.tiene('recibos.ver') ? ruta('recibos', { periodo, estado: 'vencido' }) : undefined,
+                },
+              ]}
+            />
 
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-5">
               <section className="flex min-w-0 flex-1 flex-col gap-3">
                 {migas.length > 0 && (
                   <nav aria-label="Ruta del nodo" className="flex flex-wrap items-center gap-2 text-sm text-texto-apoyo">
@@ -196,7 +225,7 @@ export default function Balance() {
                   </nav>
                 )}
                 <div className="overflow-hidden rounded-tarjeta border border-borde bg-superficie">
-                  <div className="hidden grid-cols-[1fr_96px_150px_72px] gap-x-3 bg-fondo py-3 pl-4 pr-4 text-xs font-semibold text-texto-apoyo sm:grid" aria-hidden="true">
+                  <div className="hidden grid-cols-[1fr_88px_140px_96px] gap-x-3 bg-fondo py-2 pl-4 pr-4 text-xs font-semibold text-texto-apoyo sm:grid" aria-hidden="true">
                     <span>Nodo</span>
                     <span>Documentos</span>
                     <span className="text-right">Monto</span>
@@ -210,27 +239,13 @@ export default function Balance() {
                     </div>
                   ) : (
                     <div role="tree" aria-label={`Balance de ${mesDePeriodo(periodo)}`}>
-                      {filas.map(({ nodo, nivel }) => (
-                        <div key={nodo.id} data-nodo={nodo.id}>
-                          <NodoDesplegable
-                            nodo={nodo}
-                            nivel={nivel}
-                            raiz={nivel === 0}
-                            abierto={abiertos.has(nodo.id)}
-                            cargando={!!cargando[nodo.id]}
-                            error={errores[nodo.id]}
-                            onAlternar={() => (nivel === 0 ? null : alternar(nodo))}
-                            onReintentar={() => cargarHijos(nodo.id)}
-                            onDocumento={abrirDocumento}
-                            seleccionado={doc?.nodo?.id === nodo.id}
-                          />
-                        </div>
-                      ))}
+                      {fila({ ...raiz, id: 'raiz', tiene_hijos: true }, 0)}
+                      {rama('raiz', 1)}
                     </div>
                   )}
                 </div>
                 {resumen.datos?.conciliacion && (
-                  <div className="flex items-start gap-2 rounded-tarjeta border border-acento-borde bg-acento-suave p-4 text-sm text-acento-hover">
+                  <div className="flex items-start gap-2 rounded-tarjeta border border-acento-borde bg-acento-suave p-3 text-sm text-acento-hover">
                     <Icono nombre="check" tam={18} className="mt-0.5" />
                     {resumen.datos.conciliacion}
                   </div>
@@ -239,7 +254,7 @@ export default function Balance() {
               </section>
 
               {doc && (
-                <aside className="hidden w-[340px] shrink-0 lg:block">
+                <aside className="sticky top-4 hidden w-[340px] shrink-0 animate-entrar-derecha lg:block">
                   <VisorDocumento doc={doc} onCerrar={() => setDoc(null)} />
                 </aside>
               )}

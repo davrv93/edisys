@@ -7,7 +7,7 @@ import { useQuery } from '../../lib/nav.jsx';
 import { useEid, useSesion, Guarda } from '../../layout/Sesion.jsx';
 import { usePeriodo } from '../../layout/usePeriodo.js';
 import Encabezado, { Contenido } from '../../layout/Encabezado.jsx';
-import { Boton, Tabla, Insignia, SelectorPeriodo, ErrorCarga, Vacio, Esqueleto, Icono, useDialog, useToast } from '../../ui/index.js';
+import { Boton, Tabla, Insignia, SelectorPeriodo, ErrorCarga, Vacio, Esqueleto, Icono, Chip, MenuAcciones, useDialog, useToast } from '../../ui/index.js';
 import PagoModal from './PagoModal.jsx';
 import { nombreUnidad } from '../../lib/unidad.js';
 
@@ -54,7 +54,17 @@ export default function Recibos() {
 
   const filas = (lista.datos?.datos || (Array.isArray(lista.datos) ? lista.datos : [])).map((f) => ({ ...f, unidad: nombreUnidad(f.unidad), estado: f.vencido ? 'vencido' : f.estado }));
   const total = lista.datos?.total ?? filas.length;
-  const conteos = lista.datos?.conteos;
+  // Contadores de los chips: los del API si los manda; si no, se piden los totales (por_pagina=1).
+  const totales = useCarga(
+    async () => {
+      const base = { periodo, buscar, por_pagina: 1 };
+      const [todos, pagado, vencido, parcial] = await Promise.all(['', 'pagado', 'vencido', 'pagado_parcial'].map((e) => api.get(`/edificios/${eid}/recibos`, { ...base, estado: e })));
+      return { todos: todos?.total, pagado: pagado?.total, vencido: vencido?.total, pagado_parcial: parcial?.total };
+    },
+    [eid, periodo, buscar],
+    { activo: !propio && !!lista.datos && !lista.datos?.conteos },
+  );
+  const conteos = lista.datos?.conteos || totales.datos;
   const r0 = idSel ? detalle.datos : null;
   const r = r0 && {
     ...r0,
@@ -138,7 +148,7 @@ export default function Recibos() {
     <>
       <SelectorPeriodo periodo={periodo} onCambio={(p) => setQuery({ periodo: p, pagina: null, id: null }, { reemplazar: true })} />
       <Guarda permiso="recibos.emitir">
-        <Boton variante="secundario" onClick={generar} cargando={trabajando === 'generar'}>
+        <Boton variante="secundario" icono="borrador" onClick={generar} cargando={trabajando === 'generar'} className="hidden lg:inline-flex">
           Generar borradores
         </Boton>
         <Boton onClick={emitir} cargando={trabajando === 'emitir'} icono="recibo">
@@ -148,36 +158,38 @@ export default function Recibos() {
     </>
   );
 
+  const secundarias = propio
+    ? []
+    : [{ etiqueta: 'Generar borradores', icono: 'borrador', onClick: generar, soloMovil: true, oculto: !s.tiene('recibos.emitir') || trabajando === 'generar' }];
+
   const columnas = [
-    { clave: 'unidad', titulo: 'Unidad', movil: 'titulo' },
-    { clave: 'propietario', titulo: 'Propietario', movil: 'sub' },
+    { clave: 'unidad', titulo: 'Unidad', movil: 'titulo', className: 'whitespace-nowrap' },
+    { clave: 'propietario', titulo: 'Propietario', movil: 'sub', render: (f) => <span className="line-clamp-1" title={f.propietario}>{f.propietario}</span> },
     ...(propio ? [{ clave: 'periodo', titulo: 'Periodo', render: (f) => nombrePeriodo(f.periodo) }] : []),
-    { clave: 'total_cts', titulo: 'Total', alinear: 'der', render: (f) => formatearSoles(f.total_cts), movil: 'valor' },
-    { clave: 'estado', titulo: 'Estado', render: (f) => <Insignia estado={f.estado} /> },
+    { clave: 'total_cts', titulo: 'Total', alinear: 'der', render: (f) => formatearSoles(f.total_cts), movil: 'valor', className: 'whitespace-nowrap' },
+    { clave: 'estado', titulo: 'Estado', render: (f) => <Insignia estado={f.estado} />, movil: 'valor2' },
   ];
 
-  const chip = (valor, etiqueta, n, tono) => {
-    const activo = estado === valor;
-    const base = tono === 'alerta' && !activo ? 'bg-alerta-suave text-alerta border-alerta-borde' : activo ? 'bg-tinta text-white border-tinta' : 'bg-superficie border-borde-fuerte text-tinta';
-    return (
-      <button type="button" aria-pressed={activo} onClick={() => setQuery({ estado: valor || null, pagina: null }, { reemplazar: true })} className={`h-11 rounded-control border px-3 text-sm font-semibold sm:h-10 ${base}`}>
-        {etiqueta}
-        {n != null ? ` · ${n}` : ''}
-      </button>
-    );
-  };
+  const chip = (valor, etiqueta, n, tono) => (
+    <Chip key={valor || 'todos'} activo={estado === valor} tono={tono} contador={n} onClick={() => setQuery({ estado: valor || null, pagina: null, id: null }, { reemplazar: true })}>
+      {etiqueta}
+    </Chip>
+  );
 
   const vistaLista = (
-    <section className={`flex min-w-0 flex-col gap-3 lg:w-[440px] lg:shrink-0 xl:w-[480px] ${idSel ? 'hidden lg:flex' : 'flex'}`}>
+    <section className={`flex min-w-0 flex-col gap-3 lg:w-[400px] lg:shrink-0 xl:w-[460px] ${idSel ? 'hidden lg:flex' : 'flex'}`}>
       {!propio && (
-        <div className="flex flex-wrap items-center gap-2">
-          {chip('', 'Todos', conteos?.todos)}
-          {chip('pagado', 'Pagados', conteos?.pagado)}
-          {chip('vencido', 'Vencidos', conteos?.vencido, 'alerta')}
-          <label className="relative min-w-[160px] flex-1">
+        <div className="flex flex-col gap-2" role="search" aria-label="Filtrar recibos">
+          <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 lg:mx-0 lg:flex-wrap lg:px-0" role="group" aria-label="Estado">
+            {chip('', 'Todos', conteos?.todos)}
+            {chip('pagado', 'Pagados', conteos?.pagado, 'acento')}
+            {chip('vencido', 'Vencidos', conteos?.vencido, 'alerta')}
+            {chip('pagado_parcial', 'Parciales', conteos?.pagado_parcial, 'aviso')}
+          </div>
+          <label className="relative min-w-[140px] flex-1">
             <span className="sr-only">Buscar unidad o propietario</span>
             <Icono nombre="buscar" tam={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-texto-apoyo" />
-            <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Buscar unidad" className="h-11 w-full rounded-control border border-borde-fuerte bg-superficie pl-9 pr-3 text-base focus:outline-none focus:ring-2 focus:ring-acento sm:h-10 sm:text-sm" />
+            <input type="search" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Buscar unidad" className="h-11 w-full rounded-control border border-borde-fuerte bg-superficie pl-9 pr-3 text-base transition-colors duration-rapida focus:border-acento focus:outline-none focus:ring-2 focus:ring-acento lg:h-8 lg:text-sm" />
           </label>
         </div>
       )}
@@ -210,7 +222,7 @@ export default function Recibos() {
   );
 
   const vistaDetalle = idSel && (
-    <section className="flex min-w-0 flex-1 flex-col gap-4 rounded-tarjeta border border-borde bg-superficie p-4 lg:p-8">
+    <section key={idSel} className="flex min-w-0 flex-1 flex-col gap-4 rounded-tarjeta border border-borde bg-superficie p-4 animate-entrar-derecha lg:sticky lg:top-4 lg:p-6" aria-label="Detalle del recibo">
       <button type="button" onClick={() => setQuery({ id: null })} className="-ml-1 flex h-11 items-center gap-1 self-start text-sm font-semibold text-acento lg:hidden">
         <Icono nombre="volver" tam={18} /> Volver a la lista
       </button>
@@ -231,29 +243,26 @@ export default function Recibos() {
                 Descargar PDF
               </Boton>
               <Guarda permiso="recibos.emitir">
-                <Boton variante="secundario" icono="enviar" onClick={enviarCorreo}>
+                <Boton variante="secundario" icono="correo" onClick={enviarCorreo}>
                   Enviar por correo
                 </Boton>
               </Guarda>
               <Guarda permiso="whatsapp.enviar">
-                <Boton icono="whatsapp" onClick={enviarWhatsApp}>
+                <Boton variante="secundario" icono="whatsapp" onClick={enviarWhatsApp}>
                   Enviar por WhatsApp
                 </Boton>
               </Guarda>
               {r.saldo_cts > 0 && r.estado !== 'anulado' && (
                 <Guarda permiso={['pagos.registrar', 'pagos.informar']}>
-                  <Boton icono="mas_signo" onClick={() => setPagoAbierto(true)}>
+                  <Boton icono="voucher" onClick={() => setPagoAbierto(true)}>
                     {esAdmin ? 'Registrar pago' : 'Pagar'}
                   </Boton>
                 </Guarda>
               )}
-              {!r.pagos?.length && r.estado !== 'anulado' && (
-                <Guarda permiso="recibos.emitir">
-                  <Boton variante="fantasma" onClick={anular}>
-                    Anular
-                  </Boton>
-                </Guarda>
-              )}
+              <MenuAcciones
+                etiqueta="Más acciones del recibo"
+                items={[{ etiqueta: 'Anular recibo', icono: 'anulado', peligro: true, onClick: anular, oculto: !(!r.pagos?.length && r.estado !== 'anulado' && s.tiene('recibos.emitir')) }]}
+              />
             </>
           }
         />
@@ -264,13 +273,13 @@ export default function Recibos() {
   return (
     <>
       {dialogEl}
-      <Encabezado titulo={propio ? 'Mis recibos' : `Recibos · ${nombrePeriodo(periodo)}`} acciones={acciones} />
+      <Encabezado titulo={propio ? 'Mis recibos' : `Recibos · ${nombrePeriodo(periodo)}`} acciones={acciones} secundarias={secundarias} />
       <Contenido>
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-5">
           {vistaLista}
           {vistaDetalle || (
             <div className="hidden flex-1 rounded-tarjeta border border-dashed border-borde-fuerte lg:block">
-              <Vacio titulo="Elige un recibo" texto="Verás su desglose, la foto del medidor y sus pagos." icono="recibo" />
+              <Vacio titulo="Elige un recibo" texto="Verás su desglose, la foto del medidor y sus pagos." icono="recibo" compacto />
             </div>
           )}
         </div>
@@ -312,7 +321,7 @@ export function DetalleRecibo({ r, edificio, acciones }) {
           <span className="text-sm text-texto-apoyo">
             Recibo N.º {r.numero} · {edificio}
           </span>
-          <h2 className="font-titulo text-2xl font-semibold lg:text-3xl">
+          <h2 className="font-titulo text-xl font-semibold lg:text-2xl">
             {r.unidad} · {r.propietario}
           </h2>
           <span className="text-sm text-texto-suave">
@@ -328,16 +337,16 @@ export function DetalleRecibo({ r, edificio, acciones }) {
           <tbody>
             {lineas.map((l, i) => (
               <tr key={i} className="border-b border-superficie-2">
-                <td className="py-3 pr-3">
+                <td className="py-2.5 pr-3">
                   {l.concepto}
                   {l.detalle && <div className="text-xs text-texto-apoyo">{l.detalle}</div>}
                 </td>
-                <td className="py-3 text-right font-semibold tabular-nums">{formatearSoles(l.monto_cts)}</td>
+                <td className="py-2.5 text-right font-semibold tabular-nums">{formatearSoles(l.monto_cts)}</td>
               </tr>
             ))}
             <tr>
               <td className="pt-4 text-lg font-semibold">Total</td>
-              <td className="pt-4 whitespace-nowrap text-right font-titulo text-3xl font-semibold tabular-nums">{formatearSoles(r.total_cts)}</td>
+              <td className="pt-4 whitespace-nowrap text-right font-titulo text-kpi font-semibold tabular-nums">{formatearSoles(r.total_cts)}</td>
             </tr>
             {r.saldo_cts > 0 && r.saldo_cts !== r.total_cts && (
               <tr>
@@ -388,8 +397,11 @@ export function DetalleRecibo({ r, edificio, acciones }) {
         </div>
       )}
 
-      <p className="rounded-control bg-fondo p-3 text-xs text-texto-apoyo">Recibo interno de mantenimiento; no es un comprobante SUNAT.</p>
-      {acciones && <div className="flex flex-col gap-2 border-t border-borde pt-4 sm:flex-row sm:flex-wrap sm:justify-end">{acciones}</div>}
+      <p className="flex items-center gap-2 rounded-control bg-fondo p-3 text-xs text-texto-apoyo">
+        <Icono nombre="info" tam={14} />
+        Recibo interno de mantenimiento; no es un comprobante SUNAT.
+      </p>
+      {acciones && <div className="flex flex-wrap items-center gap-2 border-t border-borde pt-4 sm:justify-end [&>a]:flex-1 [&>button]:flex-1 sm:[&>a]:flex-none sm:[&>button]:flex-none">{acciones}</div>}
     </>
   );
 }

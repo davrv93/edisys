@@ -103,3 +103,19 @@ export function pctDe(parte, total) {
   if (!total) return 0;
   return Math.round((Number(parte) * 1000) / Number(total)) / 10;
 }
+
+/**
+ * Céntimos → cifra corta para la franja de KPI cuando no cabe: «S/ 19,5 mil», «S/ 1,2 mill.».
+ * Por debajo de S/ 10.000 devuelve el formato completo. El valor exacto va en el tooltip.
+ */
+export function formatearSolesCorto(cts) {
+  if (cts === null || cts === undefined || cts === '') return '—';
+  const n = Number(cts);
+  if (!Number.isFinite(n)) return '—';
+  const soles = Math.abs(n) / 100;
+  const signo = n < 0 ? '-' : '';
+  const limpio = (x) => formatearNumero(x, 1).replace(/,0$/, '');
+  if (soles < 10000) return formatearSoles(cts);
+  if (soles < 1000000) return `${signo}S/ ${limpio(soles / 1000)} mil`;
+  return `${signo}S/ ${limpio(soles / 1000000)} mill.`;
+}

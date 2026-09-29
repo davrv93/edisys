@@ -16,7 +16,8 @@ export default function NodoDesplegable({
 
   const onKeyDown = (e) => {
     const arbol = e.currentTarget.closest('[role="tree"]');
-    const items = arbol ? [...arbol.querySelectorAll('[role="treeitem"]')] : [];
+    // Solo las filas visibles: las de ramas plegadas están dentro de un grupo «inert».
+    const items = arbol ? [...arbol.querySelectorAll('[role="treeitem"]')].filter((x) => !x.closest('[inert]')) : [];
     const i = items.indexOf(e.currentTarget);
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -56,33 +57,42 @@ export default function NodoDesplegable({
       onKeyDown={onKeyDown}
       onClick={onClick}
       className={[
-        'grid cursor-pointer grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 border-t border-superficie-2 py-3 pr-4 text-sm',
-        'sm:grid-cols-[1fr_96px_150px_72px]',
+        'relative grid min-h-fila cursor-pointer grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 border-t border-superficie-2 py-2 pr-4 text-sm transition-colors duration-rapida',
+        'sm:grid-cols-[1fr_88px_140px_96px]',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-acento',
         raiz ? 'bg-acento-suave' : seleccionado ? 'bg-acento-suave/60' : 'hover:bg-fondo',
       ].join(' ')}
       style={sangria}
     >
-      <span className={`flex min-w-0 items-center gap-2 ${raiz ? 'font-titulo text-lg sm:text-xl font-semibold' : nivel === 1 ? 'text-base font-semibold' : ''} ${esDoc && seleccionado ? 'text-acento font-semibold' : ''}`}>
+      <span className={`flex min-w-0 items-center gap-2 ${raiz ? 'font-titulo text-lg font-semibold' : nivel === 1 ? 'text-base font-semibold' : ''} ${esDoc && seleccionado ? 'text-acento font-semibold' : ''}`}>
         {esDoc ? (
           <span className={`rounded px-1.5 py-0.5 text-[11px] font-bold ${seleccionado ? 'bg-acento text-white' : 'bg-borde text-egreso'}`}>{tipoDoc}</span>
         ) : desplegable ? (
           <span className="flex h-5 w-5 items-center justify-center text-texto-apoyo">
-            {cargando ? <Spinner className="h-3.5 w-3.5" /> : <Icono nombre={abierto ? 'abajo' : 'der'} tam={16} />}
+            {cargando ? <Spinner className="h-3.5 w-3.5" /> : <Icono nombre="der" tam={16} className={`transition-transform duration-media ${abierto ? 'rotate-90' : ''}`} />}
           </span>
         ) : (
           <span className="h-5 w-5" />
         )}
         <span className="min-w-0 truncate">{nodo.nombre}</span>
         {nodo.sin_sustento && (
-          <span className="shrink-0 rounded-full border border-aviso-borde bg-aviso-suave px-2 py-0.5 text-[11px] font-semibold text-aviso">sin sustento</span>
+          <span className="shrink-0 rounded-full border border-aviso-borde bg-aviso-suave px-2 py-0.5 text-[11px] font-semibold text-aviso-texto">sin sustento</span>
         )}
       </span>
       <span className="hidden text-texto-suave tabular-nums sm:block">{esDoc ? '—' : nodo.documentos ?? ''}</span>
-      <span className={`text-right tabular-nums ${raiz ? 'text-lg font-semibold text-acento' : nivel === 1 ? 'text-base font-semibold' : ''} ${nodo.es_sustento ? 'text-texto-apoyo' : ''}`}>
+      <span className={`text-right tabular-nums ${raiz ? 'font-titulo text-lg font-semibold text-acento' : nivel === 1 ? 'text-base font-semibold' : ''} ${nodo.es_sustento ? 'text-texto-apoyo' : ''}`}>
         {nodo.es_sustento ? 'sustento' : formatearSoles(nodo.total_cts)}
       </span>
-      <span className="hidden text-right text-texto-suave tabular-nums sm:block">{nodo.pct_padre != null && !esDoc ? formatearPct(nodo.pct_padre) : ''}</span>
+      <span className="hidden items-center justify-end gap-2 text-right text-xs text-texto-suave tabular-nums sm:flex">
+        {nodo.pct_padre != null && !esDoc && !raiz && (
+          <>
+            <span className="h-1 w-8 overflow-hidden rounded-chip bg-superficie-2" aria-hidden="true">
+              <span className="crece-x block h-1 rounded-chip bg-serie-1" style={{ width: `${Math.min(100, Math.max(0, Number(nodo.pct_padre)))}%` }} />
+            </span>
+            {formatearPct(nodo.pct_padre)}
+          </>
+        )}
+      </span>
       {error && (
         <span className="col-span-full flex items-center gap-2 text-sm text-alerta" role="alert">
           <Icono nombre="alerta" tam={14} /> No se pudo abrir este nodo.

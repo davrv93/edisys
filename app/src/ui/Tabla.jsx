@@ -6,7 +6,7 @@ import { Esqueleto, ErrorCarga, Vacio } from './EstadosPantalla.jsx';
  * Tabla con orden, paginación (en el servidor), fila seleccionable y los tres estados.
  * En móvil (< 640 px) se convierte en lista de tarjetas, nunca en scroll horizontal.
  *
- * columnas: [{ clave, titulo, render?(fila), alinear?: 'izq'|'der', ordenable?, ancho?, movil?: 'titulo'|'sub'|'valor'|'dato'|'oculto', className?,
+ * columnas: [{ clave, titulo, render?(fila), alinear?: 'izq'|'der', ordenable?, ancho?, movil?: 'titulo'|'sub'|'valor'|'valor2'|'dato'|'oculto', className?,
  *             prioridad?: 1|2|3 }]  (v2: en tablet se ocultan las columnas de prioridad 2 y 3; en 1024–1279, las de 3)
  * paginacion: { pagina, porPagina, total, onPagina }
  */
@@ -33,7 +33,8 @@ export default function Tabla({
   const titulo = columnas.find((c) => c.movil === 'titulo') || columnas[0];
   const sub = columnas.find((c) => c.movil === 'sub');
   const val = columnas.find((c) => c.movil === 'valor');
-  const datos = columnas.filter((c) => c !== titulo && c !== sub && c !== val && c.movil !== 'oculto');
+  const val2 = columnas.find((c) => c.movil === 'valor2'); // v2: debajo de la cifra, a la derecha (p. ej. la insignia)
+  const datos = columnas.filter((c) => c !== titulo && c !== sub && c !== val && c !== val2 && c.movil !== 'oculto');
 
   return (
     <div className={cargando ? 'opacity-60 transition-opacity' : ''}>
@@ -110,7 +111,12 @@ export default function Tabla({
                     <div className="truncate text-base font-semibold text-tinta">{valor(titulo, f)}</div>
                     {sub && <div className="truncate text-sm text-texto-suave">{valor(sub, f)}</div>}
                   </div>
-                  {val && <div className="shrink-0 text-base font-semibold tabular-nums">{valor(val, f)}</div>}
+                  {(val || val2) && (
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      {val && <div className="text-base font-semibold tabular-nums">{valor(val, f)}</div>}
+                      {val2 && <div>{valor(val2, f)}</div>}
+                    </div>
+                  )}
                 </div>
                 {datos.length > 0 && (
                   <dl className="grid w-full grid-cols-2 gap-x-3 gap-y-0.5 text-xs">

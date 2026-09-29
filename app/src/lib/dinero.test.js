@@ -69,3 +69,16 @@ describe('porcentajes y números', () => {
     expect(pctDe(1, 0)).toBe(0);
   });
 });
+
+import { formatearSolesCorto } from './dinero.js';
+describe('formatearSolesCorto (franja de KPI)', () => {
+  it('abrevia desde S/ 10.000 y deja el resto completo', () => {
+    expect(formatearSolesCorto(1946000)).toBe('S/ 19,5 mil');
+    expect(formatearSolesCorto(3412000)).toBe('S/ 34,1 mil');
+    expect(formatearSolesCorto(2000000)).toBe('S/ 20 mil');
+    expect(formatearSolesCorto(51000)).toBe('S/ 510,00');
+    expect(formatearSolesCorto(-1946000)).toBe('-S/ 19,5 mil');
+    expect(formatearSolesCorto(125000000)).toBe('S/ 1,3 mill.');
+    expect(formatearSolesCorto(null)).toBe('—');
+  });
+});

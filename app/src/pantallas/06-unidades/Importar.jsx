@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { subir, api, urlApi } from '../../lib/api.js';
 import { formatearPct } from '../../lib/dinero.js';
 import { revisarSuma, enmascararDni } from '../../lib/participacion.js';
-import { Boton, SubirArchivo, TarjetaKPI, Vacio, useDialog, useToast } from '../../ui/index.js';
+import { Boton, SubirArchivo, FranjaKPI, Icono, Vacio, useDialog, useToast } from '../../ui/index.js';
+
+const hecho3 = (paso) => paso === 3;
 
 const TIPOS_XLSX = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
 
@@ -68,15 +70,25 @@ export default function Importar({ eid, onVerUnidades }) {
     <div className="flex flex-col gap-4 lg:gap-6">
       {dialogEl}
       <ol className="flex flex-wrap items-center gap-3 text-sm" aria-label="Pasos de la importación">
-        {['Subir archivo', 'Validar', 'Confirmar'].map((t, i) => (
-          <li key={t} className="flex items-center gap-3">
-            {i > 0 && <span className="h-0.5 w-8 bg-borde-fuerte sm:w-12" aria-hidden="true" />}
-            <span className={`flex items-center gap-2 font-semibold ${paso > i ? 'text-acento' : 'text-texto-apoyo'}`} aria-current={paso === i + 1 ? 'step' : undefined}>
-              <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs ${paso > i ? 'bg-acento text-white' : 'border border-borde-fuerte'}`}>{i + 1}</span>
-              {t}
-            </span>
-          </li>
-        ))}
+        {['Subir archivo', 'Validar', 'Confirmar'].map((t, i) => {
+          const hecho = paso > i + 1 || (hecho3(paso) && i === 2);
+          const actual = paso === i + 1 && !hecho;
+          return (
+            <li key={t} className="flex items-center gap-3">
+              {i > 0 && (
+                <span className="relative h-0.5 w-8 overflow-hidden rounded-chip bg-borde-fuerte sm:w-12" aria-hidden="true">
+                  <span className={`absolute inset-0 origin-left bg-acento transition-transform duration-lenta ${paso > i ? 'scale-x-100' : 'scale-x-0'}`} />
+                </span>
+              )}
+              <span className={`flex items-center gap-2 font-semibold transition-colors duration-media ${paso > i ? 'text-acento' : 'text-texto-apoyo'}`} aria-current={actual ? 'step' : undefined}>
+                <span className={`flex h-6 w-6 items-center justify-center rounded-chip text-xs transition-colors duration-media ${hecho ? 'bg-acento text-white' : actual ? 'border-2 border-acento text-acento' : 'border border-borde-fuerte'}`}>
+                  {hecho ? <Icono nombre="check" tam={14} grosor={2.5} className="animate-escala-entrar" /> : i + 1}
+                </span>
+                {t}
+              </span>
+            </li>
+          );
+        })}
         {res && (
           <li className="text-texto-suave sm:ml-auto">
             {res.archivo || archivo?.name} · hoja «{res.hoja || 'Padron'}» · {res.filas} filas
@@ -98,7 +110,7 @@ export default function Importar({ eid, onVerUnidades }) {
           <p className="text-base text-texto-suave">
             Usa la plantilla (hoja <b>Padron</b>, y opcional <b>Deuda</b>). Reimportar el mismo archivo no duplica: cada unidad se identifica por su código.
           </p>
-          <Boton variante="fantasma" icono="descargar" href={urlApi(`/edificios/${eid}/importaciones/plantilla.xlsx`)} className="self-start">
+          <Boton variante="fantasma" icono="excel" href={urlApi(`/edificios/${eid}/importaciones/plantilla.xlsx`)} className="self-start">
             Descargar plantilla Excel
           </Boton>
           <SubirArchivo etiqueta="Excel del padrón" ayuda=".xlsx, hasta 10 MB" aceptar=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" tipos={TIPOS_XLSX} extensiones={['.xlsx', '.xls']} archivo={archivo} onArchivo={setArchivo} />
@@ -113,12 +125,15 @@ export default function Importar({ eid, onVerUnidades }) {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-            <TarjetaKPI titulo="Filas leídas" valor={res.filas} nota={`${res.validas ?? res.filas} válidas`} tamValor="text-3xl" />
-            <TarjetaKPI tono={suma.ok ? 'acento' : 'alerta'} titulo="Suma de participaciones" valor={suma.suma} nota={suma.ok ? 'Cuadra. Se puede prorratear.' : suma.mensaje} tamValor="text-3xl" />
-            <TarjetaKPI tono={advertencias.length ? 'aviso' : 'neutro'} titulo="Observaciones" valor={advertencias.length} nota={advertencias.length ? advertencias.slice(0, 2).map((a) => `Fila ${a.fila}`).join(' y ') : 'Ninguna'} tamValor="text-3xl" />
-            <TarjetaKPI tono={errores.length ? 'alerta' : 'neutro'} titulo="Errores que bloquean" valor={errores.length} nota={errores.length ? 'Corrige y vuelve a subir' : 'Correo, celular y DNI con formato válido'} tamValor="text-3xl" />
-          </div>
+          <FranjaKPI
+            etiqueta="Resultado de la validación"
+            principal={{ titulo: 'Suma de participaciones', tono: suma.ok ? 'acento' : 'alerta', valor: suma.suma, nota: suma.ok ? 'Cuadra. Se puede prorratear.' : suma.mensaje }}
+            items={[
+              { titulo: 'Filas leídas', valor: String(res.filas), nota: `${res.validas ?? res.filas} válidas` },
+              { titulo: 'Observaciones', tono: advertencias.length ? 'aviso' : undefined, valor: String(advertencias.length), nota: advertencias.length ? advertencias.slice(0, 2).map((a) => `Fila ${a.fila}`).join(' y ') : 'Ninguna' },
+              { titulo: 'Errores que bloquean', tono: errores.length ? 'alerta' : undefined, valor: String(errores.length), nota: errores.length ? 'Corrige y vuelve a subir' : 'Correo, celular y DNI válidos' },
+            ]}
+          />
 
           <div className="overflow-hidden rounded-tarjeta border border-borde bg-superficie">
             <div className="overflow-x-auto">
@@ -137,14 +152,19 @@ export default function Importar({ eid, onVerUnidades }) {
                     const o = obsPorFila.get(f.fila);
                     return (
                       <tr key={f.fila} className={`border-t border-superficie-2 ${o?.tipo === 'error' ? 'bg-alerta-suave' : o ? 'bg-aviso-suave' : ''}`}>
-                        <td className="px-4 py-3 text-texto-apoyo">{f.fila}</td>
-                        <td className="px-4 py-3 font-semibold">Dpto {f.codigo}</td>
-                        <td className="px-4 py-3">{f.tipo}</td>
-                        <td className="px-4 py-3">{f.propietario_nombre}</td>
-                        <td className="px-4 py-3 tabular-nums">{enmascararDni(f.propietario_dni_ruc)}</td>
-                        <td className="px-4 py-3">{f.inquilino_nombre || <span className="text-texto-apoyo">—</span>}</td>
-                        <td className="px-4 py-3 text-right tabular-nums">{formatearPct(f.participacion_pct, 2)}</td>
-                        <td className={`px-4 py-3 ${o?.tipo === 'error' ? 'font-semibold text-alerta' : o ? 'text-aviso' : 'text-acento'}`}>{o ? o.texto : 'Correcta'}</td>
+                        <td className="px-4 py-2.5 text-texto-apoyo">{f.fila}</td>
+                        <td className="px-4 py-2.5 font-semibold">Dpto {f.codigo}</td>
+                        <td className="px-4 py-2.5">{f.tipo}</td>
+                        <td className="px-4 py-2.5">{f.propietario_nombre}</td>
+                        <td className="px-4 py-2.5 tabular-nums">{enmascararDni(f.propietario_dni_ruc)}</td>
+                        <td className="px-4 py-2.5">{f.inquilino_nombre || <span className="text-texto-apoyo">—</span>}</td>
+                        <td className="px-4 py-2.5 text-right tabular-nums">{formatearPct(f.participacion_pct, 2)}</td>
+                        <td className={`px-4 py-2.5 ${o?.tipo === 'error' ? 'font-semibold text-alerta' : o ? 'text-aviso-texto' : 'text-acento'}`}>
+                          <span className="inline-flex items-center gap-1.5">
+                            <Icono nombre={o?.tipo === 'error' ? 'alerta' : o ? 'moroso' : 'check'} tam={14} />
+                            {o ? o.texto : 'Correcta'}
+                          </span>
+                        </td>
                       </tr>
                     );
                   })}

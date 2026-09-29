@@ -19,3 +19,4 @@ export { Tooltip, BotonIcono } from './Tooltip.jsx';
 export { MenuAcciones, Desplegable } from './Menu.jsx';
 export { ICONOS, existeIcono } from './Icono.jsx';
 export { default as Chip } from './Chip.jsx';
+export { default as FranjaKPI, Variacion } from './FranjaKPI.jsx';

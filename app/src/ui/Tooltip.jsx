@@ -10,6 +10,7 @@ const LADOS = {
 
 /**
  * Tooltip propio (sin `title` nativo): aparece al pasar el ratón y con el foco de teclado.
+ * Oculto con display:none hasta entonces, para no ensanchar la página (scroll horizontal).
  * Es solo visual (aria-hidden): el nombre accesible lo lleva el control (aria-label).
  * `className` permite limitarlo a un tamaño (p. ej. «xl:hidden» en el menú de iconos).
  */
@@ -20,7 +21,7 @@ export function Tooltip({ texto, lado = 'arriba', children, className = '' }) {
       {texto && (
         <span
           aria-hidden="true"
-          className={`pointer-events-none absolute z-50 whitespace-nowrap rounded-control bg-tinta px-2 py-1 text-xs font-semibold text-white opacity-0 shadow-flotante transition-opacity duration-rapida group-focus-within/tt:opacity-100 group-hover/tt:opacity-100 ${LADOS[lado] || LADOS.arriba} ${className}`}
+          className={`pointer-events-none absolute z-50 hidden whitespace-nowrap rounded-control bg-tinta px-2 py-1 text-xs font-semibold text-white shadow-flotante animate-fundir group-hover/tt:block group-has-[:focus-visible]/tt:block ${LADOS[lado] || LADOS.arriba} ${className}`}
         >
           {texto}
         </span>
