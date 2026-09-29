@@ -1,0 +1,24 @@
+Verificación del motor Go contra motor/app.py (29-09-2026)
+
+Referencias (se ejecutan en un contenedor APARTE de la imagen Python, nunca con
+docker exec en edisys_motor: una segunda copia del modelo lo lleva al OOM):
+
+  docker run --rm -i --memory 512m --entrypoint python edisys/motor:local - < ref_logica.py > ../testdata/py_ref.json
+  docker run --rm -i --memory 1g -v ../motor/models:/models:ro --entrypoint python edisys/motor:local - < ref_e5.py > ../testdata/e5_ref.json
+
+tokens_ref.json: 3 126 textos (golden de motor_golden_sql, benchmark/preguntas.jsonl,
+faq.json, casos límite y 3 000 cadenas Unicode aleatorias con semilla 20260929)
+tokenizados con tokenizers de la imagen Python (enable_truncation(128)).
+
+Paridad HTTP lado a lado (llama de eco determinista, índices copiados):
+
+  docker network create motor_paridad
+  docker run -d --name paridad_llama_eco --network motor_paridad --network-alias llama \
+    -v $PWD/eco.py:/eco.py:ro --entrypoint python edisys/motor:local /eco.py
+  docker run -d --name paridad_motor_py --network motor_paridad -p 127.0.0.1:4767:8080 --memory 400m \
+    -v <models>:/models:ro -v <DIR>/paridad/indice_py:/motor/indice edisys/motor:local
+  docker run -d --name paridad_motor_go --network motor_paridad -p 127.0.0.1:4768:8080 --memory 400m \
+    -v <models>:/models:ro -v <DIR>/paridad/indice_go:/motor/indice edisys/motor-go:local
+  python3 paridad.py <DIR>      # <DIR> con golden_preguntas.txt y paridad/indice_{py,go}
+
+Resultado: 61/61 iguales con el índice vivo y 61/61 reindexando desde la semilla.
