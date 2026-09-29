@@ -130,6 +130,7 @@ var listaBlanca = map[string]bool{
 	"unidad": true, "area": true, "recurso": true, "reserva": true,
 	"incidencia": true, "medidor": true, "lectura": true, "reparto_medidor": true,
 	"egreso": true, "movimiento_banco": true, "edificio": true,
+	"rubro": true, "concepto": true, "presupuesto": true, "recibo_general": true,
 }
 
 var (
@@ -195,6 +196,9 @@ func (s *Server) ejecutaGolden(ctx context.Context, eid int64, gid int64, pregun
 	estado := "ok"
 	if err != nil {
 		estado = "error: " + err.Error()
+	} else {
+		// Ejecutó bien: queda verificado y suma un uso (lo muestra la pantalla Motor).
+		_, _ = s.DB.Exec(ctx, `UPDATE motor_golden_sql SET verifico_en=now(), veces_usada=veces_usada+1 WHERE id=$1`, gid)
 	}
 	_ = s.auditaConsulta(ctx, eid, gid, pregunta, limpio, ms, estado)
 	return filas, err
@@ -452,10 +456,10 @@ func (s *Server) motorConfirma(w http.ResponseWriter, r *http.Request) {
 	cta, cancel := context.WithTimeout(r.Context(), 15*time.Second)
 	defer cancel()
 	cuerpo, _ := json.Marshal(map[string]any{
-		"pregunta":        in.Pregunta,
-		"respuesta":       in.Respuesta,
-		"respondio_bien":  true,
-		"admin":           true,
+		"pregunta":       in.Pregunta,
+		"respuesta":      in.Respuesta,
+		"respondio_bien": true,
+		"admin":          true,
 	})
 	peticion, _ := http.NewRequestWithContext(cta, http.MethodPost, s.Cfg.MotorURL+"/v1/feedback", bytes.NewReader(cuerpo))
 	peticion.Header.Set("Content-Type", "application/json")

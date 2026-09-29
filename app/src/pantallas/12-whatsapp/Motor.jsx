@@ -263,7 +263,7 @@ export default function Motor() {
             <Campo etiqueta="Pregunta" valor={editando.pregunta} onCambio={(v) => setEditando({ ...editando, pregunta: v })} ayuda="La frase que la gente pregunta y el chatbot por reglas no sabe responder." />
             <Campo etiqueta="SQL (solo SELECT, con edificio_id = :edificio_id)" tipo="textarea" valor={editando.sql} onCambio={(v) => setEditando({ ...editando, sql: v })}
               ayuda="Las guardas lo revisan al guardar: lista blanca de tablas, sin escritura, sin comentarios. :edificio_id se reemplaza por el edificio." />
-            <p className="text-xs text-texto-apoyo">Tablas permitidas: recibo, recibo_linea, pago, periodo, unidad, area, recurso, reserva, incidencia, medidor, lectura, reparto_medidor, egreso, movimiento_banco, edificio.</p>
+            <p className="text-xs text-texto-apoyo">Tablas permitidas: recibo, recibo_linea, pago, periodo, unidad, area, recurso, reserva, incidencia, medidor, lectura, reparto_medidor, egreso, movimiento_banco, edificio, rubro, concepto, presupuesto, recibo_general.</p>
           </div>
         )}
       </Modal>
