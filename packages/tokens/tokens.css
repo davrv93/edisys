@@ -74,13 +74,13 @@
   --color-serie-5: #64748b;        /* slate-500 · 4,8:1 */
 
   /* ---------- Densidad ---------- */
-  --alto-control: 36px;            /* escritorio */
+  --alto-control: 34px;            /* escritorio */
   --alto-control-tactil: 44px;     /* móvil: objetivo táctil */
-  --alto-fila: 40px;               /* filas de tabla */
-  --pad-tarjeta: 16px;
-  --alto-encabezado: 56px;
-  --ancho-lateral: 220px;
-  --ancho-lateral-iconos: 64px;
+  --alto-fila: 38px;               /* filas de tabla */
+  --pad-tarjeta: 14px;
+  --alto-encabezado: 54px;
+  --ancho-lateral: 200px;
+  --ancho-lateral-iconos: 56px;
 
   /* ---------- Forma: un radio por nivel ---------- */
   --radio-mini: 4px;               /* marcas de gráfico, etiquetas de 11 px */
@@ -99,14 +99,14 @@
   --ease-entrada: cubic-bezier(0.4, 0, 1, 1);
 
   /* ---------- Tipografía compacta ---------- */
-  --texto-cuerpo: 15px;            /* móvil */
-  --texto-kpi: 26px;
-  --texto-titulo-pantalla: 22px;
+  --texto-cuerpo: 14.5px;          /* móvil */
+  --texto-kpi: 24px;
+  --texto-titulo-pantalla: 20px;
 }
 
 @media (min-width: 1024px) {
   :root {
-    --texto-cuerpo: 14px;          /* escritorio */
+    --texto-cuerpo: 13.5px;        /* escritorio */
   }
 }
 

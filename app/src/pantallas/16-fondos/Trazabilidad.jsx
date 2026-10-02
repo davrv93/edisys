@@ -89,7 +89,7 @@ export default function Trazabilidad() {
   return (
     <>
       {dialogEl}
-      <Encabezado titulo="Trazabilidad de fondos" subtitulo="Cuánto entra y sale de cada servicio" acciones={acciones} />
+      <Encabezado titulo="Trazabilidad de fondos" subtitulo="Cuánto entra y sale de cada servicio" ayuda="Cada sol cobrado y cada egreso se asigna a un fondo (servicio). Toca un fondo para ver sus movimientos del periodo." acciones={acciones} />
       <Contenido>
         <Seccion titulo={`Saldos de ${desde}`} extra={<span className="text-sm text-texto-apoyo">Saldo total: <b className="tabular-nums text-tinta">{formatearSoles(total)}</b></span>}>
           {t.error ? (

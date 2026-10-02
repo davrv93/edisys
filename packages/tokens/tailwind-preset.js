@@ -73,7 +73,7 @@ export default {
       },
       fontFamily: {
         titulo: ['Fraunces', 'Georgia', 'serif'],
-        sans: ['"Public Sans"', 'system-ui', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
       },
       fontSize: {
         cuerpo: ['var(--texto-cuerpo)', { lineHeight: '1.45' }],

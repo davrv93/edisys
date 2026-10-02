@@ -30,6 +30,22 @@ export function Tooltip({ texto, lado = 'arriba', children, className = '' }) {
   );
 }
 
+/** Icono de ayuda: su explicación aparece en tooltip al pasar el ratón o con el foco. */
+export function BotonAyuda({ texto, lado = 'abajo', className = '' }) {
+  return (
+    <Tooltip texto={texto} lado={lado}>
+      <span
+        tabIndex={0}
+        role="note"
+        aria-label={texto}
+        className={`inline-flex h-5 w-5 shrink-0 cursor-help items-center justify-center rounded-chip text-texto-apoyo transition-colors duration-rapida hover:text-tinta ${className}`}
+      >
+        <Icono nombre="info" tam={15} />
+      </span>
+    </Tooltip>
+  );
+}
+
 const VARIANTES = {
   fantasma: 'text-texto-suave hover:bg-superficie-2 hover:text-tinta',
   secundario: 'border border-borde-fuerte bg-superficie text-tinta hover:bg-fondo',

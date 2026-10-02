@@ -1,4 +1,4 @@
-import { BotonIcono, MenuAcciones } from '../ui/index.js';
+import { BotonAyuda, BotonIcono, MenuAcciones } from '../ui/index.js';
 import Migas from './Migas.jsx';
 
 /**
@@ -9,7 +9,7 @@ import Migas from './Migas.jsx';
  * `soloMovil`: la acción ya está a la vista en escritorio (en `acciones`) y en el celular pasa al menú.
  * En móvil: título y `⋯` en una fila; las acciones debajo, en una sola línea que se desliza si no cabe.
  */
-export default function Encabezado({ titulo, subtitulo, acciones, secundarias, volver, children }) {
+export default function Encabezado({ titulo, subtitulo, ayuda, acciones, secundarias, volver, children }) {
   const visibles = (secundarias || []).filter((x) => x && !x.oculto);
   const escritorio = visibles.filter((x) => !x.soloMovil);
   const menu = visibles.length ? <MenuAcciones items={visibles} lado="abajo" /> : null;
@@ -21,7 +21,10 @@ export default function Encabezado({ titulo, subtitulo, acciones, secundarias, v
           {volver && <BotonIcono href={volver} etiqueta="Volver" icono="volver" lado="abajo" className="-ml-2" />}
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             <Migas />
-            <h1 className="truncate font-titulo text-titulo-pantalla font-semibold">{titulo}</h1>
+            <div className="flex min-w-0 items-center gap-1.5">
+              <h1 className="truncate font-titulo text-titulo-pantalla font-semibold">{titulo}</h1>
+              {ayuda && <BotonAyuda texto={ayuda} lado="abajo" />}
+            </div>
             {subtitulo && <p className="truncate text-xs text-texto-apoyo">{subtitulo}</p>}
           </div>
           {menu && <span className="lg:hidden">{menu}</span>}

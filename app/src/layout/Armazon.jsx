@@ -118,7 +118,7 @@ export default function Armazon({ pagina, children }) {
           href={ruta(it.pagina, it.query)}
           aria-current={activo ? 'page' : undefined}
           aria-label={it.etiqueta}
-          className={`flex h-10 w-full items-center gap-3 rounded-control px-3 text-sm transition-colors duration-rapida ${activo ? 'bg-acento font-semibold text-white hover:text-white' : 'text-texto-claro hover:bg-superficie-oscura hover:text-white'}`}
+          className={`flex h-9 w-full items-center gap-2.5 rounded-control px-2.5 text-[13px] transition-colors duration-rapida ${activo ? 'bg-acento font-semibold text-white hover:text-white' : 'text-texto-claro hover:bg-superficie-oscura hover:text-white'}`}
         >
           <Icono nombre={it.icono} tam={18} />
           <span className={`truncate ${L.texto}`}>{it.etiqueta}</span>
@@ -135,7 +135,7 @@ export default function Armazon({ pagina, children }) {
         </a>
 
         {/* Escritorio: menú lateral en dos anchos */}
-        <aside className={`hidden shrink-0 flex-col gap-5 bg-tinta px-3 py-4 transition-[width] duration-media lg:sticky lg:top-0 lg:flex lg:h-screen ${L.ancho}`}>
+        <aside className={`hidden shrink-0 flex-col gap-4 bg-tinta px-2.5 py-3 transition-[width] duration-media lg:sticky lg:top-0 lg:flex lg:h-screen ${L.ancho}`}>
           <div className="flex items-center justify-between gap-2">
             <a href={ruta('inicio')} className={`${L.abierto} px-1`} aria-label="EDISYS, ir al inicio">
               <Logo claro tam={28} />
@@ -166,7 +166,7 @@ export default function Armazon({ pagina, children }) {
                       type="button"
                       onClick={() => alternarGrupo(g.id)}
                       aria-expanded={!plegado}
-                      className="flex items-center justify-between px-3 pb-0.5 text-[11px] font-semibold uppercase tracking-wider text-texto-tenue transition-colors duration-rapida hover:text-white"
+                      className="flex items-center justify-between px-2.5 pb-0.5 text-[10.5px] font-semibold uppercase tracking-wider text-texto-tenue transition-colors duration-rapida hover:text-white"
                     >
                       {g.etiqueta}
                       <Icono nombre={plegado ? 'abajo' : 'arriba'} tam={12} />
@@ -310,7 +310,7 @@ export default function Armazon({ pagina, children }) {
 
 function Avatar({ iniciales, oscuro = false }) {
   return (
-    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-chip text-sm font-semibold text-white ${oscuro ? 'bg-superficie-oscura-2' : 'bg-tinta'}`} aria-hidden="true">
+    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-chip text-xs font-semibold text-white ${oscuro ? 'bg-superficie-oscura-2' : 'bg-tinta'}`} aria-hidden="true">
       {iniciales}
     </span>
   );

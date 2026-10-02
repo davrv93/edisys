@@ -146,7 +146,7 @@ export default function Proveedores() {
   return (
     <>
       {dialogEl}
-      <Encabezado titulo="Proveedores y cuentas por pagar" subtitulo={vista === 'cuentas' ? `Por pagar: ${formatearSoles(porPagar)}` : 'Catálogo de proveedores del edificio'} acciones={acciones} />
+      <Encabezado titulo="Proveedores y cuentas por pagar" subtitulo={vista === 'cuentas' ? `Por pagar: ${formatearSoles(porPagar)}` : 'Catálogo de proveedores del edificio'} ayuda="Registra a quién le pagas y controla el pago de sus comprobantes. Al pagar, el egreso entra solo al balance." acciones={acciones} />
       <Contenido>
         <div className="flex flex-wrap items-center gap-2">
           <Chip activo={vista === 'cuentas'} icono="recibo" onClick={() => setVista('cuentas')} contador={listaCpp.length}>

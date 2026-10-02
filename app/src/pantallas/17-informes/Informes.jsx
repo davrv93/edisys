@@ -33,7 +33,7 @@ export default function Informes() {
 
   return (
     <>
-      <Encabezado titulo="Informes" subtitulo={`Económico y consumos · ${periodo}`} />
+      <Encabezado titulo="Informes" subtitulo={`Económico y consumos · ${periodo}`} ayuda="Resumen económico del mes, flujo de los últimos 12 meses y consumo de agua por departamento." />
       <Contenido>
         <div className="flex flex-wrap items-center gap-2">
           <Chip activo={vista === 'economico'} icono="balance" onClick={() => setVista('economico')}>
