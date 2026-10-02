@@ -22,6 +22,7 @@ export const PAGINAS = {
   analitica: '/analitica/',
   conciliacion: '/conciliacion/',
   proveedores: '/proveedores/',
+  fondos: '/fondos/',
   configuracion: '/configuracion/',
 };
 

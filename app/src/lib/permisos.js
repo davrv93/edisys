@@ -84,16 +84,17 @@ export const ITEMS = {
   configuracion: { pagina: 'configuracion', etiqueta: 'Configuración', corta: 'Config.', icono: 'engranaje', permiso: 'facturacion.configurar' },
   conciliacion: { pagina: 'conciliacion', etiqueta: 'Conciliación bancaria', corta: 'Banco', icono: 'balance', permiso: 'balance.conciliar' },
   proveedores: { pagina: 'proveedores', etiqueta: 'Proveedores y cuentas por pagar', corta: 'Proveed.', icono: 'edificio', permiso: 'proveedores.ver' },
+  fondos: { pagina: 'fondos', etiqueta: 'Trazabilidad de fondos', corta: 'Fondos', icono: 'balance', permiso: 'fondos.ver' },
   roles: { pagina: 'roles', etiqueta: 'Roles y permisos', corta: 'Roles', icono: 'llave', permiso: 'roles.administrar' },
 };
 
 export const MENU_POR_ROL = {
   administrador: {
-    lateral: ['inicio', 'balance', 'conciliacion', 'proveedores', 'recibos', 'unidades', 'reservas', 'medidores', 'mantenimiento', 'whatsapp', 'chatbot', 'motor', 'analitica', 'roles', 'configuracion'],
+    lateral: ['inicio', 'balance', 'conciliacion', 'proveedores', 'fondos', 'recibos', 'unidades', 'reservas', 'medidores', 'mantenimiento', 'whatsapp', 'chatbot', 'motor', 'analitica', 'roles', 'configuracion'],
     movil: ['inicio', 'recibos', 'mantenimiento', 'whatsapp'],
   },
   junta: {
-    lateral: ['inicio', 'balance', 'recibos', 'unidades', 'reservas', 'aprobaciones', 'analitica', 'proveedores'],
+    lateral: ['inicio', 'balance', 'recibos', 'unidades', 'reservas', 'aprobaciones', 'analitica', 'proveedores', 'fondos'],
     movil: ['inicio', 'balance', 'aprobaciones'],
   },
   propietario: {
@@ -118,7 +119,7 @@ MENU_POR_ROL.superadmin = MENU_POR_ROL.administrador;
 /** Grupos del lateral: accesos comunes juntos y plegables. Todo ítem de ITEMS vive en un grupo. */
 export const GRUPOS = [
   { id: 'panel', etiqueta: 'Panel', items: ['inicio', 'portal'] },
-  { id: 'finanzas', etiqueta: 'Finanzas', items: ['balance', 'conciliacion', 'proveedores', 'recibos', 'unidades', 'analitica'] },
+  { id: 'finanzas', etiqueta: 'Finanzas', items: ['balance', 'conciliacion', 'proveedores', 'fondos', 'recibos', 'unidades', 'analitica'] },
   { id: 'operacion', etiqueta: 'Operación', items: ['reservas', 'reservar', 'medidores', 'mantenimiento', 'aprobaciones', 'trabajos', 'reportar'] },
   { id: 'comunicacion', etiqueta: 'Comunicación', items: ['whatsapp', 'chatbot', 'motor'] },
   { id: 'ajustes', etiqueta: 'Ajustes', items: ['roles', 'configuracion'] },

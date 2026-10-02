@@ -788,6 +788,10 @@ func (s *Server) crearEgreso(w http.ResponseWriter, r *http.Request) {
 		P.Fallo(w, r, err)
 		return
 	}
+	if err := s.asentarEgreso(ctx, tx, e.ID, id, in.RubroID, in.MontoCts, fecha); err != nil {
+		P.Fallo(w, r, err)
+		return
+	}
 	if err := tx.Commit(ctx); err != nil {
 		P.Fallo(w, r, err)
 		return

@@ -768,6 +768,16 @@ func (s *Server) registrarPago(w http.ResponseWriter, r *http.Request) {
 		P.Fallo(w, r, err)
 		return
 	}
+	if estado == "validado" {
+		if pid, ok := pago["id"].(int64); ok {
+			if fd, e2 := time.Parse("2006-01-02", fecha); e2 == nil {
+				if err := s.asentarIngresoPago(ctx, tx, e.ID, pid, rid, in.MontoCts, fd); err != nil {
+					P.Fallo(w, r, err)
+					return
+				}
+			}
+		}
+	}
 	recibo, err := db.Fila(ctx, tx, `SELECT id, estado, total_cts, pagado_cts, total_cts - pagado_cts AS saldo_cts FROM recibo WHERE id=$1`, rid)
 	if err != nil {
 		P.Fallo(w, r, err)
@@ -843,6 +853,13 @@ func (s *Server) validarPago(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.auditarCambio(ctx, s.DB, r, "recibos", "pago."+in.Estado, "pago", pid, nil, fila)
+	if in.Estado == "validado" {
+		var fecha time.Time
+		_ = s.DB.QueryRow(ctx, `SELECT fecha FROM pago WHERE id=$1`, pid).Scan(&fecha)
+		_ = s.asentarIngresoPago(ctx, s.DB, e.ID, pid, fila["recibo_id"].(int64), fila["monto_cts"].(int64), fecha)
+	} else {
+		_ = s.revertirPago(ctx, s.DB, pid)
+	}
 	recibo, _ := db.Fila(ctx, s.DB, `SELECT id, estado, total_cts, pagado_cts, total_cts - pagado_cts AS saldo_cts FROM recibo WHERE id=$1`, fila["recibo_id"])
 	fila["recibo"] = recibo
 	P.JSON(w, http.StatusOK, fila)

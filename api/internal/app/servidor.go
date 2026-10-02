@@ -235,6 +235,16 @@ func (s *Server) rutasEdificio(r chi.Router) {
 	r.With(q("cuentas_pagar.ver")).Get("/cuentas-por-pagar/{cid}", s.verCuentaPorPagar)
 	r.With(q("cuentas_pagar.registrar")).Post("/cuentas-por-pagar/{cid}/pagos", s.pagarCuentaPorPagar)
 
+	// Fondos y trazabilidad (bloque C)
+	r.With(q("fondos.ver")).Get("/fondos", s.listarFondos)
+	r.With(q("fondos.ver")).Get("/fondos/trazabilidad", s.trazabilidadFondos)
+	r.With(q("fondos.ver")).Get("/fondos/{fid}/movimientos", s.movimientosFondo)
+	r.With(q("fondos.administrar")).Post("/fondos", s.crearFondo)
+	r.With(q("fondos.administrar")).Put("/fondos/{fid}", s.editarFondo)
+	r.With(q("fondos.administrar")).Delete("/fondos/{fid}", s.desactivarFondo)
+	r.With(q("fondos.administrar")).Post("/fondos/{fid}/movimientos", s.movimientoManual)
+	r.With(q("fondos.administrar")).Post("/fondos/transferencia", s.transferenciaFondos)
+
 	// 05 · recibos y pagos
 	r.With(q("recibos.ver")).Get("/periodos", s.listarPeriodos)
 	r.With(q("periodos.administrar")).Post("/periodos", s.abrirPeriodo)
@@ -364,6 +374,16 @@ func (s *Server) rutasModulosNuevos(r chi.Router) {
 	r.With(q("cuentas_pagar.registrar")).Post("/cuentas-por-pagar", s.crearCuentaPorPagar)
 	r.With(q("cuentas_pagar.ver")).Get("/cuentas-por-pagar/{cid}", s.verCuentaPorPagar)
 	r.With(q("cuentas_pagar.registrar")).Post("/cuentas-por-pagar/{cid}/pagos", s.pagarCuentaPorPagar)
+
+	// Fondos y trazabilidad (bloque C)
+	r.With(q("fondos.ver")).Get("/fondos", s.listarFondos)
+	r.With(q("fondos.ver")).Get("/fondos/trazabilidad", s.trazabilidadFondos)
+	r.With(q("fondos.ver")).Get("/fondos/{fid}/movimientos", s.movimientosFondo)
+	r.With(q("fondos.administrar")).Post("/fondos", s.crearFondo)
+	r.With(q("fondos.administrar")).Put("/fondos/{fid}", s.editarFondo)
+	r.With(q("fondos.administrar")).Delete("/fondos/{fid}", s.desactivarFondo)
+	r.With(q("fondos.administrar")).Post("/fondos/{fid}/movimientos", s.movimientoManual)
+	r.With(q("fondos.administrar")).Post("/fondos/transferencia", s.transferenciaFondos)
 
 	r.With(q("incidencias.ver")).Get("/mantenimiento/incidencias", s.listarIncidencias)
 	r.With(q("incidencias.ver")).Patch("/mantenimiento/incidencias/{tid}/estado", s.cambiarEstadoIncidencia)

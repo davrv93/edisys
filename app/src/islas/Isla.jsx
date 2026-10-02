@@ -23,6 +23,7 @@ const PANTALLAS = {
   analitica: { permiso: 'analitica.ver', C: lazy(() => import('../pantallas/13-analitica/Analitica.jsx')) },
   conciliacion: { permiso: 'balance.conciliar', C: lazy(() => import('../pantallas/14-conciliacion/Conciliacion.jsx')) },
   proveedores: { permiso: ['proveedores.ver', 'cuentas_pagar.ver'], C: lazy(() => import('../pantallas/15-proveedores/Proveedores.jsx')) },
+  fondos: { permiso: 'fondos.ver', C: lazy(() => import('../pantallas/16-fondos/Trazabilidad.jsx')) },
   configuracion: { permiso: 'facturacion.configurar', C: lazy(() => import('../pantallas/configuracion/Configuracion.jsx')) },
 };
 
