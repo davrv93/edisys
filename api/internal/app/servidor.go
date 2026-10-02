@@ -245,6 +245,10 @@ func (s *Server) rutasEdificio(r chi.Router) {
 	r.With(q("fondos.administrar")).Post("/fondos/{fid}/movimientos", s.movimientoManual)
 	r.With(q("fondos.administrar")).Post("/fondos/transferencia", s.transferenciaFondos)
 
+	// Informes económicos y consumos (bloque C)
+	r.With(q("balance.ver")).Get("/informes/economico", s.informeEconomico)
+	r.With(q("balance.ver")).Get("/informes/consumos", s.consumosPorDepartamento)
+
 	// 05 · recibos y pagos
 	r.With(q("recibos.ver")).Get("/periodos", s.listarPeriodos)
 	r.With(q("periodos.administrar")).Post("/periodos", s.abrirPeriodo)
@@ -384,6 +388,10 @@ func (s *Server) rutasModulosNuevos(r chi.Router) {
 	r.With(q("fondos.administrar")).Delete("/fondos/{fid}", s.desactivarFondo)
 	r.With(q("fondos.administrar")).Post("/fondos/{fid}/movimientos", s.movimientoManual)
 	r.With(q("fondos.administrar")).Post("/fondos/transferencia", s.transferenciaFondos)
+
+	// Informes económicos y consumos (bloque C)
+	r.With(q("balance.ver")).Get("/informes/economico", s.informeEconomico)
+	r.With(q("balance.ver")).Get("/informes/consumos", s.consumosPorDepartamento)
 
 	r.With(q("incidencias.ver")).Get("/mantenimiento/incidencias", s.listarIncidencias)
 	r.With(q("incidencias.ver")).Patch("/mantenimiento/incidencias/{tid}/estado", s.cambiarEstadoIncidencia)
