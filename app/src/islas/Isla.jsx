@@ -28,6 +28,7 @@ const PANTALLAS = {
   externos: { permiso: 'externos.ver', C: lazy(() => import('../pantallas/18-externos/Externos.jsx')) },
   vouchers: { permiso: ['pagos.registrar', 'pagos.informar'], C: lazy(() => import('../pantallas/19-vouchers/Vouchers.jsx')) },
   cobranzas: { permiso: 'cobranzas.ver', C: lazy(() => import('../pantallas/20-cobranzas/Cobranzas.jsx')) },
+  documentos: { permiso: 'documentos.ver', C: lazy(() => import('../pantallas/21-documentos/Documentos.jsx')) },
   configuracion: { permiso: 'facturacion.configurar', C: lazy(() => import('../pantallas/configuracion/Configuracion.jsx')) },
 };
 

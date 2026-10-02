@@ -89,12 +89,13 @@ export const ITEMS = {
   externos: { pagina: 'externos', etiqueta: 'Recibos e ingresos externos', corta: 'Externos', icono: 'recibo', permiso: 'externos.ver' },
   vouchers: { pagina: 'vouchers', etiqueta: 'Vouchers y cuentas bancarias', corta: 'Vouchers', icono: 'recibo', permiso: ['pagos.registrar', 'pagos.informar'] },
   cobranzas: { pagina: 'cobranzas', etiqueta: 'Cobranzas sin identificar', corta: 'Cobranzas', icono: 'entrante', permiso: 'cobranzas.ver' },
+  documentos: { pagina: 'documentos', etiqueta: 'Documentos', corta: 'Documentos', icono: 'recibo', permiso: 'documentos.ver' },
   roles: { pagina: 'roles', etiqueta: 'Roles y permisos', corta: 'Roles', icono: 'llave', permiso: 'roles.administrar' },
 };
 
 export const MENU_POR_ROL = {
   administrador: {
-    lateral: ['inicio', 'balance', 'conciliacion', 'proveedores', 'fondos', 'informes', 'externos', 'vouchers', 'cobranzas', 'recibos', 'unidades', 'reservas', 'medidores', 'mantenimiento', 'whatsapp', 'chatbot', 'motor', 'analitica', 'roles', 'configuracion'],
+    lateral: ['inicio', 'balance', 'conciliacion', 'proveedores', 'fondos', 'informes', 'externos', 'vouchers', 'cobranzas', 'recibos', 'unidades', 'reservas', 'medidores', 'mantenimiento', 'documentos', 'whatsapp', 'chatbot', 'motor', 'analitica', 'roles', 'configuracion'],
     movil: ['inicio', 'recibos', 'mantenimiento', 'whatsapp'],
   },
   junta: {
@@ -102,11 +103,11 @@ export const MENU_POR_ROL = {
     movil: ['inicio', 'balance', 'aprobaciones'],
   },
   propietario: {
-    lateral: ['portal', 'recibos', 'reservar', 'reportar', 'balance'],
+    lateral: ['portal', 'recibos', 'reservar', 'reportar', 'balance', 'documentos'],
     movil: ['portal', 'recibos', 'reservar', 'reportar'],
   },
   inquilino: {
-    lateral: ['portal', 'reservar', 'reportar'],
+    lateral: ['portal', 'reservar', 'reportar', 'documentos'],
     movil: ['portal', 'reservar', 'reportar'],
   },
   operario: {
@@ -125,7 +126,7 @@ export const GRUPOS = [
   { id: 'panel', etiqueta: 'Panel', items: ['inicio', 'portal'] },
   { id: 'finanzas', etiqueta: 'Finanzas', items: ['balance', 'conciliacion', 'proveedores', 'fondos', 'informes', 'externos', 'vouchers', 'cobranzas', 'recibos', 'unidades', 'analitica'] },
   { id: 'operacion', etiqueta: 'Operación', items: ['reservas', 'reservar', 'medidores', 'mantenimiento', 'aprobaciones', 'trabajos', 'reportar'] },
-  { id: 'comunicacion', etiqueta: 'Comunicación', items: ['whatsapp', 'chatbot', 'motor'] },
+  { id: 'comunicacion', etiqueta: 'Comunicación', items: ['whatsapp', 'chatbot', 'motor', 'documentos'] },
   { id: 'ajustes', etiqueta: 'Ajustes', items: ['roles', 'configuracion'] },
 ];
 

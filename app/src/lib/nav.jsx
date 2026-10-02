@@ -27,6 +27,7 @@ export const PAGINAS = {
   externos: '/externos/',
   vouchers: '/vouchers/',
   cobranzas: '/cobranzas/',
+  documentos: '/documentos/',
   configuracion: '/configuracion/',
 };
 

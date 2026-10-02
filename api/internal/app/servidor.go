@@ -269,6 +269,14 @@ func (s *Server) rutasEdificio(r chi.Router) {
 	r.With(q("cobranzas.gestionar")).Post("/cobranzas-sin-identificar/{id}/devolver", s.devolverCobranza)
 	r.With(q("cobranzas.ver")).Get("/devoluciones", s.listarDevoluciones)
 
+	// E1 · documentos por categorías
+	r.With(q("documentos.ver")).Get("/documentos/categorias", s.listarDocumentoCategorias)
+	r.With(q("documentos.administrar")).Post("/documentos/categorias", s.crearDocumentoCategoria)
+	r.With(q("documentos.administrar")).Delete("/documentos/categorias/{id}", s.borrarDocumentoCategoria)
+	r.With(q("documentos.ver")).Get("/documentos", s.listarDocumentos)
+	r.With(q("documentos.administrar")).Post("/documentos", s.crearDocumento)
+	r.With(q("documentos.administrar")).Post("/documentos/{id}/publicar", s.publicarDocumento)
+
 	// 05 · recibos y pagos
 	r.With(q("recibos.ver")).Get("/periodos", s.listarPeriodos)
 	r.With(q("periodos.administrar")).Post("/periodos", s.abrirPeriodo)
@@ -434,6 +442,14 @@ func (s *Server) rutasModulosNuevos(r chi.Router) {
 	r.With(q("cobranzas.gestionar")).Post("/cobranzas-sin-identificar/{id}/imputar", s.imputarCobranza)
 	r.With(q("cobranzas.gestionar")).Post("/cobranzas-sin-identificar/{id}/devolver", s.devolverCobranza)
 	r.With(q("cobranzas.ver")).Get("/devoluciones", s.listarDevoluciones)
+
+	// E1 · documentos por categorías
+	r.With(q("documentos.ver")).Get("/documentos/categorias", s.listarDocumentoCategorias)
+	r.With(q("documentos.administrar")).Post("/documentos/categorias", s.crearDocumentoCategoria)
+	r.With(q("documentos.administrar")).Delete("/documentos/categorias/{id}", s.borrarDocumentoCategoria)
+	r.With(q("documentos.ver")).Get("/documentos", s.listarDocumentos)
+	r.With(q("documentos.administrar")).Post("/documentos", s.crearDocumento)
+	r.With(q("documentos.administrar")).Post("/documentos/{id}/publicar", s.publicarDocumento)
 
 	r.With(q("incidencias.ver")).Get("/mantenimiento/incidencias", s.listarIncidencias)
 	r.With(q("incidencias.ver")).Patch("/mantenimiento/incidencias/{tid}/estado", s.cambiarEstadoIncidencia)
