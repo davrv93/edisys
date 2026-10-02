@@ -103,6 +103,10 @@ func (s *Server) asentarIngresoPago(ctx context.Context, tx db.Q, eid, pagoID, r
 		return nil
 	}
 	mapa := s.fondosDeTipo(ctx, tx, eid)
+	if len(mapa) == 0 {
+		_ = s.asegurarFondosBase(ctx, eid)
+		mapa = s.fondosDeTipo(ctx, tx, eid)
+	}
 	pesos := make([]int64, 0, len(lineas))
 	fondos := make([]int64, 0, len(lineas))
 	var total int64

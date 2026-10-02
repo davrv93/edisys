@@ -25,6 +25,7 @@ export const PAGINAS = {
   fondos: '/fondos/',
   informes: '/informes/',
   externos: '/externos/',
+  vouchers: '/vouchers/',
   configuracion: '/configuracion/',
 };
 

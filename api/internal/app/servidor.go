@@ -256,6 +256,12 @@ func (s *Server) rutasEdificio(r chi.Router) {
 	r.With(q("externos.ver")).Get("/ingresos-externos", s.listarIngresosExternos)
 	r.With(q("externos.registrar")).Post("/ingresos-externos", s.crearIngresoExterno)
 
+	// A3 · cuentas bancarias y vouchers multicuenta
+	r.With(q("cuentas_bancarias.ver")).Get("/cuentas-bancarias", s.listarCuentasBancarias)
+	r.With(q("cuentas_bancarias.administrar")).Post("/cuentas-bancarias", s.crearCuentaBancaria)
+	r.With(q("cuentas_bancarias.administrar")).Put("/cuentas-bancarias/{id}", s.editarCuentaBancaria)
+	r.Post("/unidades/{uid}/vouchers", s.registrarVoucher)
+
 	// 05 · recibos y pagos
 	r.With(q("recibos.ver")).Get("/periodos", s.listarPeriodos)
 	r.With(q("periodos.administrar")).Post("/periodos", s.abrirPeriodo)
@@ -406,6 +412,12 @@ func (s *Server) rutasModulosNuevos(r chi.Router) {
 	r.With(q("externos.registrar")).Post("/recibos-externos/{id}/pagar", s.pagarReciboExterno)
 	r.With(q("externos.ver")).Get("/ingresos-externos", s.listarIngresosExternos)
 	r.With(q("externos.registrar")).Post("/ingresos-externos", s.crearIngresoExterno)
+
+	// A3 · cuentas bancarias y vouchers multicuenta
+	r.With(q("cuentas_bancarias.ver")).Get("/cuentas-bancarias", s.listarCuentasBancarias)
+	r.With(q("cuentas_bancarias.administrar")).Post("/cuentas-bancarias", s.crearCuentaBancaria)
+	r.With(q("cuentas_bancarias.administrar")).Put("/cuentas-bancarias/{id}", s.editarCuentaBancaria)
+	r.Post("/unidades/{uid}/vouchers", s.registrarVoucher)
 
 	r.With(q("incidencias.ver")).Get("/mantenimiento/incidencias", s.listarIncidencias)
 	r.With(q("incidencias.ver")).Patch("/mantenimiento/incidencias/{tid}/estado", s.cambiarEstadoIncidencia)
