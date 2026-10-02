@@ -249,6 +249,13 @@ func (s *Server) rutasEdificio(r chi.Router) {
 	r.With(q("balance.ver")).Get("/informes/economico", s.informeEconomico)
 	r.With(q("balance.ver")).Get("/informes/consumos", s.consumosPorDepartamento)
 
+	// B4 · recibos e ingresos externos
+	r.With(q("externos.ver")).Get("/recibos-externos", s.listarRecibosExternos)
+	r.With(q("externos.registrar")).Post("/recibos-externos", s.crearReciboExterno)
+	r.With(q("externos.registrar")).Post("/recibos-externos/{id}/pagar", s.pagarReciboExterno)
+	r.With(q("externos.ver")).Get("/ingresos-externos", s.listarIngresosExternos)
+	r.With(q("externos.registrar")).Post("/ingresos-externos", s.crearIngresoExterno)
+
 	// 05 · recibos y pagos
 	r.With(q("recibos.ver")).Get("/periodos", s.listarPeriodos)
 	r.With(q("periodos.administrar")).Post("/periodos", s.abrirPeriodo)
@@ -392,6 +399,13 @@ func (s *Server) rutasModulosNuevos(r chi.Router) {
 	// Informes económicos y consumos (bloque C)
 	r.With(q("balance.ver")).Get("/informes/economico", s.informeEconomico)
 	r.With(q("balance.ver")).Get("/informes/consumos", s.consumosPorDepartamento)
+
+	// B4 · recibos e ingresos externos
+	r.With(q("externos.ver")).Get("/recibos-externos", s.listarRecibosExternos)
+	r.With(q("externos.registrar")).Post("/recibos-externos", s.crearReciboExterno)
+	r.With(q("externos.registrar")).Post("/recibos-externos/{id}/pagar", s.pagarReciboExterno)
+	r.With(q("externos.ver")).Get("/ingresos-externos", s.listarIngresosExternos)
+	r.With(q("externos.registrar")).Post("/ingresos-externos", s.crearIngresoExterno)
 
 	r.With(q("incidencias.ver")).Get("/mantenimiento/incidencias", s.listarIncidencias)
 	r.With(q("incidencias.ver")).Patch("/mantenimiento/incidencias/{tid}/estado", s.cambiarEstadoIncidencia)

@@ -24,6 +24,7 @@ export const PAGINAS = {
   proveedores: '/proveedores/',
   fondos: '/fondos/',
   informes: '/informes/',
+  externos: '/externos/',
   configuracion: '/configuracion/',
 };
 
