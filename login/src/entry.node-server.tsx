@@ -12,6 +12,9 @@ import render from "./entry.ssr";
 
 // Estáticos propios: el staticFile de Qwik duplica la base («/login/login/…»)
 // cuando `base` no es «/», así que servimos dist/ nosotros mismos.
+// PREFIJO de URL pública: vacío en local; «/edisys» bajo el alias de boticalima.
+const PREFIJO = (process.env.EDISYS_PREFIJO ?? "").replace(/\/+$/, "");
+const BASE_LOGIN = `${PREFIJO}/login`;
 const DIST = join(fileURLToPath(import.meta.url), "..", "..", "dist");
 const TIPOS: Record<string, string> = {
   js: "text/javascript; charset=utf-8",
@@ -29,7 +32,7 @@ const TIPOS: Record<string, string> = {
 function servirEstatico(req: IncomingMessage, res: ServerResponse): boolean {
   if (req.method !== "GET" && req.method !== "HEAD") return false;
   const ruta = decodeURIComponent((req.url ?? "/").split("?")[0]);
-  if (!ruta.startsWith("/login/")) return false;
+  if (!ruta.startsWith(`${BASE_LOGIN}/`)) return false;
   const ext = extname(ruta).slice(1);
   if (!ext || !TIPOS[ext]) return false;
   const archivo = normalize(join(DIST, ruta));
@@ -42,7 +45,7 @@ function servirEstatico(req: IncomingMessage, res: ServerResponse): boolean {
   } catch {
     return false;
   }
-  const inmutable = ruta.startsWith("/login/build/") || ruta.startsWith("/login/assets/");
+  const inmutable = ruta.startsWith(`${BASE_LOGIN}/build/`) || ruta.startsWith(`${BASE_LOGIN}/assets/`);
   res.writeHead(200, {
     "Content-Type": TIPOS[ext],
     "Content-Length": tam,
@@ -70,8 +73,8 @@ const { router, notFound } = createQwikCity({
 });
 
 const server = createServer((req, res) => {
-  // Salud para el healthcheck del compose.
-  if (req.url === "/login/salud") {
+  // Salud para el healthcheck del compose (ruta interna, siempre en /login/salud).
+  if (req.url === `${BASE_LOGIN}/salud` || req.url === "/login/salud") {
     res.writeHead(200, { "content-type": "application/json" });
     res.end('{"ok":true}');
     return;
@@ -83,7 +86,7 @@ const server = createServer((req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`edisys-login escuchando en http://${HOST}:${PORT}/login/`);
+  console.log(`edisys-login escuchando en http://${HOST}:${PORT}${BASE_LOGIN}/`);
 });
 
 const apagar = () => server.close(() => process.exit(0));

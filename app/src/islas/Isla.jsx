@@ -22,6 +22,7 @@ const PANTALLAS = {
   motor: { permiso: 'motor.administrar', C: lazy(() => import('../pantallas/12-whatsapp/Motor.jsx')) },
   analitica: { permiso: 'analitica.ver', C: lazy(() => import('../pantallas/13-analitica/Analitica.jsx')) },
   conciliacion: { permiso: 'balance.conciliar', C: lazy(() => import('../pantallas/14-conciliacion/Conciliacion.jsx')) },
+  proveedores: { permiso: ['proveedores.ver', 'cuentas_pagar.ver'], C: lazy(() => import('../pantallas/15-proveedores/Proveedores.jsx')) },
   configuracion: { permiso: 'facturacion.configurar', C: lazy(() => import('../pantallas/configuracion/Configuracion.jsx')) },
 };
 

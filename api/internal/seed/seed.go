@@ -36,7 +36,7 @@ type Opciones struct {
 }
 
 // Periodos sembrados.
-var Periodos = []string{"2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09"}
+var Periodos = []string{"2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10"}
 
 var propietarios = map[string]string{
 	"101": "Juan Pérez Rojas", "102": "Rosa Díaz Quispe", "103": "Carlos Mendoza Silva", "104": "Lucía Torres Vega",
@@ -57,11 +57,12 @@ var tardios = map[string]map[string]bool{
 	"2026-06": {"104": true},
 	"2026-07": {"402": true, "104": true},
 	"2026-08": {"402": true, "503": true},
+	"2026-10": {"104": true},
 }
 
-var factorConsumo = map[string]float64{"2026-04": 1.08, "2026-05": 1.03, "2026-06": 0.96, "2026-07": 0.92, "2026-08": 0.97}
+var factorConsumo = map[string]float64{"2026-04": 1.08, "2026-05": 1.03, "2026-06": 0.96, "2026-07": 0.92, "2026-08": 0.97, "2026-10": 1.02}
 
-var presupuestoMes = map[string]int64{"2026-04": 1620000, "2026-05": 1620000, "2026-06": 1650000, "2026-07": 1650000, "2026-08": 1680000, "2026-09": 1680000}
+var presupuestoMes = map[string]int64{"2026-04": 1620000, "2026-05": 1620000, "2026-06": 1650000, "2026-07": 1650000, "2026-08": 1680000, "2026-09": 1680000, "2026-10": 1680000}
 
 // Presupuesto por rubro de setiembre (suma 16.800); los meses anteriores se escalan.
 var presupuestoRubros = []struct {
@@ -139,7 +140,7 @@ func Sembrar(ctx context.Context, pool *pgxpool.Pool, alm archivo.Almacen, op Op
 	s := &sembrador{ctx: ctx, tx: tx, alm: alm, unidades: map[string]int64{}, medidor: map[string]int64{}, usuarios: map[string]int64{},
 		rubros: map[string]int64{}, concepto: map[string]int64{}, recurso: map[string]int64{}, periodo: map[string]int64{}}
 
-	s.exec(`TRUNCATE chatbot_sesion, comprobante, comprobante_serie, facturacion_config, movimiento_banco, extracto, banco_mapeo, correo_adjunto, correo_mensaje, ajuste, whatsapp_mensaje, whatsapp_config, voto, incidencia_evidencia, incidencia_evento, incidencia, junta_miembro,
+	s.exec(`TRUNCATE chatbot_sesion, producto, producto_categoria, cliente, comprobante, comprobante_serie, facturacion_config, movimiento_banco, extracto, banco_mapeo, correo_adjunto, correo_mensaje, ajuste, whatsapp_mensaje, whatsapp_config, voto, incidencia_evidencia, incidencia_evento, incidencia, junta_miembro,
 		reparto_medidor, recibo_general, lectura, medidor, reserva, recurso, area, egreso, pago, recibo_linea, recibo, presupuesto, periodo,
 		concepto, rubro, importacion, deuda_inicial, unidad_persona, persona, unidad, auditoria, invitacion, sesion_refresh,
 		usuario_edificio_rol, rol_permiso_edificio, usuario, edificio, archivo, administradora, contacto, motor_consulta, motor_golden_sql RESTART IDENTITY CASCADE`)
@@ -495,7 +496,7 @@ func Sembrar(ctx context.Context, pool *pgxpool.Pool, alm archivo.Almacen, op Op
 			monto                 int64
 			doc                   string // pdf | foto | "" (sin sustento) | sedapal
 		}
-		luz := map[string]int64{"2026-04": 101500, "2026-05": 99000, "2026-06": 95500, "2026-07": 94000, "2026-08": 96500, "2026-09": 98000}[per]
+		luz := map[string]int64{"2026-04": 101500, "2026-05": 99000, "2026-06": 95500, "2026-07": 94000, "2026-08": 96500, "2026-09": 98000, "2026-10": 97500}[per]
 		egs := []egreso{
 			{"administracion", "conserjeria", "Conserjería " + P.NombreMes(ini.Month()), 630000, "pdf"},
 			{"administracion", "limpieza", "Limpieza " + P.NombreMes(ini.Month()), 280000, "foto"},
@@ -613,9 +614,9 @@ func Sembrar(ctx context.Context, pool *pgxpool.Pool, alm archivo.Almacen, op Op
 	 'SELECT COUNT(*) AS reservas FROM reserva WHERE edificio_id = :edificio_id AND estado IN (''confirmada'',''pendiente_pago'') AND inicio >= date_trunc(''month'', (now() AT TIME ZONE ''America/Lima''))', '{reserva}'),
 	($1, '¿cuáles son las próximas reservas?',
 	 'SELECT re.codigo, a.nombre AS area, re.inicio, re.fin, u.codigo AS unidad FROM reserva re JOIN recurso rc ON rc.id=re.recurso_id JOIN area a ON a.id=rc.area_id JOIN unidad u ON u.id=re.unidad_id WHERE re.edificio_id = :edificio_id AND re.estado IN (''confirmada'',''pendiente_pago'') AND re.inicio >= (now() AT TIME ZONE ''America/Lima'') ORDER BY re.inicio LIMIT 10', '{reserva,recurso,area,unidad}'),
-	($1, '¿cuánto se recaudó por reservas este mes?',
+	($1, '¿cuánto ha entrado por el alquiler de las áreas comunes (reservas) en lo que va del mes?',
 	 'SELECT COALESCE(SUM(re.total_cts),0) AS recaudado_cts, COUNT(*) AS reservas FROM reserva re WHERE re.edificio_id = :edificio_id AND re.estado=''confirmada'' AND re.inicio >= date_trunc(''month'', (now() AT TIME ZONE ''America/Lima''))', '{reserva}'),
-	($1, '¿cuánto entró por reservas este año?',
+	($1, '¿cuánto ha entrado por el alquiler de las áreas comunes (reservas) durante todo este año?',
 	 'SELECT COALESCE(SUM(re.total_cts),0) AS recaudado_cts FROM reserva re WHERE re.edificio_id = :edificio_id AND re.estado=''confirmada'' AND re.inicio >= date_trunc(''year'', (now() AT TIME ZONE ''America/Lima''))', '{reserva}'),
 	($1, '¿cuántas reservas canceló la unidad 503?',
 	 'SELECT COUNT(*) AS canceladas FROM reserva re JOIN unidad u ON u.id=re.unidad_id WHERE re.edificio_id = :edificio_id AND u.codigo=''503'' AND re.estado=''cancelada''', '{reserva,unidad}'),
@@ -675,6 +676,11 @@ func Sembrar(ctx context.Context, pool *pgxpool.Pool, alm archivo.Almacen, op Op
 	s.exec(`INSERT INTO facturacion_config (edificio_id, ruc, razon_social, direccion, ubigeo, modo, actualizado_por)
 		VALUES ($1,'20600000005','Junta de Propietarios del Edificio Demo','Av. José Larco 1234, Miraflores, Lima','150122','simulado',$2)`, s.eid, s.usuarios["admin@demo.pe"])
 
+	// --- Comercio: catálogo del punto de venta (alquileres, servicios, espacios, extras) y clientes.
+	if err := s.catalogoComercio(); err != nil {
+		return nil, err
+	}
+
 	// --- Conciliación: extracto de setiembre del BCP ya cargado (2 movimientos sin pareja a propósito).
 	adminID := s.usuarios["admin@demo.pe"]
 	if _, err := conciliacion.CargarDemo(ctx, tx, s.eid, "2026-09", 3412000, &adminID); err != nil {
@@ -714,6 +720,73 @@ func proveedorDe(concepto string) string {
 		return "Ascensores Andinos SAC"
 	}
 	return "Proveedor Demo SAC"
+}
+
+// catalogoComercio siembra el catálogo del punto de venta: en un edificio lo que se vende son
+// alquileres, servicios a los inquilinos y usos de espacios comunes, más algunos extras con stock.
+func (s *sembrador) catalogoComercio() error {
+	cats := []struct {
+		nombre string
+		orden  int
+	}{{"Alquileres", 1}, {"Servicios", 2}, {"Espacios comunes", 3}, {"Extras", 4}}
+	cat := map[string]int64{}
+	for _, c := range cats {
+		cat[c.nombre] = s.id(`INSERT INTO producto_categoria (edificio_id, nombre, orden) VALUES ($1,$2,$3) RETURNING id`, s.eid, c.nombre, c.orden)
+	}
+
+	prods := []struct {
+		codigo, nombre, categoria, unidad, descripcion, afectacion string
+		precio, costo                                              int64
+		stock                                                      float64
+	}{
+		{"ALQ-302", "Alquiler de departamento 302", "Alquileres", "mes", "Contrato mensual, incluye agua y mantenimiento", "inafecto", 2500000, 0, 0},
+		{"ALQ-504", "Alquiler de departamento 504", "Alquileres", "mes", "Contrato mensual, duplex con terraza", "inafecto", 3200000, 0, 0},
+		{"ALQ-C12", "Alquiler de cochera 12", "Alquileres", "mes", "Estacionamiento techado, nivel -1", "gravado", 450000, 0, 0},
+		{"ALQ-D03", "Alquiler de depósito 3", "Alquileres", "mes", "Depósito de 8 m2, tercer piso", "gravado", 300000, 0, 0},
+
+		{"SRV-LIM", "Limpieza de departamento", "Servicios", "hora", "Personal de limpieza del edificio", "inafecto", 2500, 1200, 0},
+		{"SRV-LAV", "Lavandería por kilo", "Servicios", "kg", "Lavado y planchado, entrega en 24 h", "inafecto", 800, 350, 0},
+		{"SRV-MUC", "Mucama por día", "Servicios", "dia", "Mucama para estancias o mudanzas", "inafecto", 1800, 900, 0},
+		{"SRV-ELC", "Reparación eléctrica", "Servicios", "hora", "Técnico electricista del edificio", "gravado", 3500, 1500, 0},
+		{"SRV-PIN", "Pintura por m2", "Servicios", "m2", "Pintura latex para interior", "gravado", 1800, 900, 0},
+		{"SRV-VIG", "Vigilancia adicional fin de semana", "Servicios", "dia", "Guardia extra en Ownership Day", "inafecto", 2400, 0, 0},
+
+		{"ESP-SAL", "Sala de reuniones por hora", "Espacios comunes", "hora", "Sala con proyector, máximo 12 personas", "gravado", 6000, 0, 0},
+		{"ESP-AZO", "Azotea para eventos por hora", "Espacios comunes", "hora", "Azotea, previa autorización de la junta", "gravado", 15000, 0, 0},
+		{"ESP-EST", "Estacionamiento por hora", "Espacios comunes", "hora", "Visitante, máximo 4 horas", "gravado", 500, 0, 0},
+
+		{"EXR-LLA", "Llave adicional del departamento", "Extras", "unidad", "Copia de llave con portería", "gravado", 25000, 9000, 25},
+		{"EXR-PLA", "Placa de parqueo adicional", "Extras", "unidad", "Placa para segundo vehículo", "gravado", 80000, 35000, 10},
+		{"EXR-KEY", "Tarjeta de acceso adicional", "Extras", "unidad", "Tarjeta de acceso al edificio", "gravado", 30000, 11000, 40},
+		{"EXR-RUI", "Multa por ruido nocturno", "Extras", "unidad", "Incumplimiento del reglamento de silencio", "gravado", 50000, 0, 0},
+		{"EXR-MAS", "Multa por animal sin correa", "Extras", "unidad", "Incumplimiento de la norma de mascotas", "gravado", 30000, 0, 0},
+	}
+	for _, p := range prods {
+		controla := p.stock > 0
+		s.exec(`INSERT INTO producto (edificio_id, categoria_id, codigo, nombre, descripcion, unidad, precio_cts, costo_cts,
+				afectacion, controla_stock, stock, creado_por)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+			s.eid, cat[p.categoria], p.codigo, p.nombre, p.descripcion, p.unidad, p.precio, p.costo, p.afectacion, controla, p.stock, s.usuarios["admin@demo.pe"])
+	}
+
+	type cli struct{ nombre, tipo, doc, tel, correo, unidad string }
+	clientes := []cli{
+		{"María Demo", "1", "45871234", "51900000201", "maria@demo.pe", "201"},
+		{"Iván Inquilino", "1", "70112233", "51911000302", "ivan@demo.pe", "302"},
+		{"Inmobiliaria Los Pinos SAC", "6", "20600000048", "51999000210", "facturacion@lospinos.pe", ""},
+		{"Carlos Quispe Medina", "1", "43991234", "51999000211", "cquispe@demo.pe", ""},
+	}
+	for _, c := range clientes {
+		var unidad *int64
+		if c.unidad != "" {
+			uid := s.unidades[c.unidad]
+			unidad = &uid
+		}
+		s.exec(`INSERT INTO cliente (edificio_id, nombre, tipo_doc, num_doc, telefono, correo, unidad_id, creado_por)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+			s.eid, c.nombre, c.tipo, c.doc, c.tel, c.correo, unidad, s.usuarios["admin@demo.pe"])
+	}
+	return nil
 }
 
 // incidencias siembra INC-001 … INC-014 con línea de tiempo, evidencias, votos y egresos de los terminados.

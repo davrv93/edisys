@@ -2,6 +2,7 @@
 package config
 
 import (
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -15,6 +16,7 @@ type Config struct {
 	CookieSecure  bool
 	Version       string
 	URLPublica    string // p. ej. http://localhost:4700 (para enlaces de invitación y recibos)
+	PrefijoURL    string // prefijo de ruta pública (p. ej. «/edisys»), derivado de URLPublica; vacío en local
 	S3Endpoint    string
 	S3AccessKey   string
 	S3SecretKey   string
@@ -76,13 +78,19 @@ func envInt(k string, def int) int {
 
 // Cargar lee el entorno.
 func Cargar() Config {
+	urlPublica := strings.TrimRight(env("URL_PUBLICA", "http://localhost:4700"), "/")
+	prefijo := ""
+	if u, err := url.Parse(urlPublica); err == nil {
+		prefijo = strings.TrimRight(u.Path, "/")
+	}
 	return Config{
 		Puerto:            env("PORT", "8080"),
 		DatabaseURL:       env("DATABASE_URL", "postgres://edisys:edisys@localhost:4754/edisys?sslmode=disable"),
 		JWTSecret:         env("JWT_SECRET", "cambia-este-secreto-de-desarrollo-de-32-bytes!"),
 		CookieSecure:      envBool("COOKIE_SECURE", false),
 		Version:           env("APP_VERSION", "dev"),
-		URLPublica:        strings.TrimRight(env("URL_PUBLICA", "http://localhost:4700"), "/"),
+		URLPublica:        urlPublica,
+		PrefijoURL:        prefijo,
 		S3Endpoint:        env("S3_ENDPOINT", "localhost:4790"),
 		S3AccessKey:       env("S3_ACCESS_KEY", "GK0e615b1c2d3e4f5a6b7c8d9e"),
 		S3SecretKey:       env("S3_SECRET_KEY", "7d1f0c9b8a7e6d5c4b3a29181716151413121110a9b8c7d6e5f4a3b2c1d0e9f8"),

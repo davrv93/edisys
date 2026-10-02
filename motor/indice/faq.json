@@ -1,17 +1,62 @@
 [
-  {"id": "faq_horarios_piscina", "texto": "Horarios de la piscina del Edificio Demo: de 08:00 a 12:00, de 12:00 a 16:00 y de 16:00 a 20:00. Aforo máximo: 20 personas. La piscina se cierra en mantenimiento los lunes en la mañana."},
-  {"id": "faq_reservar_parrilla", "texto": "Para reservar la parrilla escribe «quiero reservar la parrilla» por WhatsApp y el asistente te ofrece las franjas libres del día que pidas. La reserva queda confirmada al instante si tu unidad no tiene deuda vencida. Las normas de la parrilla vienen en el recibo y en la app, sección Reservas."},
-  {"id": "faq_reportar_incidencia", "texto": "Para reportar una fuga, falla eléctrica u otro problema escribe por WhatsApp qué está pasando y en qué piso o área: el asistente lo registra como incidencia con un código (por ejemplo INC-015) y la administración lo revisa. También puedes reportarlo desde la app, sección Mantenimiento."},
-  {"id": "faq_aforo_piscina", "texto": "El aforo máximo de la piscina es de 20 personas por franja."},
-  {"id": "faq_pago_yape", "texto": "Puedes pagar tu cuota con Yape o Plin al número de la administración, o por transferencia a la cuenta del edificio. En el concepto escribe «Dpto <tu código> <periodo, por ejemplo 2026-09>». Después sube la foto del voucher y el código de operación en la app (sección Recibos) y la administración lo valida."},
-  {"id": "faq_morosidad", "texto": "La morosidad del Edificio Demo a setiembre 2026 es de 13,1 % (deuda vencida de 3 unidades). El detalle por unidad está en la app, sección Balance, indicador de morosidad."},
-  {"id": "faq_saldo_banco", "texto": "El saldo en el banco del Edificio Demo acumulado a setiembre 2026 es de S/ 34.120,00. El detalle por mes está en la app, sección Balance."},
-  {"id": "faq_reparto_medidores", "texto": "El reparto de medidores toma la lectura de cada departamento y del medidor general, calcula el consumo de cada uno y reparte la diferencia entre el total facturado y la suma de los consumos de forma prorrateada. Las lecturas corregidas generan ajustes en el recibo del mes siguiente."},
-  {"id": "faq_horario_admin", "texto": "La administración atiende de lunes a viernes de 9:00 a 18:00. Para emergencias (fuga, corte de luz, ascensor detenido) escribe por WhatsApp y se registra de inmediato."},
-  {"id": "faq_cuota_ordinaria", "texto": "La cuota ordinaria cubre los gastos regulares del edificio (limpieza, vigilancia, mantenimiento de áreas comunes). La cuota extraordinaria se aprueba en junta para gastos especiales, como reparaciones grandes o mejoras, y no forma parte del recibo mensual."},
-  {"id": "faq_deuda_402", "texto": "El Dpto 402 debe S/ 1.420,00 de meses anteriores. Mientras tenga deuda vencida, la unidad no puede reservar áreas comunes."},
-  {"id": "faq_pago_201", "texto": "El Dpto 201 está al día: su recibo de setiembre 2026 (S/ 990,00) figura pagado el 12-09."},
-  {"id": "faq_recibo_contenido", "texto": "El recibo mensual incluye: cuota ordinaria, consumo de agua y energía de áreas comunes, cuota de reserva, el prorrateo de medidores del mes, y el saldo anterior pendiente si existe. Se publica a inicios de cada mes y llega por WhatsApp y por correo."},
-  {"id": "faq_horario_sum", "texto": "El SUM se puede reservar todos los días de 08:00 a 22:00 en franjas de 2 horas. La reserva requiere que la unidad no tenga deuda vencida."},
-  {"id": "faq_quien_puede_reservar", "texto": "Pueden reservar áreas comunes los propietarios y los inquilinos cuya unidad tenga el permiso activado, siempre que la unidad esté al día. Con deuda vencida, la reserva se bloquea."}
+  {
+    "id": "faq_horarios_piscina",
+    "texto": "Horarios de la piscina del Edificio Demo: de 08:00 a 12:00, de 12:00 a 16:00 y de 16:00 a 20:00. Aforo máximo: 20 personas. La piscina se cierra en mantenimiento los lunes en la mañana."
+  },
+  {
+    "id": "faq_reservar_parrilla",
+    "texto": "Para reservar la parrilla escribe «quiero reservar la parrilla» por WhatsApp y el asistente te ofrece las franjas libres del día que pidas. La reserva queda confirmada al instante si tu unidad no tiene deuda vencida. Las normas de la parrilla vienen en el recibo y en la app, sección Reservas."
+  },
+  {
+    "id": "faq_reportar_incidencia",
+    "texto": "Para reportar una fuga, falla eléctrica u otro problema escribe por WhatsApp qué está pasando y en qué piso o área: el asistente lo registra como incidencia con un código (por ejemplo INC-015) y la administración lo revisa. También puedes reportarlo desde la app, sección Mantenimiento."
+  },
+  {
+    "id": "faq_aforo_piscina",
+    "texto": "El aforo máximo de la piscina es de 20 personas por franja."
+  },
+  {
+    "id": "faq_pago_yape",
+    "texto": "Puedes pagar tu cuota con Yape o Plin al número de la administración, o por transferencia a la cuenta del edificio. En el concepto escribe «Dpto <tu código> <periodo, por ejemplo 2026-09>». Después sube la foto del voucher y el código de operación en la app (sección Recibos) y la administración lo valida."
+  },
+  {
+    "id": "faq_morosidad",
+    "texto": "La morosidad del Edificio Demo a setiembre 2026 es de 13,1 % (deuda vencida de 3 unidades). El detalle por unidad está en la app, sección Balance, indicador de morosidad."
+  },
+  {
+    "id": "faq_saldo_banco",
+    "texto": "El saldo del banco del edificio se muestra en la app, sección Balance; el asistente puede leerlo si la administración tiene activado el motor."
+  },
+  {
+    "id": "faq_reparto_medidores",
+    "texto": "El reparto de medidores toma la lectura de cada departamento y del medidor general, calcula el consumo de cada uno y reparte la diferencia entre el total facturado y la suma de los consumos de forma prorrateada. Las lecturas corregidas generan ajustes en el recibo del mes siguiente."
+  },
+  {
+    "id": "faq_horario_admin",
+    "texto": "La administración atiende de lunes a viernes de 9:00 a 18:00. Para emergencias (fuga, corte de luz, ascensor detenido) escribe por WhatsApp y se registra de inmediato."
+  },
+  {
+    "id": "faq_cuota_ordinaria",
+    "texto": "La cuota ordinaria cubre los gastos regulares del edificio (limpieza, vigilancia, mantenimiento de áreas comunes). La cuota extraordinaria se aprueba en junta para gastos especiales, como reparaciones grandes o mejoras, y no forma parte del recibo mensual."
+  },
+  {
+    "id": "faq_deuda_402",
+    "texto": "Mientras una unidad tenga deuda vencida, no puede reservar áreas comunes hasta regularizar. La deuda de cada unidad se ve en la app, sección Cobranza."
+  },
+  {
+    "id": "faq_pago_201",
+    "texto": "Cada propietario ve el estado de sus recibos en la app, sección Recibos; ahí figura la fecha de pago cuando está al día."
+  },
+  {
+    "id": "faq_recibo_contenido",
+    "texto": "El recibo mensual incluye: cuota ordinaria, consumo de agua y energía de áreas comunes, cuota de reserva, el prorrateo de medidores del mes, y el saldo anterior pendiente si existe. Se publica a inicios de cada mes y llega por WhatsApp y por correo."
+  },
+  {
+    "id": "faq_horario_sum",
+    "texto": "El SUM se puede reservar todos los días de 08:00 a 22:00 en franjas de 2 horas. La reserva requiere que la unidad no tenga deuda vencida."
+  },
+  {
+    "id": "faq_quien_puede_reservar",
+    "texto": "Pueden reservar áreas comunes los propietarios y los inquilinos cuya unidad tenga el permiso activado, siempre que la unidad esté al día. Con deuda vencida, la reserva se bloquea."
+  }
 ]

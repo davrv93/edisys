@@ -5,7 +5,6 @@ import {
   type DocumentHead,
   type RequestHandler,
 } from "@builder.io/qwik-city";
-import { Logo } from "~/components/logo/logo";
 import { Particulas } from "~/components/particulas/particulas";
 import {
   DESTINO_POR_DEFECTO,
@@ -125,14 +124,6 @@ const Spinner = () => (
   </svg>
 );
 
-const TARJETAS = [
-  { titulo: "Balance", valor: "Por nodos" },
-  { titulo: "Medidores", valor: "Con foto" },
-  { titulo: "Junta", valor: "Aprueba en línea" },
-];
-
-const LEMA = "Cada sol del edificio, con su sustento.";
-
 export default component$(() => {
   const loc = useLocation();
   const servidor = useResultadoServidor();
@@ -245,50 +236,18 @@ export default component$(() => {
   const deshabilitado = enviando.value || bloqueado;
 
   const campo =
-    "h-12 w-full rounded-control border bg-superficie px-4 text-base text-tinta placeholder:text-texto-apoyo transition-colors duration-rapida " +
+    "h-11 w-full rounded-control border bg-superficie px-3.5 text-[15px] text-tinta placeholder:text-texto-apoyo transition-colors duration-rapida " +
     "focus:outline-none focus:ring-1 disabled:bg-fondo disabled:text-texto-apoyo";
   const campoOk = "border-borde-fuerte focus:border-acento focus:ring-acento";
   const campoMal = "border-alerta focus:border-alerta focus:ring-alerta";
 
   return (
-    <div class="flex min-h-screen flex-col bg-fondo lg:flex-row">
-      {/* Panel de marca: escritorio, con partículas y resplandor */}
-      <aside class="relative hidden w-[480px] shrink-0 flex-col justify-between overflow-hidden bg-tinta p-12 text-borde lg:flex xl:w-[540px] xl:p-14">
-        <div aria-hidden="true" class="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-acento-oscuro opacity-10 blur-3xl" />
-        <div aria-hidden="true" class="pointer-events-none absolute -bottom-32 -right-16 h-80 w-80 rounded-full bg-acento opacity-20 blur-3xl" />
-        <Particulas cantidad={26} />
-        <a href="/" class="relative z-10 self-start rounded-lg" aria-label="EDISYS, ir a la página principal">
-          <Logo tam={40} texto="text-3xl" />
-        </a>
-        <div class="relative z-10 flex flex-col gap-6">
-          <h1 class="font-titulo text-4xl font-medium leading-[1.15] text-white xl:text-5xl">{LEMA}</h1>
-          <p class="text-lg leading-relaxed text-texto-claro">
-            Recibos, balance, reservas y mantenimiento en un solo lugar para la administración, la junta y cada
-            propietario.
-          </p>
-          <ul class="mt-4 grid grid-cols-3 gap-2">
-            {TARJETAS.map((t) => (
-              <li key={t.titulo} class="flex flex-col gap-1 rounded-tarjeta border border-superficie-oscura-2 bg-superficie-oscura p-3">
-                <span class="text-xs text-texto-tenue">{t.titulo}</span>
-                <span class="text-sm font-semibold text-white">{t.valor}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <p class="relative z-10 text-xs text-texto-tenue">Datos personales protegidos según la Ley 29733.</p>
-      </aside>
+    <div class="relative flex min-h-screen items-center justify-center overflow-hidden bg-tinta px-4 py-6 font-sans">
+      <div aria-hidden="true" class="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-acento-oscuro opacity-10 blur-3xl" />
+      <div aria-hidden="true" class="pointer-events-none absolute -bottom-32 -right-16 h-80 w-80 rounded-full bg-acento opacity-20 blur-3xl" />
+      <Particulas cantidad={30} />
 
-      {/* Cabecera: móvil, con partículas */}
-      <header class="relative flex flex-col gap-6 overflow-hidden bg-tinta px-6 pb-8 pt-12 lg:hidden">
-        <div aria-hidden="true" class="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-acento opacity-20 blur-3xl" />
-        <Particulas cantidad={12} />
-        <a href="/" class="relative z-10 self-start rounded-lg" aria-label="EDISYS, ir a la página principal">
-          <Logo tam={36} texto="text-2xl" />
-        </a>
-        <h1 class="relative z-10 font-titulo text-3xl font-medium leading-tight text-white">{LEMA}</h1>
-      </header>
-
-      <main class="flex flex-1 justify-center px-0 lg:items-center lg:px-12">
+      <main class="relative z-10 flex w-full justify-center">
         <form
           method="post"
           action={loc.url.pathname + loc.url.search}
@@ -296,15 +255,26 @@ export default component$(() => {
           preventdefault:submit
           onSubmit$={enviar}
           aria-busy={enviando.value}
-          class={["flex w-full max-w-[400px] flex-col gap-5 px-6 py-8 transition-opacity duration-media animate-aparecer lg:gap-6 lg:px-0 lg:py-16", enviando.value ? "opacity-80" : ""]}
+          class={["flex w-full max-w-[344px] flex-col gap-4 rounded-tarjeta border border-borde bg-superficie px-5 py-6 shadow-flotante transition-opacity duration-media animate-aparecer sm:px-6", enviando.value ? "opacity-80" : ""]}
         >
           <input type="hidden" name="next" value={destino} />
 
-          <div class="hidden flex-col gap-2 lg:flex">
-            <h2 class="font-titulo text-4xl font-semibold">Ingresar</h2>
-            <p class="text-base text-texto-suave">Administración, junta, propietarios y personal del edificio.</p>
+          <div class="flex flex-col items-center gap-3 text-center">
+            <a href="/" class="flex items-center gap-2.5 rounded-lg" aria-label="EDISYS, ir a la página principal">
+              <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true">
+                <rect width="32" height="32" rx="8" class="fill-acento" />
+                <path
+                  d="M8 24h16M10.5 19h11M13 14h6M16 9v0.01"
+                  stroke="#FFFFFF"
+                  stroke-width="2.4"
+                  stroke-linecap="round"
+                  fill="none"
+                />
+              </svg>
+              <span class="text-xl font-semibold tracking-[0.08em] text-tinta">EDISYS</span>
+            </a>
+            <h1 class="text-sm font-normal text-texto-suave">Accede a tu edificio</h1>
           </div>
-          <h2 class="sr-only lg:hidden">Ingresar</h2>
 
           {error.value && (
             <div
@@ -332,9 +302,9 @@ export default component$(() => {
             </div>
           )}
 
-          <fieldset disabled={enviando.value} class="flex flex-col gap-5 lg:gap-6">
-            <div class="flex flex-col gap-2">
-              <label for="correo" class="text-sm font-semibold">
+          <fieldset disabled={enviando.value} class="flex flex-col gap-3">
+            <div class="flex flex-col gap-1.5">
+              <label for="correo" class="sr-only">
                 Correo o DNI
               </label>
               <input
@@ -352,6 +322,7 @@ export default component$(() => {
                 aria-invalid={errCorreo ? "true" : undefined}
                 aria-describedby={errCorreo ? "correo-error" : undefined}
                 class={[campo, errCorreo ? campoMal : campoOk]}
+                placeholder="Correo o DNI"
               />
               {errCorreo && (
                 <p id="correo-error" class="text-sm text-alerta">
@@ -360,19 +331,10 @@ export default component$(() => {
               )}
             </div>
 
-            <div class="flex flex-col gap-2">
-              <div class="flex items-center justify-between">
-                <label for="clave" class="text-sm font-semibold">
-                  Contraseña
-                </label>
-                <button
-                  type="button"
-                  onClick$={avisarOlvido}
-                  class="hidden text-sm text-acento underline-offset-2 hover:text-acento-hover hover:underline lg:inline"
-                >
-                  ¿La olvidaste?
-                </button>
-              </div>
+            <div class="flex flex-col gap-1.5">
+              <label for="clave" class="sr-only">
+                Contraseña
+              </label>
               <div class="relative">
                 <input
                   ref={claveRef}
@@ -384,7 +346,8 @@ export default component$(() => {
                   bind:value={clave}
                   aria-invalid={errClave ? "true" : undefined}
                   aria-describedby={errClave ? "clave-error" : undefined}
-                  class={[campo, "pr-14", errClave ? campoMal : campoOk]}
+                  class={[campo, "pr-12", errClave ? campoMal : campoOk]}
+                  placeholder="Contraseña"
                 />
                 <button
                   type="button"
@@ -392,7 +355,7 @@ export default component$(() => {
                   aria-pressed={verClave.value}
                   aria-controls="clave"
                   aria-label={verClave.value ? "Ocultar contraseña" : "Mostrar contraseña"}
-                  class="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-lg text-texto-suave hover:text-tinta focus-visible:outline focus-visible:outline-2 focus-visible:outline-acento"
+                  class="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-lg text-texto-suave hover:text-tinta focus-visible:outline focus-visible:outline-2 focus-visible:outline-acento"
                 >
                   <IconoOjo abierto={!verClave.value} />
                 </button>
@@ -404,21 +367,20 @@ export default component$(() => {
               )}
             </div>
 
-            <div class="flex items-center justify-between">
-              <label class="flex min-h-11 items-center gap-2 text-sm text-texto-suave lg:gap-3">
+            <div class="flex items-center justify-between gap-3">
+              <label class="flex min-h-8 items-center gap-2 text-sm text-texto-suave">
                 <input
                   type="checkbox"
                   name="recordar"
                   bind:checked={recordar}
-                  class="h-5 w-5 rounded border-borde-fuerte accent-[var(--color-acento)]"
+                  class="h-4 w-4 rounded border-borde-fuerte accent-[var(--color-acento)]"
                 />
-                <span class="lg:hidden">Recordarme</span>
-                <span class="hidden lg:inline">Recordar este dispositivo</span>
+                <span>Recordarme</span>
               </label>
               <button
                 type="button"
                 onClick$={avisarOlvido}
-                class="min-h-11 text-sm text-acento underline-offset-2 hover:text-acento-hover hover:underline lg:hidden"
+                class="text-sm text-acento underline-offset-2 hover:text-acento-hover hover:underline"
               >
                 ¿Olvidaste tu clave?
               </button>
@@ -428,32 +390,24 @@ export default component$(() => {
           <button
             type="submit"
             disabled={deshabilitado}
-            class="flex h-13 items-center justify-center gap-2 rounded-control bg-acento text-base font-semibold text-white transition-[background-color,transform] duration-rapida hover:bg-acento-hover enabled:active:scale-98 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento disabled:cursor-not-allowed disabled:opacity-70 lg:h-12"
+            class="flex h-11 items-center justify-center gap-2 rounded-control bg-acento text-[15px] font-semibold text-white transition-[background-color,transform] duration-rapida hover:bg-acento-hover enabled:active:scale-98 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento disabled:cursor-not-allowed disabled:opacity-70"
           >
             {enviando.value && <Spinner />}
             {enviando.value ? "Ingresando…" : "Ingresar"}
           </button>
 
-          <div class="hidden items-center gap-3 text-xs text-texto-apoyo lg:flex" aria-hidden="true">
-            <div class="h-px flex-1 bg-borde" />o<div class="h-px flex-1 bg-borde" />
-          </div>
-
           <button
             type="button"
             onClick$={avisarWhatsApp}
             disabled={enviando.value}
-            class="h-13 rounded-control border border-borde-fuerte bg-superficie text-base font-semibold text-tinta transition-[background-color,transform] duration-rapida hover:bg-fondo enabled:active:scale-98 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento lg:h-12"
+            class="self-center text-sm font-medium text-acento underline-offset-2 hover:text-acento-hover hover:underline disabled:opacity-60"
           >
             Recibir código por WhatsApp
           </button>
 
-          <p class="text-center text-sm text-texto-apoyo">
-            ¿Eres propietario y no tienes cuenta? <a href="/#contacto">Pide tu acceso a la administración</a>
+          <p class="text-center text-xs text-texto-apoyo">
+            ¿No tienes cuenta? <a href="/#contacto">Pide tu acceso</a>
           </p>
-
-          <div class="mt-auto rounded-xl border border-acento-borde bg-acento-suave p-4 text-sm leading-normal text-acento-hover lg:hidden">
-            Instala EDISYS en tu celular: menú del navegador, «Agregar a pantalla de inicio».
-          </div>
         </form>
       </main>
     </div>

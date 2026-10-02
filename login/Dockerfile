@@ -3,6 +3,8 @@
 
 FROM node:22-slim AS build
 WORKDIR /src
+ARG EDISYS_PREFIJO=""
+ENV EDISYS_PREFIJO=${EDISYS_PREFIJO}
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY . .

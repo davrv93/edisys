@@ -7,9 +7,12 @@ import { qwikVite } from "@builder.io/qwik/optimizer";
 import { qwikCity } from "@builder.io/qwik-city/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
+// Prefijo de URL pública: vacío en local; «/edisys» bajo el alias de boticalima.
+const PREFIJO = process.env.EDISYS_PREFIJO || "";
+
 export default defineConfig((): UserConfig => {
   return {
-    base: "/login/",
+    base: `${PREFIJO}/login/`,
     plugins: [qwikCity(), qwikVite(), tsconfigPaths({ root: "." })],
     server: {
       headers: { "Cache-Control": "public, max-age=0" },

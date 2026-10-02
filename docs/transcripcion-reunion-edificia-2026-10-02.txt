@@ -1,0 +1,891 @@
+que sean de recaudar, y los importes que sean de recaudar.
+Y de acuerdo al porcentaje de participación o algún otro
+criterio, y esto es lo que le toca pagar al vecino.
+Entonces acá tienes tu presupuesto, tus montos totales,
+el porcentaje de participación que tiene y luego el importe.
+Como ves acá hay porcentajes diferentes.
+Porque hay condominios, este es un ejemplo de condominio bien
+grande que tiene el porcentaje general,
+el porcentaje de la etapa, el porcentaje de la torre,
+el porcentaje de los estacionamientos.
+Entonces cada servicio no usa necesariamente el mismo
+porcentaje.
+A veces todo un porcentaje diferente.
+Entonces acá se pone el porcentaje.
+Este diarresivo es configurable.
+Que voy a mostrar unos modelos de resivos que tenemos por acá.
+Con el paso del tiempo los clientes nos pedían.
+Pero yo quiero que sea de color verde,
+porque el verde es el color de una empresa.
+Bueno, claro, tíntalo el verde.
+Quiero que el nombre de la persona esté en la de izquierdo.
+Quiero que la fecha de emisión de iniciamiento esté en la
+parte de arriba.
+Este es otro más sencillo, más simple.
+No vale hacer mucha cosa, mucho detalle.
+Creo que solamente diga pota fija.
+Bueno, como te digo, con el aldeo de ballet,
+esto ya no va a ser posible.
+Pero algunos usuarios todavía lo mantienen así.
+Acá estamos poniendo-- este es el igual al que te hemos
+trabajado hace un ratito.
+Acá sale la foto del contómetro.
+Aquí puedes poner imágenes adicionales.
+Acá, por ejemplo, pusieron el código QR para que los vecinos
+vayan y paen ahí.
+La foto del contómetro es siempre buena,
+porque no faltan por ahí los vecinos que dicen,
+oh, yo no he consumido esa cantidad de agua.
+Ustedes están equivocados.
+Yo no voy a pagar esto.
+Pero acá no te pueden decir eso porque acá está el
+contómetro.
+Ahora te van a decir que el contómetro está malogrado,
+pero ya eso es triste.
+Acá puedes poner el color rosado y así cosas por el estilo.
+Puedes salir las barras de consumo de agua.
+Y puedes personalizarlo con tu logo, con tu nombre.
+Acá, como dice, que te mostré hace un ratito.
+Acá puedes poner dos fotos.
+En fin, puedes hacer todas esas cosas.
+Y entonces, volvamos a nuestra presentación.
+Pues estamos por acá, entonces, aquí.
+Y entonces, ¿qué se hace en el sistema?
+Y esto lo hacemos juntos.
+Creamos, tú nos pasas tu hoja de Excel con presupuestos y nos
+dices exactamente qué vas a hacer.
+Yo voy a pagar esto de esta manera.
+Y esto es el presupuesto.
+Perfecto.
+Entonces, te ayudamos y lo hacemos juntos.
+Armamos el presupuesto creando las categorías en este
+botoncito que dice ver las categorías.
+Pones el nombre y le ponen tu orden.
+¿Qué arma es tu título?
+Y después, lo puedes editar, lo puedes eliminar.
+Según sea necesario.
+Luego, pones los servicios.
+Los servicios que llaman item, partida, fondos,
+diversos nombres.
+En el sistema se llaman servicios.
+Entonces, acá, igualito, en la función configuración
+servicios, se arma lo que al final viene a ser el plan
+contable.
+O sea, todas las cosas que tenemos que cobrar y que tenemos
+que pagar las ponemos acá para poder identificarlas.
+Y después, vamos a ver la ventaja que nos da esto de hacerlo
+así, porque vamos a poder saber cuánto se ha recaudado y cuánto
+se ha gastado de cada cosa.
+Bueno, vamos a avanzar con esta parte primero.
+Como decía, nuestro plan contable tiene un número de
+cuentas.
+Tiene una cuenta principal, que es el título del grupo que hemos
+visto, y después el detalle.
+Entonces, tenemos diversos servicios que se han de
+configurar de acuerdo al modo que sea establecido de
+recaudación, de cobranza.
+Si se recauda, si se paga, si se distribuye.
+Pero la idea es decirle al sistema cómo es el número
+grande, se convierte en el número chico.
+Este número grande, ¿cómo se convierte en este número pequeño?
+Se hace una fórmula, se distribuye de todos por
+igual, se multiplica todo por un porcentaje,
+calcula por el consumo que han tenido,
+o es un monto fijo o un monto variable.
+Entonces, esa configuración se hace acá.
+Como te digo, eso lo hacemos juntos.
+Tú no dices nada más cómo es, y te enseñamos a hacerlo para
+que tú lo puedas editar, modificar o los siguientes
+edificios lo hagas tu mismo.
+Bueno, entonces, hasta aquí, la configuración y la emisión
+del recibo, ¿no?
+Que ponen los valores, que ponen los recibo del agua,
+de la luz, etcétera.
+Y se emiten los recibo.
+Si los recibo ya te los mostré, se envían por correo,
+se pueden enviar por Telegram, los puedes impimir,
+los puedes impimir por debajo de la puerta, etcétera.
+Es una pregunta hasta aquí.
+No, ninguna.
+Ya hablado bastante.
+Vamos, sí, entiendo.
+No lo debo.
+Ya.
+Entonces, ahora qué vamos a hacer con los recibo?
+Todos los recibo los emitimos.
+Ya.
+Nos emitimos y nos vamos a, como te decía,
+repartir de lo que hicimos y ahora tenemos que cobrarnos.
+Entonces, ¿cómo podemos cobrar los recibo?
+El sistema tiene tres formas de registrar la cobrancia de los
+recibo.
+Una es con una empresa recabadora llamada Cacho,
+con la cual estamos interconectados.
+Acá, por ejemplo, dice enviado.
+¿Enviado a dónde?
+¿A Cacho?
+¿Qué cosa es Cacho?
+Cacho es una empresa recabadora que tiene interconectado el
+sistema con nosotros.
+Entonces, aquí, todo hace que el recibo que tú generas sea como
+recibo de agua o de luz.
+Para pagar el agua o la luz, ¿qué hago?
+Agarro mi celular, busco el banco con que yo trabajo,
+banco de crédito, por ejemplo, pongo pago de servicios y luego
+busco se da pao y pago.
+Ya pago mi agua, pago mi luz y así hago yo todos los meses.
+Igualito.
+Igualito.
+Uno va, este es los datos de tu recibo, ¿no?
+Y aquí tú puedes ingresar al BCP, pagar con YAP,
+con el BBVA, con Intervan, o con estos cuatro máscas,
+NER, digital, etcétera.
+Entonces, ¿qué haces?
+Pones selecciones de agua o de crédito, pago de servicios,
+pones Cacho, pones tu código y sale, ¿no?
+Igual con YAP.
+Entonces, acá tengo una pequeña muestra de esto.
+Nosotros estamos con YAP, por ejemplo, ¿no?
+Entonces, hay YAP, pago de servicios.
+En esta pantalla ya cambió.
+YAP me la cambió entonces, pero es ilustrativa, ¿no?
+YAP al servicio, seleccionas el 1, ¿no?
+Ya sale Renier, Claro, Flux en Sur, seleccionas Cacho,
+Pérez Solis, pones el código, se cede 1, 3, 80, y acá está el
+crecido y los pagas, ¿no?
+Y vuelto a pagar el agua y la luz.
+Y también puedes hacer lo mismo con el barco de crédito.
+Bien, entonces, es la primera, los pagos están
+sincronizados con el, con Cacho.
+Tú te olvías de esto, de la cobranza,
+los mandos al Cacho, y solitos se dan a registrar acá las
+cobranzas.
+En esta extinción reporte de Cacho,
+transacciones y liquidaciones.
+Transacciones son los pagos que hacen los vecinos.
+Se pagó el día 29, ayer, a las 4 de la tarde,
+368 soles, lo que están todos tus pagos.
+Y acá las liquidaciones que son las transferencias que hace
+Cacho a la cuenta del edificio, ¿no?
+Acá dice que el día de ayer también, a las 3 de la tarde,
+Cacho ha abonado por las cobranzas, porque Cacho cobra y
+se descuenta su comisión y te abona la diferencia, ¿no?
+Entonces, tú puedes ver acá instantáneamente todos los
+pagos y los abonos que se han hecho.
+Y eso se reflejan luego en los reportes.
+Acá tenemos, por ejemplo, un reporte que le llamamos Estado
+del Cuenta Bancario, este reporte de Estado del Cuenta
+Bancario, este fue de ajo. Remedas, ¿no?
+Ponen, más o menos, el mismo estilo, este es octubre,
+los 30 de agosto dice acá.
+Vamos a poner primero agosto.
+Oh, ya, ven un reporte.
+Entonces, te sale aquí todas tus cobranzas, ¿no?
+Abonos, abonos, todo lo que abono Cacho, sale acá y tú lo
+puedes ver.
+Y eso lo contrastas después como le estaba de cuenta de tu
+banco, de verdad, y hace la conciliación bancaria.
+Bueno, entonces, esta es una de las formas de cobranza.
+La otra de la forma es tener una cuenta arregladadora como
+tú hemos mencionado en el Banco de Crédito.
+Entonces, tú puedes ver acá tus recibos de mantenimiento y para
+enviar al Banco de Crédito el detalle de tus recibos tienes
+que elaborar un archivo que se llama CREP, ¿no?
+Entonces, ellos te envían una macro, tú subes a la macro en
+Excel, los datos de tus recibos y se genera el CREP.
+Aquí el CREP se genera automáticamente, ¿no?
+Tú vienes acá ese archivo de cobranza, das click aquí y al
+sistema te genera el CREP.
+Tú lo descargas, acá está el CREP descargado y lo subes al
+Banco.
+Y después, para registrar las cobranzas, no tienes que estar
+descargando los movimientos para estar.
+Una vez fui a un edificio y vi una chica que estaba ahí.
+¿Qué hace?
+Le digo, estoy marcando a las cobranzas, descargaba los
+movimientos del Banco, un PDF en una hoja ese y se ponía a
+buscar, ¿no? ¿Quién es? ¿Ah, el señor tal?
+¿300.5? ¿Quién pagó 300.5?
+Busque, busca, toda la mañana se lo pasaba ahí haciendo eso.
+En cambio, si tienes el sistema del Banco de crédito, puedes
+descargar el archivo, acá dice click en recabalación,
+entra acá, busca reporte de cobro.
+Esta pantalla es del 2024, no de repente ya cambió el
+crédito porque a veces los bancos cambian y no me avisan.
+Entonces acá ponen reporte de cobro, busquen avanzada,
+ponen la fecha que quiere que este es el 2024, le da click en
+buscar y acá te sale tu archivo, CDPG.
+¿Crees que es el que tú enviaste?
+CDPG es el que te devuelve el Banco con las cobranzas, ¿no?
+Credipago, CDPG significa credipago.
+Entonces, le da click acá, descargas el reporte,
+esperas que descarga y acá está tu reporte, ¿no?
+Y acá dirá el nombre del edificio, ¿no?
+Los robles, los jazmines, ¿cómo se llama el edificio?
+Ponen acá el CDPG y este archivo tiene esta estructura
+semejante, ¿no?
+Una lista, una fila de letras y números que el edificio ya
+sabe qué cosa es, lo identifica.
+Entonces, el edificio se agarra esto,
+tú lo subes al sistema, la edificia, cobranzas masivas,
+de acá, te lo hicieron hacia el banco de crédito,
+pones tu CREP que has descargado, perdón, tu CDPG,
+le da click en subir y acá está.
+Ya está identificado todo este del mes de noviembre,
+son cien soles, este departamento, tata, tata, tata.
+Y le da su guardar y listo, ya tienes tu cobranza registrada.
+Y la última forma de cobranza es ya a mano,
+pues no tienes ninguna de las dos cosas o pagaron,
+te pagaron efectivo o te yapearon, pues entras acá y pones
+cobranzas y ya tu solito pones, ¿no?
+Hay otra forma que lo puede hacer el propietario,
+lo usan bastante en unos edificios, lo pusimos ahí,
+no sabía que lo estaban tanto.
+Una vez una señora me dijo, no, acá, todos, todos,
+tienen que reportar su pago por el sistema,
+si no traes como si no hubiesen pagado.
+Y peor todavía cuando tienen que reservar un área común, ¿no?
+Si no, lo usas a través del sistema, no puedes reservar.
+Entonces, acá está ingresando, lo que hemos visto hace un
+ratito es la vista del administrador.
+Aquí estoy en la vista del vecino.
+Pues un vecino puede ser dueño de 2 o 3 departamentos, ¿no?
+A veces hay gente que alquilas o servían bis, ¿no?
+Entonces, creas un usuario para ellos y los,
+todos los departamentos los pueden ver acá.
+Entonces acá ellos vienen al departamento y acá hay una
+opción que se llama voucher y acá reportan sus vouchers,
+agregar vouchers dice aquí.
+He de pagar que lo hago el crédito con este número de
+operación el día de ayer, 29 de septiembre, 100 soles.
+Y quiero que esto hacía un soles y utilicen en el recibo de,
+acá selecciones del recibo.
+Lo usual, lo normal, digamos, es que la plata vaya al
+recibo más antiguo, ¿no?
+Pero como te digo, tenemos 14 años, 13 años en este negocio
+y sabemos que la gente no siempre paga el
+recibo más antiguo.
+Entonces, no quieren tan reclamaciones o vienen unas
+señores y dicen, no, este voy a pagar y el otro va a pagar
+mi esposo, ¿no?
+Entonces, paga, escogen ellos que el recibo van a pagar.
+Aquí este es un edificio de ejemplos,
+son datos ficticios, ¿no?
+Entonces, uno escoge acá el que el recibo paga y le va a
+guardar, ¿no?
+Entonces, este, te llega a ti, al administrador y se aprueba, ¿no?
+Bueno, acá dice que, como lo he hecho así, a la ya que
+importa, me ha salido este mensaje.
+Está ahí en válido, bueno.
+Hasta el monto, pues, tiene que ser--
+Bueno, pero la idea es que llenas ahí tus montos.
+Acá hay unos ya llenados, ¿no?
+Acá está de 200 soles, 200 soles, 100 soles.
+Ya que ahí se ha procesado.
+Procesado quiere decir que el administrador aprobó el pago
+y no procesado, es que todavía está pendiente.
+Pues, ahí está acá puedes poner incluso el voucher de la
+transferencia, ¿no?
+Ah, acá está el voucher, está el sustento.
+Justamente para que no digan después que están existiendo
+pagos de vecinos que no han pagado.
+Porque ahí siempre no faltan los usuarios o vecinos que son muy
+suficaces y acusan sin tener pruebas de cosas que se hacen
+mal, ¿no?
+Ya han pasado el pago de un propietario que no ha pagado
+nada, no como que no ha pagado nada.
+Acá está su voucher.
+Bien, entonces, como te digo, para eso sirve el sistema para
+hacer la gestión transparente.
+Bueno, hasta acá las cobranzas.
+¿Tienes una pregunta sobre las cobranzas?
+No, está muy directivo.
+¿No?
+Sí.
+Continúan, entonces.
+La tercera parte, me avisa cualquier cosa.
+La tercera parte es pagar a los proveedores, ¿no?
+Emitir, cobrar, pagar.
+Esto es todo lo que se hace.
+Entonces, vamos a pagar a los proveedores.
+Previamente, los proveedores tienen que estar registrados
+en este lugar.
+Acá viso proveedores.
+Pones la administración, el asistente que da el servicio de
+mantenimiento de ancianos, la guardianía, la luz, el agua,
+todos los proveedores, a los cuales se tienen que pagar,
+tienen que estar registrados acá.
+Se registra con este botónico.
+Pones su nombre, su look y el ítimo.
+Como un sistema contable, esto tiene que poner ahí los datos.
+¿A quién le está pagando?
+No puede ser que hay una salida de dinero y dice, ¿a quién fue?
+No me van a poder, creo que fue el jardinero.
+Pero ¿cuánto fue?
+Creo que fue 300 soles.
+No eso no existe, pero sincero, tiene que estar todo para que
+después vengan, cuando vengan las auditorías, ¿no?
+Cuando vienen de nueva junta y dicen,
+¿la empresa se ha confabulado con el presidente anterior y
+que se han tirado la plata?
+Entonces, todo va a estar acá bien resguardado.
+Entonces, acá venimos.
+Y como te digo, todos estos reportes que te estoy mostrando
+por acá, los puede ver en el propietario.
+Acá en esta sección, en esta vista el propietario,
+tú le puedes dar estas opciones.
+Estas opciones son configurables.
+Tu deseo, tú decides qué cosa va a hacer y ver el vecino.
+Al principio, todo esto era lo mismo para todo el mundo.
+Pero empezaron los pedidos.
+No, que no queremos que vea esto.
+Que esto lo van a ver solamente en los propietarios.
+La secretaria va a entrar, pero solo para hacer reservaciones.
+No tiene por qué estar viendo el resto de cosas.
+Entonces, al final uno escoge.
+Quiero que vea esto, esto, esto, y nada más.
+Entonces, puedes tu poner.
+Y como te decía acá están los reportes.
+Todos los reportes, los mismos reportes,
+se pueden poner a disposición de los reportes.
+Bueno, entonces acabamos de ver los comprobantes.
+O sea, hablábamos de comprobantes en el sistema a las
+facturas de los piquets de los proveedores.
+Entonces, el agua y la luz, a nosotros,
+van a ser comprobantes.
+Entonces acá, por ejemplo, ponemos en cuenta por pagar
+comprobantes.
+Y aquí están la clínica en él, los restintores,
+el CDAPAL, en fin, todos tus proveedores.
+Y acá puedes poner la imagen del recibo que estás pagando,
+hasta tu recibo de agua, ¿no?
+Y el ticket del voucher que pagaste en el banco.
+Entonces estas son las dos cosas.
+Este es el recibo y este es el voucher.
+Y esto, como te digo, lo pueden ver todos.
+Además, el sistema guarda información como, ¿quién hizo
+qué? ¿Quién registró todos los recibos?
+El EASAR.
+¿Qué día lo hizo? El 13 de marzo a las 1 y 12.
+¿Ah, el pago? ¿Quién registró el pago?
+También el EASAR, ¿no?
+Te día, el mismo día, 10 minutos después.
+Entonces, ¿para qué sirve esto?
+Para las auditorías también, para saber quién lo hizo.
+En general, esto me lo pidió un cliente que me decía el EASAR.
+Yo creo que mis empleados me engañan.
+Yo les digo que hagan algo, me dicen que ya lo hicieron,
+pero mentira, él me ha vuelto y recibo hace.
+Entonces yo necesito saber quién lo hizo y cuándo.
+Bueno, entonces esto hace transparente la gestión,
+como te decía.
+Entonces tú registras los pagos de tus proveedores por acá.
+De modo que él ya tiene todos.
+Entonces, vamos a ver ahora los resultados de estos registros.
+Vamos a entrar acá a este edificio y vamos a ver,
+por ejemplo, la trazabilidad.
+¿Qué cosa es la trazabilidad?
+La trazabilidad nos dice cuánto se ha recaudado para cada cosa.
+Esto nació también el día que un cliente me dijo el EASAR.
+¿Cuánto se ha recaudado a las multas?
+¿Qué hermano, no sé?
+Uy, porque me han pedido el reporte de las multas.
+¿Quiénes han pagado a las multas?
+Sí, madre, vamos, pues a ver.
+Y tuvimos que descargar tablas, hacer tablas dinámicas,
+filtrar hasta que por fin sacamos.
+Y él me siente lo mismo y él me siente lo mismo.
+Entonces, hicimos eso.
+¿Qué cosa es el sistema?
+Cada vez que un vecino paga, por ejemplo,
+acá paga 183 soles, ¿no?
+Estos 183 soles que entran a la caja es como si dentro de la caja
+tuviésemos cajitas o alcancías, ¿no?
+Entonces, en la caja ficticia virtual,
+tenemos alcancías virtuales en donde este dinero, 6 soles con 39,
+se va para el mantenimiento de asensores.
+Un sol 20 se va para los asensores y capacitados.
+Y así, cada cosa se va a la alcancía que le corresponde.
+De modo que cuando hay que pagar ese servicio,
+uno agarra la alcancía de eso y dice,
+hay tanta plata, sí, alcanza para pagar o a veces no alcanza.
+Porque cuando uno alcanza, por ejemplo, en el agua y la luz,
+el agua y la luz se tiene que pagar puntual todo el tiempo.
+Pero los vecinos no siempre pagan puntual.
+Hay morosos.
+Hay algunos por ahí que se demoran 2, 3 años de pagar.
+Entonces, falta plata.
+Y como sabes, si falta plata, lo puedes ver acá en este reporte
+que llamamos trazabilidad.
+Vamos a ver el reporte de trazabilidad.
+Para eso, puedes requiere que todos los ingresos y ingresos
+hayan sido registrados.
+Si no los registran, pues no sirven.
+Aquí, por ejemplo, podemos ver el agua, los asensores,
+los mantenidos asensores, y acá te sale tu saldo.
+Como es, hay algunos negativos y otros positivos.
+Parece que acá están cobrando con un nombre, ¿no?
+Emiten el recibo con un servicio llamado Cuanto Orinaria,
+donde se recibe todo y después se gasta usando el nombre del
+servicio que se está pagando.
+Algunos hacen esto.
+Como es, acá no te sirve de mucho para hacerlo así.
+Sin embargo, lo hacen así.
+No sé por qué.
+Pero acá tienes 429.000 soles en esta cuenta y en las otras
+tienes una serie de montos negativos.
+O sea, acá te habría que pasar el dinero que puede hacer
+operaciones de pasar dinero de una cuenta o otra.
+Pero si lo llevas bien ordenado, esto te va a salir con el saldo
+correcto, ¿no?
+Por ejemplo, esto se usa mucho.
+Mira acá en este condominio que se llaman los nubales que
+tiene 18 torres, es un constituimiento.
+Acá la gente quiere saber cuánto se ha recabado de sus torres,
+¿no?
+Porque dicen así, los reportes, los ingresos del asensor de la
+torre 1 son para la torre 1.
+No quiero que se basen en la torre 2.
+Entonces, puedes tener acá, por ejemplo,
+este reporte si se lleva diferenciado.
+No hay un concepto único para cobranza,
+sino que se cobra todos 1 por 1.
+Y acá los vecinos pueden-- este lo usan bastante los
+presidentes de la torre.
+El presidente de la torre 1 ingresa y se fije todos los
+saldos de su torre 1, no de la torre.
+El presidente de la torre 2 igual.
+Entonces, hacen una fiscalización.
+Bueno, acá se está demorando un poquito porque es un reporte
+bastante grande.
+Los reportes se hablan en el momento, como ves.
+No es que el reporte está aguarrado ahí para que cuando
+tú veas, no, hiciste una cobranza o un pago,
+se genera el reporte justo en ese momento.
+Acá está, ¿no?
+Entonces acá dice sistema.
+Y acá están los saldos, ¿no?
+Pago significado, del agua a la luz.
+Y acá están torre 1, torre 2, torre 3 y cada torre ve sus saldos.
+Entonces, consumo común, cuánto han gastado.
+Y listo, pues no tienes ahí la información instantáneamente.
+¿Qué más tenemos por acá?
+Tenemos informes económicos que nos muestran cuánto plata hay
+en el banco, cuánto ingresó, cuánto salió,
+cuál es el saldo final, cuántos vecinos pagaron,
+cuánto pagaron.
+En fin, como su nombre dice, es detallado, detalladísimo.
+Todo, todo, tú puedes ver acá.
+Este reporte lo pueden ver los vecinos también.
+Entonces, esto lo consulta mucho los presidentes de las
+torres.
+Entonces, ahí comienzan a ver.
+Pero este vecino ya pagó y no está subresistido.
+Pago registrado porque se demoran cosas así.
+No, que hasta cuánto plata hay en el banco, 3 millones,
+cuánto ingresó, 600, 400,000.
+Como te digo, esto es una municipalidad de esto.
+No es un distrito, es esto, no es un condomín.
+Y acá tienes, puedes decir, 260.
+Todos los que pagaron, ¿no?
+Y acá los vecinos que están debiendo.
+Esto es como un balance, ¿no?
+Un balance de cuántas tienes en cuenta por pagar,
+en cuenta por cobrar, los saldos en los bancos,
+los movimientos de pago de cada uno.
+Y en la parte de abajo, mira que tan grande este reporte.
+Acá tus pagos de luz, ¿no?
+Tus de luz, suministro, transferencia.
+A ver, quiero ver esto si se pagó, ¿no?
+Es acá, acá está tu comprobante, ¿no?
+Ah, sí está, no han hecho.
+En fin, todas esas cosas sirven.
+Ya para terminar con esta parte, estamos viendo los reportes.
+Vamos a ver algunos reportes que son bastante consultados.
+Por ejemplo, el reporte Moroso, ¿no?
+Quieren saber quién es uno, Moroso, aquí están.
+Por cierto, la palabra Moroso se puede cambiar, ¿no?
+Una vez de un edificio me quedó, ¿ya sabe?
+No le gusta que le diga Moroso.
+Pero ¿cómo quiere que le ponga?
+Quiere que le diga este recibo vencido.
+Nada cambia, ¿no?
+Entonces, puedes cambiar la palabra Moroso.
+Aquí también salen los nombres de las personas.
+Acá no sale, pero las puedes mostrar.
+También nos pidieron, no, que afecta su privacidad,
+que esto quiera los nombres.
+La personalización es algo que es bastante usado en el sistema.
+Y acá, de forma, también puedes tener los pagos de los
+puntuales, ¿no?
+Una señora vino una vez y me dijo,
+¿ya quiero saber la puntualidad, señor Lanzar?
+¿Cómo es ese acceso?
+Uch, actitud de que ahora con el programador hicimos este reporte
+puntualidad.
+Ves, acá ves a colores y de un vistazo,
+¿cómo anda tu humorosidad?
+No está tan mal, acá hay más verdes que rojos.
+Pero acá te das cuenta, ¿no?
+Mira, este vecino no paga.
+Ya, llámalo.
+Ya ahorita, ¿no?
+Entonces, te sirve para hacer tus saldores y tu gestión de
+cobranza.
+Como a veces, realmente hemos hecho tres cosas.
+Emitir recibo, registrar su cobranza y pagar los proveedores.
+Y ya tienes los saldos, tienes los morosos.
+Puedes ver también la fecha, ¿no?
+La misma señora me dijo, quiero saber la fecha,
+porque acá dice moroso, pero no dice que había pagado.
+Ya, entonces, le dije para programador otra vez,
+no, ya ponle la fecha porque quieren saber la fecha.
+Entonces, entras acá y acá te das cuenta ya si qué tan grave
+es la morosidad.
+Porque si el recibo de enero te lo paga en enero,
+ya pues no es tan grave.
+No nos ha molestado los vecinos porque no pagaron.
+Pero si lo están pagando en marzo, ¿no?
+Y acá, de repente, tienes otro que te lo pague en abril.
+Acá en mayo, por ejemplo, ¿no?
+Ya esto está grave, ¿no?
+Entonces, a eso sí hay que llamarlos para que cobrar.
+También puedes ver los flujos de ingreso, ¿no?
+Porque tú cobras, cobras y de final, ¿y cuánto recaudé,
+¿y cuánto basté, y cómo fue?
+Acá está, ¿no?
+Entonces, en enero, recogaste 25.000 soles en febrero, 24.
+Y así, esto está más o menos parejo, ¿no?
+Aunque acá hay alguna diferencia de 24 a 19,
+son 5.000 soles de diferencia.
+¿Y dónde están esos 5.000 soles?
+¿Por qué no se cobraron acá?
+Fija, te tienen una pagada, ¿no?
+Tú ves acá, llega el primer, por ejemplo, ahora,
+para el 1 de octubre, si ya registres todas tus cobranzas,
+tú puedes ingresar acá y ver, ¿no?
+¿Quiénes son para-- este no pagó?
+Este tampoco pagó.
+Y así, ¿no?
+Ya mate a todos esos que no han pagado ahorita para que me
+paguen, porque necesitamos el dinero.
+Entonces, ¿tienes esto al día?
+Yo hubiera visto edificios que los juntas de propietarios le
+reclaman, ¿no?
+O sea, tú puedes ir a los vecinos, vecinos,
+y ustedes no pagan, ¿cómo se cumplimos las cosas?
+Y te voltea el pastel.
+Porque para eso te hemos contratado, ¿puedes decir, ¿no?
+Te hemos contratado esto para que cobres y te quejas de que
+no pagan, y ya das la cobranza y después me traes el reporte.
+Y este es el reporte que te puede servir.
+No mienes, señores, cuando ingresamos,
+estamos recogiendo solamente 19.000 soles,
+pero gracias a la gestión de cobranza,
+estamos recogiendo ahora 20.000 o 25.000, o sea, en fin.
+Estas son algunas de los reportes.
+Como ves, acá podemos tener los reportes de cobranzas,
+de pago, de los recibes de abejo.
+Puedes hacer acuergos de pago.
+Por ejemplo, habíamos visto por acá que había un moroso que
+debería varios recibes, ¿no?
+Entonces, acá es el que más debe de aquí.
+Acá, sumamos que este.
+El depósito, o sea, depósito de 16, no.
+Esa es este, el 601.
+Entonces, vienes tú acá, acuentas por cobrar,
+y vienes a acuergos de pago.
+Acuergos de pago.
+Entonces, usted dice acá, señor, y llama hasta el 601, ¿no?
+601.
+601.
+Y aquí los elecciones.
+Y este es el señor, la señora Rina.
+El día de hoy, señora Rina, vamos a hacer un acorde de pago.
+Ustedes estos recibes, le vamos a recargar por falso, ¿no?
+100 soles o al revés, le haces un descuento, ¿no?
+Mejor le vamos a descontar.
+Te quitas las, no sé, negocias con el deudor, ¿no?
+¿Cuánto va a pagar y se sale un monto?
+Ya, son 886 soles. ¿Está de acuerdo?
+Sí.
+Ya, esto cuánto va a pagar.
+Lo puedo pagar en 6 cuotas.
+Y cuando va a empezar, en octubre, perfecto.
+Las cuotas salen de 140.
+No mucho, que mejor un poquito más, 12 meses.
+Ya, las cuotas salen de 70.
+Ya, está bien.
+Ya va a guardar y el sistema va a emitir un documento que
+firma el presidente de la junta, firma el deudor.
+Y todos los meses en los siguientes recibes va a salir el
+importe del acuerdo de pago, ¿no?
+Entonces, de finales en los recibes.
+Y hace otras cosas más, como avisos de cobranza automáticos.
+Tú puedes programar para que el sistema automáticamente,
+en determinado día del mes, te envía cada día de aviso el 15.
+Entonces, el 15, por deuda vencida.
+Ya, los que deben de 100 soles hasta 1,000 soles,
+le vas a mandar algún aviso suave, ¿no?
+Por favor, señor, no se olvide pagar.
+Y los que es más de 1,000 soles hasta 10,000 soles,
+o hasta infinito, no te pones un millón de soles.
+Asunto, evite problemas judiciales.
+Por favor, hago sus pagos a tiempo.
+En fin, tú puedes personalizar tus mensajes de cobranza,
+de acuerdo al nivel de deuda que tengan tus vecinos.
+Y listos, mira, ya tienes todos sus controles de la
+contabilidad en el sistema.
+Y como te digo, hace la gestión transparente.
+Si le haces acceso a tus vecinos a los mismos reportes,
+ellos pueden ingresar y ver su trazabilidad,
+ver los morosos, ver sus cobranzas.
+No, no, claro.
+Y están todos tranquilos y no están preguntando ni diciendo
+cosas que no somos, ¿no?
+Bueno, hasta aquí la contabilidad.
+¿Qué te ha parecido?
+¿Tienes una pregunta?
+No, no, no, no, no, no, no, no, no, no, no, no, no, no, no.
+¿Me escuchas?
+Sí, ¿me escuchas?
+Hola.
+Hola.
+¿Puerto estás ahí?
+Bueno, permíteme, no sé si le habéis puerto.
+No te escuchamos.
+Sí, ¿lo escucho?
+¿Estás escuchando a mí?
+O sea, por lo menos está ahí, ¿no?
+Sí, está.
+¿Hola?
+Parece que es un micrófono, ¿es?
+¿Os lo escuchás?
+Hola.
+¿Me escuchan ahí?
+Nosotros no le escuchamos.
+Si tienes alguna pregunta, puedes hacerla por el chat.
+Ahí sí me escuchan, digo.
+Y nos avisa para continuar, si no--
+Pero no, sí, le decía que sí lo había entendido.
+Tuvo bien.
+¿Me escuchan?
+Sí, si te escuchamos.
+Ah, excelente.
+Bueno, muy bien, entonces pasamos ahora a ver otros temas, por ejemplo, en publicación
+de documentos.
+Puedes ingresar al sistema, vamos a cambiar de--
+Acá, por ejemplo, algunas veces hay necesidad en compartir documentos con los vecinos, hay
+reglamento interno, un libro de reclamaciones, el estado de cuenta del banco, las actas de
+las sesiones de la directiva, el contrato que se hizo con la empresa administradora,
+en fin, ¿no?
+Documentos que los vecinos desean ver y que alguna reunión te podrían decir a ustedes,
+no hacen acuerdos secretos, nada, la última reunión, qué cosa habrán acordado.
+No, señor, todo está acá, pues acá en esta sesión de documentos, estos títulos,
+estos grupos, los creas tú, ¿no?
+Entonces acá, por ejemplo, hay actas sesiones de Junta de Directivos, entonces en eso aquí
+y acá están, ¿no?
+Actas sesiones extraordinarias de tal fecha, entonces todos están acá aguardados, los
+documentos, todos los--
+Y están como ves, esto está del año 2021, hasta el 2020, hasta la actualidad, ¿no?
+Entonces, ¿qué--?
+Acá de tal fecha, acá está, ¿no?
+En fin, puedes poner acá los documentos que desees, como ves, el sistema no los elimina
+y los guarda la cantidad de tiempo que sea necesario.
+También puedes publicar anuncios, ¿no?
+Va a haber un corte de agua, de luz, de mantivito del ascensor, o una reunión, ¿no?
+Que pones anuncios, vigilancia, epidemiológica, retiro el padeño de bicicletas, la junta
+de propietarios, tiene una asamblea, etcétera, y esto lo puedes enviar por correo y te sirve
+como evidencia para que los vecinos sepan que se les avisó, que les informó, ¿no?
+Ustedes no avisaron nada, que todo lo hacen en secreto, no, señor, aquí está, usted
+puede entrar, demandó por correo, que a mí me llegó el correo, pero usted puede ingresar
+al sistema a ver, lo puedes enviar y enviar eso por telégrafo.
+Entre poco vamos a tener también WhatsApp, WhatsApp cuesta más, porque acá telé--
+Ya se que hemos puesto a telégrafo porque el telégrafo es gratuito, no nos cuesta nada.
+Bueno, todos los costos al final se lo pasamos al cliente, ¿no?
+Que ponemos WhatsApp acá esto y WhatsApp cuesta un sol y el sistema va a costar un sol más.
+Bueno, después tienes otras cosas como tus colaboradores, ¿no?
+Las personas que trabajan contigo, estamos a lo que dio una empresa que una vez dijo que
+sus empleados habían mandado un vigilante nuevo y la gente pensó que se había metido
+un ladrón, ¿no?
+Entonces hay una opción acá que te permite presentar a tus colaboradores, acá no está,
+como está a ver aquí la avería, no tengo paracelso, acá está paracelso, ya, por ejemplo,
+tú puedes poner acá la lista de las personas que trabajan contigo en el edificio para
+que los vecinos los vean, ¿no?
+Entonces acá puedes ingresar, por ejemplo, y ves el WhatsApp, acá puse a Teofilo Cubías,
+Teofilo Cubías para sus datos, puedes poner documentos, su currículum, su ficha entesente
+espinales, su ficha plame, de modo que la gente conozca, pues si sepa y no esté sospechando
+de que hay gente que no debe, ¿no?
+Entonces, incluso ellos mismos pueden ingresar y ver, ¿no?
+Guglarlos, ¿no? O extroquearlos, como se dice, para que sean contentos y tranquilos,
+eso es importante, que un segundo mínimo esté con la información correcta y no tenga sospechas
+negativas.
+¿Qué más tenemos?
+Tenemos que puedes hacer encuestas y vamos a pasar a ver, ¿ah?
+Coherno ocurrencias, ¿no?
+Coherno ocurrencias es para que no tengas un cuaderno de papel, pues esto me lo pidió
+también una empresa que un empleado le robó el cuaderno de ocurrencias, ¿no?
+Le metió, lo despidieron y se robó el cuaderno de ocurrencias.
+Entonces, se puede tener un cuaderno de ocurrencias virtuales, donde puedes informar, tus empleados
+informan, ¿no?
+Hay una regauxidad, hay un recorrido de escatado, si entregaron las llaves a 19 y 8, hay una
+maya rota, ¿no?
+Y yo estaba acá, agregó ocurrencias.
+El día de ayer, por ejemplo, se pone que el supervisor fue y encontró cosas, títulos,
+asensón malogrado, o tablero despintado, descripción, el tablero está despintado desde hace tiempo,
+hay mucho óxido, prioridad máxima, ¿no?
+Alta, ¿no?
+Y acá puedes poner una foto, un documento o algo que sustente y eso después lo atiendes
+tú internamente y lo también se puede poner para que lo hagan los vecinos, lo llamamos
+Tique de Atención.
+Los vecinos pueden llegar al sistema y acá ponen los Tique de Atención y el que hacen
+lo mismo, ¿no?
+Daño en el asensor, una regauxidad, un virus roto, la maseta rota, fuga de agua, entonces
+los vecinos se informan a través del sistema.
+Y hay clientes, por ejemplo, que tienen esta, por eso los ponemos en la panel principal,
+cuando ingresas al sistema, acá dice Tique de Atención.
+Estos Tickets aparecen acá y tus empleados, tú, tienes la obligación de ingresar acá
+y atenderlo.
+Entonces, estos están abiertos, ¿por qué están abiertos estos Tickets?
+¿Qué ha pasado?
+Anda, contesta.
+¿Qué cosa está pidiendo la gente que no nos atendemos?
+No, no.
+¿Qué necesitas acá?
+Bueno, esas son cosas miseláneas y ahora vamos a ver las reservaciones.
+Entonces, como te decía en este condominio, los Nogales, que es inmenso, ya te imagino
+la cantidad de áreas comunes que hay acá, hay como 40, ¿no?
+Tienes parrillas grandes, chicas medianas, para, no solamente de uso de una torre, campo
+de fútbol chico, grandes, etcétera.
+Entonces, ¿cómo se configura acá?
+Acá, esta es la primera parte, la configuración.
+Como te decía siempre, te enseñamos a hacer la configuración para que estés allá dominando
+lo que pueda hacer. Acá pones los datos, restricción, reglamento, los horarios, de
+qué días, de qué hora, qué hora cada día, cuánto tiempo o mínimo, cuánto tiempo o
+máximo.
+Es restricciones, permitir con déu de vencida, ¿no?
+Todos los morosos no pueden reservar, o a veces sí les dejan, ¿no?
+No se escucha.
+¡Porrible!
+¡Porrible!
+No te entiendo nada.
+No sé si tú me puedes dar mi periodo, yo no te entiendo nada.
+Los que deben hasta 100 soles, los que deben más de 100 soles tienen que no pueden reservar.
+Los que tienen residuos financiados, a veces como te enseñé la financiación, ¿no?
+Entonces, te dicen, ya, si usted financia, le vamos a dar acceso a las áreas comunes
+para que pueda reservarse.
+Y así otras más, ¿no?
+Tiempo de máxima anticipación, tiempo de mínima anticipación, tiempo de separación
+entre reservas, ¿no?
+Reservas un día y a por reserva mañana había un departamento que todos los días reservado
+al hacer las reuniones y que atendía a sus pacientes ahí, ¿no?
+Entonces, te limitaron, pues no, no, espérate 5 días, pues ya reservaste un día, espérate
+5 días para tener, esto de la máxima anticipación también es importante, si tú la dejas libre,
+¿no?
+Los vecinos ingresan y comienzan a reservar, reservar, reservar, reservar, y tu vecino
+quiere entrar a reservar y ya está ocupado todo octubre, todo noviembre, todo diciembre
+y tiene tiempo recién en enero, entonces se va a quejar, ¿no?
+Cómo dejan registrar, uno quiere entrar y no, máximo 30 días, más de 30 días no
+puedes reservar.
+Si te pasas de 30 días el sistema te va a rechazar, y así otras cosas más, ¿no?
+Puedes poner una foto del sitio o dos o tres, puedes poner una tarifa aquí para que, ¿no?
+Entonces acá vas a poner, ya, por la reservación te va a pagar 100 soles, ¿no?
+Entonces monta 100 soles, de igual, por la limpieza tienes que pagar y pones acá limpieza,
+limpieza del área, limpieza del área común es 30 soles, y así, entonces cada vez que
+un recibo o un vecino reserve, vaya a hacer la reservación, el sistema le va a emitir
+este recibo, y esto va a funcionar como si fuese la entrada al cine, o sea, cuando uno
+va al cine, ¿qué cosa hace?
+¿No?
+Que hago yo para ir al cine, agarro las páginas en planes, busco la película y me dan un
+sitio para pagar, yo pago y me lo conveno a mi QR, igualito, acá está ahí como vecino,
+voy a traer acá reservaciones, entonces entro acá reservaciones, reservaciones, y voy
+a reservar un área, entonces acá la derecho, agregar reservación, hoy clica acá, área
+común, parrilla, la película que voy a ver se llama parrilla, acá están las fotos
+de la película, voy a hacer una analogía, tus horarios para ver la película, una descripción
+de la película, bueno, el área, y acá tu reglamento, acá tu pones un título, parrillada,
+voy a hacer una parrillada de amigos, parrillada de amigos, por eso acá, ¿a qué día va a
+hacer tu parrillada?
+Ah, la voy a hacer para el 6 de... 8 es feriado, ¿no?
+Ya para el miércoles, vamos a hacer una parrillada en la noche, no, desde las 5 de la
+tarde...
+Me protengo batería...
+Por ahora es acá...
+No tiene batería...
+El mismo día, para las 11 de la noche, un TPD, ¿no?
+Y acá cuánto gente va a ir, vamos a ir 5 personas, 8 personas, y otros datos más, ¿no?
+Hay un dinosaurio de reglamento, y acá te sale, si está ahí espacio para el día,
+mira, y acá no está ocupado, guardar, y el sistema te responderá si puedes reservar
+o no.
+O sea, si puedes reservar, te va a salir el recibo, acá está el recibo, acá dice pendiente,
+ahí el recibo está acá, ¿no? con la configuración que se ha hecho, reserva de la sala 200 soles,
+garantía 100 soles, limpieza 50 soles, entonces pagues este recibo, y una vez que el recibo
+está apagado, al propietario le va a llegar por correo cuando está probado, ¿no?
+Que se ha probado, por ejemplo, su código QR, ¿no?
+Y acá está el código QR, entonces este es como decía, como la entrada al cine, la
+entrada al estadio, ¿no?
+Entonces, con este código QR se presenta el propietario en día del evento, y el empleado,
+el encargado que está habiendo en… ¿dónde lo tengo por acá?
+Entonces, acá me perdí que está, a ver, no, este no es.
+Un ratito, tengo acá la vista del… a ver, el código QR, acá está, y entonces el
+encargado, tu empleado, tiene que escanearlo y le va a salir esto, no tienes deuda en
+la reserva aún ha empezado, ¿no?
+Entonces, ya, señor, en cinco minutos va a poder usted ingresar, y acá esto es importante,
+dice no tiene deuda, y acá le puede salir que tiene deuda, porque ¿qué pasa?
+Yo hoy día reservo, ¿no?, pero mi recibo vence mañana, y yo no lo pago, y después
+voy al día que es reservado, o la semana que viene, y me presento, y acá me va a salir
+tiene deuda, porque para reservar hay que estar al día, y para entrar también hay
+que estar al día, ¿no?
+Hay algunos vecinos que pagan nomás para reservar y después olvidate, no volver a pagar nunca
+más.
+Como ya reservaron, ya está.
+Pero no, acá le van a validar de que el día que está ingresando al evento tiene que estar
+al día en sus pagos, ¿no?
+Esto te ahorra problemas porque después vienen los vecinos y yo quería estar reservado y
+no pude, y ustedes le han dado la reserva a un moroso, ¿no?, entonces no, no puede ser.
+Bueno, estas son las principales ventajas que tiene el sistema, la parte contable que es
+muy solicitada, y las cosas varias y las reservaciones.
+Y algunas otras cosas como encuestas, videollamadas, liste los colaboradores, publicación de documentos,
+la personalización, ¿no?, la personalización es algo muy importante para nuestros clientes,
+para nosotros también.
+Por ejemplo, edificia tiene diversas formas de, por ejemplo, esta es una forma de personalización.
+Acá han cambiado el logo de edificia y han puesto espacio, ¿no?, el logo de su empresa.
+Pero el fondo también se puede cambiar, ¿no?, los vecinos me decían, los usuarios me decían
+el azar, este fondo es feo, los vecinos están, perdón, los edificios están borrosos, ese
+color no es el color que me representa, yo necesito que el sistema sea favorable, no
+es que tú vendas nomás, sino yo también necesito, bueno, está bien, con toda la razón.
+Entonces hicimos algo así, por ejemplo, ¿no?, grupo, este, este, este usuario le pone su
+propio logo, su propio fondo, ¿no?, y además, este otro grupo, a ver, un ratito, ¿te puedes
+poner en tu página web, si tienes una página web, puedes poner, este, tu propio, tu propio,
+tu propia página, me estoy demorando acá, Marco Perú, por ejemplo, esta empresa tiene
+su propia página, ¿no?, con su logo, con sus imágenes, todo, y acá tiene un botoncito
+que dice intranet, le haz clic acá y pasas al sistema, y me da también, pues, entonces,
+puedes personalizar, esto, puedes personalizar la app, la app también, puedes personalizar,
+el dominio incluso, ¿no?, a veces nuestro dominio dice siempre difícil, y un cliente
+me dijo en las radio, me decías lo que digas, el, mi dominio, porque otra vez, ¿no?, tú
+pones tu dominio y tú vendes y yo, entonces acá pones el dominio, ¿no?, es como, como
+lo daba, mejor hagamos algo, y un práctico, te pido el IndraE a tu, a la dirección, y
+por último, ¿te necesitas? Y cuando llegues y yo te lo pago, ya no me devuelves, y está,
+amor, dale, mejor, tranquilo, yo te voy a, a acabar el vídeo, te voy a pedir, ya, a ver,
+voy a pedir. Me dijo, ya, me ha ido un edificio, me han dicho que tengo que tener mi propia
+app, que no puedo trabajar con apps, véneme el app, ¿no?, le dije, ¿cómo te voy a vender
+el app?, y el app es de edificios, pero ya sé, le dije, voy a hacer, quitar mi etiqueta,
+le voy a poner la tuya. Y cómo estás súper apurado, tranquilo, porque yo sé que tienes
+que ir hasta allá, esperadme. ¿Cuánto será la tarifa de donde estás tú hasta allá?
+Puedes poner tu propia marca, ¿no?, acá dice Pradi, Company, Nexo, Lavería, Harmony,
+Tobarca. Entonces, estas empresas, cuando van... Estamos comunicando, ¿no?, de donde?
+De cada aplicación de edificios, ¿no?, dice, de cada aplicación de Tobarca, entonces los
+usuarios relacionan la marca de la empresa con el servicio, con la app, ¿no? Entonces,
+estás cubierto por todas partes, acá también central, Servinock, etcétera. Entonces, si
+tú gusta, estas cosas que te estás diciendo tienen un costo adicional, puedes poner tu
+propia marca para que tus vecinos, tus clientes ingresen a tu aplicación y no a la aplicación
+de edificios. Que al final es lo mismo, ¿no?, solamente como te digo, hemos quitado el etiqueta.
+Quítale el etiqueta de edificio y pongo tu etiqueta y puedes ingresar a Google Play y descargar
+tu propia aplicación. Bueno, eso sería todo. Tienes a sacar alguna pregunta, consulta,
+es algo que si hayan quedado de interés, ¿está bien un poco más?
+Excelente, excelente. Entonces, ponid parte y sería todo. Te agradezco mucho, tu atención.
+Gracias, Rosario.
+Gracias, Eleazar.
+Bien conversando.
+Bueno, gracias. Muy amable. Bueno, ¿por qué te pareció la plataforma?
+Ok, entonces yo te estoy pasando el presupuesto, ¿te parece?, por los 10 edificios. La medida
+que vas incrementando.

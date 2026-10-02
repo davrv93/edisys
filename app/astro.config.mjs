@@ -7,6 +7,11 @@ import AstroPWA from '@vite-pwa/astro';
 
 const EDGE = process.env.EDISYS_EDGE || 'http://localhost:4700';
 
+// Prefijo de URL pública: vacío en local; «/edisys» bajo el alias de boticalima.
+// Debe coincidir con el que use el borde (edge) y el login.
+const PREFIJO = process.env.EDISYS_PREFIJO || '';
+const BASE_APP = `${PREFIJO}/app`;
+
 /** El muestrario de componentes (/app/ui) solo existe en desarrollo (§2.2). */
 const muestrario = {
   name: 'edisys-muestrario',
@@ -18,7 +23,7 @@ const muestrario = {
 };
 
 export default defineConfig({
-  base: '/app',
+  base: BASE_APP,
   trailingSlash: 'ignore',
   output: 'static',
   build: { format: 'directory', assets: '_astro' },
@@ -28,8 +33,8 @@ export default defineConfig({
     tailwind({ applyBaseStyles: false }),
     muestrario,
     AstroPWA({
-      base: '/app/',
-      scope: '/app/',
+      base: `${BASE_APP}/`,
+      scope: `${BASE_APP}/`,
       registerType: 'prompt',
       injectRegister: false,
       manifestFilename: 'manifest.webmanifest',
@@ -39,16 +44,16 @@ export default defineConfig({
         short_name: 'EDISYS',
         description: 'Administración de edificios: cuotas, recibos, balance, reservas y mantenimiento.',
         lang: 'es-PE',
-        id: '/app/',
-        start_url: '/app/',
-        scope: '/app/',
+        id: `${BASE_APP}/`,
+        start_url: `${BASE_APP}/`,
+        scope: `${BASE_APP}/`,
         display: 'standalone',
         background_color: '#F8FAFC',
         theme_color: '#0F172A',
         icons: [
-          { src: '/app/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/app/icon-512.png', sizes: '512x512', type: 'image/png' },
-          { src: '/app/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: `${BASE_APP}/icon-192.png`, sizes: '192x192', type: 'image/png' },
+          { src: `${BASE_APP}/icon-512.png`, sizes: '512x512', type: 'image/png' },
+          { src: `${BASE_APP}/icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {

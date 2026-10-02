@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { api, lista } from '../../lib/api.js';
+import { ruta } from '../../lib/nav.jsx';
 import { useCarga } from '../../lib/useCarga.js';
 import { useEid } from '../../layout/Sesion.jsx';
 import Encabezado from '../../layout/Encabezado.jsx';
@@ -110,7 +111,7 @@ export default function Motor() {
       <Encabezado
         titulo="Motor conversacional"
         subtitulo="LLM local en español: responde lo que las reglas del chatbot no entendieron. GoldenSQL con guardas para las consultas de datos."
-        volver="/app/whatsapp/"
+        volver={ruta('whatsapp')}
       />
       <div className="flex flex-col gap-5 p-4 lg:p-6">
         {/* Estado y modo */}

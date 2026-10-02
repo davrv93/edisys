@@ -1,5 +1,9 @@
 # EDISYS · borde. En local sin TLS (:80 → host 4700). En el EC2 se cambia la dirección
-# por el dominio (edisys.pe) y Caddy saca el certificado solo.
+# por el dominio y Caddy saca el certificado solo.
+#
+# @@PREFIJO@@ y @@STRIP@@ los sustituye edge/Dockerfile en la construcción:
+#   local  → prefijo vacío  (el borde sirve en la raíz)
+#   boticalima → prefijo «/edisys» (la app se sirve bajo el alias; nginx del host reenvía /edisys/*)
 {
 	admin off
 	auto_https off
@@ -9,34 +13,36 @@
 	encode zstd gzip
 
 	# API (Go). Garage/MinIO no se publica: las fotos salen firmadas por /api/v1/archivos/{id}.
-	handle /api/* {
+	# @@STRIP@@ quita el prefijo para que el API vea su ruta nativa /api/v1/….
+	handle @@PREFIJO@@/api/* {
+		@@STRIP@@
 		reverse_proxy {$API_UPSTREAM:api:8080} {
 			header_up X-Forwarded-For {remote_host}
 		}
 	}
 
-	# Login (Qwik City). Vive bajo /login: NO se quita el prefijo.
-	handle /login* {
+	# Login (Qwik City). Vive bajo /login: NO se quita el prefijo (su base ya lo incluye).
+	handle @@PREFIJO@@/login* {
 		reverse_proxy {$LOGIN_UPSTREAM:login:3000}
 	}
 
-	# App (Astro estático con islas React), base /app.
-	handle /app* {
+	# App (Astro estático con islas React), base @@PREFIJO@@/app.
+	handle @@PREFIJO@@/app* {
 		root * /srv
-		@inmutable path /app/_astro/*
+		@inmutable path @@PREFIJO@@/app/_astro/*
 		header @inmutable Cache-Control "public, max-age=31536000, immutable"
-		header /app/sw.js Cache-Control "no-cache"
-		try_files {path} {path}/index.html /app/index.html
+		header @@PREFIJO@@/app/sw.js Cache-Control "no-cache"
+		try_files {path} {path}/index.html @@PREFIJO@@/app/index.html
 		file_server
 	}
 
 	# No hay landing pública: la raíz manda a la app.
 	handle / {
-		redir * /app/ 302
+		redir * @@PREFIJO@@/app/ 302
 	}
 
 	handle {
-		redir * /app/ 302
+		redir * @@PREFIJO@@/app/ 302
 	}
 
 	header {

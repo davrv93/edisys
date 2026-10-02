@@ -79,8 +79,18 @@ func dptos(c []string) string {
 	return "Dptos " + strings.Join(c, ", ")
 }
 
-// Responder clasifica el mensaje y arma la respuesta con cifras reales de la base. eid=0: busca en todos.
+// Responder clasifica el mensaje, arma la respuesta con cifras reales y persiste
+// el intercambio para el feedback (best-effort). eid=0: busca en todos.
 func (s *Server) Responder(ctx context.Context, eid int64, tel, texto string) (*RespuestaBot, error) {
+	res, err := s.responder(ctx, eid, tel, texto)
+	if err != nil || res == nil {
+		return res, err
+	}
+	s.guardarMensaje(ctx, res, tel, texto)
+	return res, nil
+}
+
+func (s *Server) responder(ctx context.Context, eid int64, tel, texto string) (*RespuestaBot, error) {
 	hoy := time.Now().In(P.Lima)
 	cl := chatbot.Clasificar(texto, hoy)
 	res := &RespuestaBot{Intencion: cl.Intencion, Datos: map[string]any{"identificado": false}}
@@ -107,6 +117,22 @@ func (s *Server) Responder(ctx context.Context, eid int64, tel, texto string) (*
 	} else if manejado {
 		return res, nil
 	}
+
+	// Aprendizaje (una sola pasada, sin recursión): lo que las reglas no entienden
+	// lo buscan las golden del edificio y, si nadie sabe, el LLM clasifica.
+	origen := "reglas"
+	s.asegurarGolden(ctx, q.edificioID)
+	if cl.Intencion == chatbot.NoEntendi {
+		if in, ok := s.goldenPara(ctx, q.edificioID, texto); ok {
+			cl.Intencion, origen = in, "golden"
+		}
+	}
+	if cl.Intencion == chatbot.NoEntendi {
+		if in := s.clasificarLLM(ctx, q.edificioID, texto); in != "" {
+			cl.Intencion, origen = in, "llm"
+		}
+	}
+	res.Datos["origen"] = origen
 
 	switch cl.Intencion {
 	case chatbot.Saludo:
@@ -275,6 +301,7 @@ func (s *Server) Responder(ctx context.Context, eid int64, tel, texto string) (*
 		// si uno cuadra, ejecuta el SQL con guardas y el LLM explica las filas reales.
 		if resp, sug, ok, gid := s.preguntaMotorGolden(ctx, q.edificioID, []map[string]string{{"role": "user", "content": texto}}, true); ok && strings.TrimSpace(resp) != "" {
 			res.Intencion = "motor"
+			res.Datos["origen"] = "motor"
 			res.Respuesta = resp
 			if len(sug) > 0 {
 				res.Datos["sugerencias"] = sug

@@ -1,7 +1,9 @@
 // Cliente del API: mismo origen, cookie HttpOnly, cabecera anti-CSRF (§2.4).
 // Todo sale al API real (datos de la semilla en desarrollo); no hay capa mock.
 
-export const BASE = '/api/v1';
+import { BASE_API, BASE_LOGIN } from './base.js';
+
+export const BASE = BASE_API;
 
 export class ApiError extends Error {
   constructor(status, cuerpo = {}) {
@@ -41,7 +43,7 @@ export function construirQuery(query) {
 
 export function irAlLogin() {
   const siguiente = window.location.pathname + window.location.search;
-  window.location.assign(`/login/?next=${encodeURIComponent(siguiente)}`);
+  window.location.assign(`${BASE_LOGIN}?next=${encodeURIComponent(siguiente)}`);
 }
 
 let refrescando = null;

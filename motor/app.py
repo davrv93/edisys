@@ -234,17 +234,32 @@ def _guardar_correccion(pregunta: str, respuesta: str, confirmada: bool):
 
 
 # ---------- recuperación few-shot de golden (Go trae candidatos, Python ordena por e5) ----------
-_vector_golden = {}   # id → vector (caché; los golden cambian poco)
+_vector_golden = {}   # (id, texto) → vector: la clave incluye el texto para que
+                      # editar un golden lo re-indexe sin reiniciar el motor
 
 
 def _vec_golden(gid: int, texto: str) -> np.ndarray:
     with _candado:
-        v = _vector_golden.get(gid)
+        v = _vector_golden.get((gid, texto))
     if v is None:
         v = _e5([PREFIJO_P + texto])[0]
         with _candado:
-            _vector_golden[gid] = v
+            _vector_golden[(gid, texto)] = v
     return v
+
+
+def _jaccard(a: str, b: str) -> float:
+    """Solape léxico de tokens (sin acentos, sin stopwords) para desempatar golden:
+    e5 da sims casi idénticas a variantes del mismo tema que difieren en una palabra
+    (este mes vs este año); el solape de palabras decide cuál llega primero."""
+    parar = {"que", "qué", "cuánto", "cuántos", "cuántas", "cuál", "cuáles", "los", "las",
+             "del", "por", "para", "con", "este", "esta", "hay", "se", "de", "en", "el",
+             "la", "un", "una", "y", "o", "es", "son", "va"}
+    norm = lambda t: set(re.findall(r"[a-z0-9]+", t.lower())) - parar
+    A, B = norm(a), norm(b)
+    if not A or not B:
+        return 0.0
+    return len(A & B) / len(A | B)
 
 
 def _recuperar_golden(consulta: str, candidatos: list[dict], k: int = 3) -> list[dict]:
@@ -252,10 +267,10 @@ def _recuperar_golden(consulta: str, candidatos: list[dict], k: int = 3) -> list
     if not candidatos:
         return []
     q = _e5([PREFIJO_Q + consulta])[0]
-    pares = [(float(np.dot(q, _vec_golden(g["id"], g["pregunta"]))), g) for g in candidatos]
-    pares.sort(key=lambda x: -x[0])
+    pares = [(float(np.dot(q, _vec_golden(g["id"], g["pregunta"]))), _jaccard(consulta, g["pregunta"]), g) for g in candidatos]
+    pares.sort(key=lambda x: -(x[0] + 0.03 * x[1]))
     return [{"id": g["id"], "pregunta": g["pregunta"], "sql": g.get("sql", ""),
-             "sim": round(s, 3)} for s, g in pares[:k] if s >= 0.45]
+             "sim": round(s, 3)} for s, _, g in pares[:k] if s >= 0.45]
 
 
 # ---------- system prompt ----------
@@ -278,17 +293,20 @@ def _ensamblar(mensajes: list[dict], frag: list, mem: list, datos: dict | None =
     if mem:
         partes.append("Correcciones aprendidas de la administración:\n" +
                       "\n".join(f"P: {m['texto']}\nR: {m['respuesta']}" for m in mem))
-    ejemplos = datos.get("golden") or []
-    if ejemplos:
-        # Few-shot de dominio: patrón pregunta→SQL verificado del edificio. El modelo
-        # NO debe inventar cifras: si hay filas, vienen aparte y son las de verdad.
-        partes.append("Ejemplos de preguntas que SÍ sabes responder (con su consulta interna):\n" +
-                      "\n".join(f"P: {g['pregunta']}" for g in ejemplos) +
-                      "\nSi la pregunta del usuario se parece a alguna, respóndela con datos del contexto o di que la administración la ve en la app.")
     filas = datos.get("filas")
     if filas:
-        partes.append("Datos reales ya calculados para esta pregunta (usa SOLO estos números, en soles con coma decimal):\n" +
+        # Con filas reales no hay ejemplos: los golden cercanos (p. ej. «¿cuánto debe
+        # el dpto 402?») inducen citas ajenas. El modelo solo narra lo que Go calculó.
+        partes.append("Datos reales ya calculados para esta pregunta (usa SOLO estos números, en soles con coma decimal; no menciones unidades ni montos que no estén aquí):\n" +
                       json.dumps(filas, ensure_ascii=False)[:1800])
+    else:
+        ejemplos = datos.get("golden") or []
+        if ejemplos:
+            # Few-shot de dominio: patrón pregunta→SQL verificado del edificio, solo
+            # cuando no hay datos calculados (el usuario pregunta algo parecido).
+            partes.append("Ejemplos de preguntas que SÍ sabes responder (con su consulta interna):\n" +
+                          "\n".join(f"P: {g['pregunta']}" for g in ejemplos) +
+                          "\nSi la pregunta del usuario se parece a alguna, respóndela con datos del contexto o di que la administración la ve en la app.")
     fuera = sum(len(p) for p in partes)
     historial = []
     for m in reversed(mensajes[:-1]):

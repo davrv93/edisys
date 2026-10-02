@@ -1,8 +1,9 @@
 // Navegación entre las páginas Astro (una por pantalla). No hay router de cliente:
 // cambiar de pantalla es cargar otra página estática; los detalles van en la query (?id=…).
 import { useCallback, useEffect, useState } from 'react';
+import { BASE_APP } from './base.js';
 
-export const BASE_APP = '/app';
+export { BASE_APP };
 
 /** Página → ruta pública (cada una se sirve como /app/<ruta>/index.html). */
 export const PAGINAS = {
@@ -20,6 +21,7 @@ export const PAGINAS = {
   motor: '/motor/',
   analitica: '/analitica/',
   conciliacion: '/conciliacion/',
+  proveedores: '/proveedores/',
   configuracion: '/configuracion/',
 };
 
@@ -39,8 +41,9 @@ export function ruta(pagina, query) {
 }
 
 /** Qué página es la actual, a partir de la URL. */
-export function paginaActual(pathname = typeof window !== 'undefined' ? window.location.pathname : '/app/') {
-  const resto = pathname.replace(/^\/app/, '').replace(/\/+$/, '/') || '/';
+export function paginaActual(pathname = typeof window !== 'undefined' ? window.location.pathname : BASE_APP + '/') {
+  const sinBase = pathname.startsWith(BASE_APP) ? pathname.slice(BASE_APP.length) : pathname;
+  const resto = sinBase.replace(/\/+$/, '/') || '/';
   const hallada = Object.entries(PAGINAS).find(([, r]) => r === resto || r === resto + '/');
   return hallada ? hallada[0] : 'inicio';
 }

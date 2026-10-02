@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -150,6 +151,11 @@ func (s *Server) preguntaMotorGolden(ctx context.Context, eid int64, mensajes []
 						}
 						datos["filas"] = filas
 						goldenID = g["id"].(int64)
+						// Cifras = verdad: se narran en Go sin pasar por el LLM. El
+						// afinado v1 inventa montos aunque el prompt lo prohíba.
+						if narra := narraFilas(g["pregunta"].(string), filas); narra != "" {
+							return narra, nil, true, goldenID
+						}
 					}
 				}
 				if sim >= 0.60 {
@@ -163,6 +169,100 @@ func (s *Server) preguntaMotorGolden(ctx context.Context, eid int64, mensajes []
 	}
 	texto, lista, ok = s.pideMotor(ctx, map[string]any{"mensajes": mensajes, "pedir_sugerencias": sugerencias, "datos": datos})
 	return texto, lista, ok, goldenID
+}
+
+// narraFilas arma la respuesta del golden ejecutado directamente en Go: las cifras
+// salen de las filas SQL y no hay modelo que pueda alucinarlas. Devuelve "" si las
+// filas no encajan en un formato conocido (en ese caso responde el LLM con los datos).
+func narraFilas(pregunta string, filas []map[string]any) string {
+	if len(filas) == 0 {
+		return "No hay registros para eso en el edificio."
+	}
+	nombre := func(k string) string {
+		n := map[string]string{
+			"recaudado_cts": "Recaudado", "cobrado_cts": "Cobrado", "deuda_cts": "Deuda",
+			"saldo_cts": "Saldo", "monto_cts": "Monto", "gasto_cts": "Gasto",
+			"total_cts": "Total", "presupuestado_cts": "Presupuestado",
+		}
+		return n[k]
+	}
+	// Fila única con una sola cifra monetaria: «La suma recaudado es S/ X (N filas de detalle)».
+	if len(filas) == 1 {
+		for k, v := range filas[0] {
+			if nombre(k) == "" {
+				continue
+			}
+			cts, ok := dineroCts(v)
+			if !ok {
+				continue
+			}
+			extra := ""
+			if n, hay := filas[0]["reservas"].(int64); hay && n > 0 {
+				extra = fmt.Sprintf(" en %d reservas", n)
+			}
+			return fmt.Sprintf("%s: %s%s.", nombre(k), P.Soles(cts), extra)
+		}
+	}
+	// Varias filas: columna monetaria + columna de rotulación → «recaudado por X: S/ N».
+	col, colNombre := "", ""
+	for k := range filas[0] {
+		if nombre(k) != "" {
+			col, colNombre = k, nombre(k)
+			break
+		}
+	}
+	if col == "" || len(filas) > 8 {
+		return ""
+	}
+	rotulo := ""
+	for _, k := range []string{"rubro", "concepto", "codigo", "unidad", "nombre", "area", "mes"} {
+		if _, hay := filas[0][k]; hay {
+			rotulo = k
+			break
+		}
+	}
+	var b strings.Builder
+	total := int64(0)
+	for _, f := range filas {
+		cts, ok := dineroCts(f[col])
+		if !ok {
+			return ""
+		}
+		total += cts
+		clave := ""
+		if rotulo != "" {
+			clave, _ = f[rotulo].(string)
+		}
+		if clave != "" {
+			fmt.Fprintf(&b, "\n- %s: %s", clave, P.Soles(cts))
+		} else {
+			fmt.Fprintf(&b, "\n- %s", P.Soles(cts))
+		}
+	}
+	if len(filas) > 1 {
+		fmt.Fprintf(&b, "\nTotal: %s", P.Soles(total))
+	}
+	return fmt.Sprintf("%s del edificio:%s", colNombre, b.String())
+}
+
+// dineroCts reconoce la cifra monetaria de una celda: *_cts int64/float64, o numeric
+// que pgx entrega como string ("1234.56").
+func dineroCts(v any) (int64, bool) {
+	switch x := v.(type) {
+	case int64:
+		return x, true
+	case int32:
+		return int64(x), true
+	case float64:
+		return int64(math.Round(x)), true
+	case string:
+		n, err := strconv.ParseFloat(x, 64)
+		if err != nil || math.IsNaN(n) || math.IsInf(n, 0) {
+			return 0, false
+		}
+		return int64(math.Round(n * 100)), true
+	}
+	return 0, false
 }
 
 // recuperaGolden pide al motor (POST /v1/recuperar) el orden por similaridad e5
@@ -255,10 +355,12 @@ func validaSQL(sql string) (string, error) {
 	return sql, nil
 }
 
-// goldenCandidatos trae los golden activos del edificio (+ los generales).
+// goldenCandidatos trae TODOS los golden activos del edificio (+ los generales):
+// la selección la hace e5 en /v1/recuperar; un LIMIT por uso sesgaría el catálogo
+// hacia lo ya preguntado y dejaría sin candidatos al resto.
 func (s *Server) goldenCandidatos(ctx context.Context, eid int64) ([]map[string]any, error) {
 	return db.Filas(ctx, s.DB, `SELECT id, pregunta, sql, tablas FROM motor_golden_sql
-		WHERE desactivada=false AND (edificio_id IS NULL OR edificio_id=$1) ORDER BY veces_usada DESC LIMIT 12`, eid)
+		WHERE desactivada=false AND (edificio_id IS NULL OR edificio_id=$1) ORDER BY id`, eid)
 }
 
 // ejecutaGolden corre un SQL con las guardas y lo audita en motor_consulta.

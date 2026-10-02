@@ -224,6 +224,17 @@ func (s *Server) rutasEdificio(r chi.Router) {
 	r.With(q("balance.ver")).Get("/egresos", s.listarEgresos)
 	r.With(q("egresos.registrar")).Post("/egresos", s.crearEgreso)
 
+	// Proveedores y cuentas por pagar (bloque B)
+	r.With(q("proveedores.ver")).Get("/proveedores", s.listarProveedores)
+	r.With(q("proveedores.administrar")).Post("/proveedores", s.crearProveedor)
+	r.With(q("proveedores.ver")).Get("/proveedores/{pid}", s.verProveedor)
+	r.With(q("proveedores.administrar")).Put("/proveedores/{pid}", s.editarProveedor)
+	r.With(q("proveedores.administrar")).Delete("/proveedores/{pid}", s.borrarProveedor)
+	r.With(q("cuentas_pagar.ver")).Get("/cuentas-por-pagar", s.listarCuentasPorPagar)
+	r.With(q("cuentas_pagar.registrar")).Post("/cuentas-por-pagar", s.crearCuentaPorPagar)
+	r.With(q("cuentas_pagar.ver")).Get("/cuentas-por-pagar/{cid}", s.verCuentaPorPagar)
+	r.With(q("cuentas_pagar.registrar")).Post("/cuentas-por-pagar/{cid}/pagos", s.pagarCuentaPorPagar)
+
 	// 05 · recibos y pagos
 	r.With(q("recibos.ver")).Get("/periodos", s.listarPeriodos)
 	r.With(q("periodos.administrar")).Post("/periodos", s.abrirPeriodo)
@@ -305,7 +316,7 @@ func (s *Server) rutasEdificio(r chi.Router) {
 	r.With(q("auditoria.ver")).Get("/auditoria", s.listarAuditoria)
 }
 
-// Módulos nuevos: WhatsApp, chatbot, analítica y kanban de mantenimiento.
+// Módulos nuevos: WhatsApp, chatbot, analítica, kanban de mantenimiento y comercio.
 func (s *Server) rutasModulosNuevos(r chi.Router) {
 	q := s.requiere
 	r.With(q("whatsapp.ver")).Get("/whatsapp/mensajes", s.listarMensajes)
@@ -328,6 +339,32 @@ func (s *Server) rutasModulosNuevos(r chi.Router) {
 	r.With(q("motor.administrar")).Post("/motor/confirma", s.motorConfirma)
 
 	r.With(q("analitica.ver")).Get("/analitica/resumen", s.analitica)
+
+	// comercio (punto de venta): catálogo, clientes, caja y ventas
+	r.With(q("productos.ver")).Get("/productos", s.listarProductos)
+	r.With(q("productos.ver")).Get("/productos/{pid}", s.verProducto)
+	r.With(q("productos.registrar")).Post("/productos", s.crearProducto)
+	r.With(q("productos.registrar")).Put("/productos/{pid}", s.editarProducto)
+	r.With(q("productos.registrar")).Delete("/productos/{pid}", s.desactivarProducto)
+	r.With(q("productos.ver")).Get("/categorias", s.listarCategorias)
+	r.With(q("productos.registrar")).Post("/categorias", s.crearCategoria)
+	r.With(q("productos.registrar")).Put("/categorias/{cid}", s.editarCategoria)
+	r.With(q("productos.registrar")).Delete("/categorias/{cid}", s.desactivarCategoria)
+	r.With(q("clientes.ver")).Get("/clientes", s.listarClientes)
+	r.With(q("clientes.registrar")).Post("/clientes", s.crearCliente)
+	r.With(q("clientes.registrar")).Put("/clientes/{cid}", s.editarCliente)
+
+	// Proveedores y cuentas por pagar (bloque B)
+	r.With(q("proveedores.ver")).Get("/proveedores", s.listarProveedores)
+	r.With(q("proveedores.administrar")).Post("/proveedores", s.crearProveedor)
+	r.With(q("proveedores.ver")).Get("/proveedores/{pid}", s.verProveedor)
+	r.With(q("proveedores.administrar")).Put("/proveedores/{pid}", s.editarProveedor)
+	r.With(q("proveedores.administrar")).Delete("/proveedores/{pid}", s.borrarProveedor)
+	r.With(q("cuentas_pagar.ver")).Get("/cuentas-por-pagar", s.listarCuentasPorPagar)
+	r.With(q("cuentas_pagar.registrar")).Post("/cuentas-por-pagar", s.crearCuentaPorPagar)
+	r.With(q("cuentas_pagar.ver")).Get("/cuentas-por-pagar/{cid}", s.verCuentaPorPagar)
+	r.With(q("cuentas_pagar.registrar")).Post("/cuentas-por-pagar/{cid}/pagos", s.pagarCuentaPorPagar)
+
 	r.With(q("incidencias.ver")).Get("/mantenimiento/incidencias", s.listarIncidencias)
 	r.With(q("incidencias.ver")).Patch("/mantenimiento/incidencias/{tid}/estado", s.cambiarEstadoIncidencia)
 	r.With(q("incidencias.ver")).Get("/mantenimiento/incidencias/exportar", s.exportarIncidencias)

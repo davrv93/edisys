@@ -156,11 +156,14 @@ services:
   login:
     build:
       context: ./login
+      args:
+        EDISYS_PREFIJO: ${EDISYS_PREFIJO:-}
     image: ${EDISYS_REGISTRO:-edisys}/login:${EDISYS_TAG:-local}
     container_name: edisys_login
     <<: *logs
     environment:
       EDISYS_API_INTERNO: http://api:8080
+      EDISYS_PREFIJO: ${EDISYS_PREFIJO:-}
       NODE_OPTIONS: --max-old-space-size=128
       ORIGIN: ${URL_PUBLICA:-http://localhost:4700}
     ports: ["4730:3000"]
@@ -180,6 +183,8 @@ services:
     build:
       context: .
       dockerfile: edge/Dockerfile
+      args:
+        EDISYS_PREFIJO: ${EDISYS_PREFIJO:-}
     image: ${EDISYS_REGISTRO:-edisys}/edge:${EDISYS_TAG:-local}
     container_name: edisys_edge
     <<: *logs

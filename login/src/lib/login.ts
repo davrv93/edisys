@@ -3,18 +3,23 @@
  * y por el servidor (respaldo sin JavaScript en onPost).
  */
 
-export const RUTA_LOGIN_API = "/api/v1/auth/login";
-export const DESTINO_POR_DEFECTO = "/app/";
+/** Prefijo de URL pública. Vacío en local; «/edisys» bajo el alias de boticalima. */
+const BASE_URL = (import.meta.env?.BASE_URL as string) || "/login/";
+export const PREFIJO = BASE_URL.replace(/\/login\/?$/, "").replace(/\/$/, "");
+
+export const RUTA_LOGIN_API = `${PREFIJO}/api/v1/auth/login`;
+export const DESTINO_POR_DEFECTO = `${PREFIJO}/app/`;
 
 /**
- * Solo se aceptan rutas internas que empiecen por /app/.
+ * Solo se aceptan rutas internas que empiecen por /app/ (o por el prefijo del alias).
  * Rechaza URLs absolutas, protocolo relativo (//otro.pe), barras invertidas y «..».
  */
 export function destinoSeguro(valor: string | null | undefined): string {
+  const baseApp = `${PREFIJO}/app`;
   if (!valor) return DESTINO_POR_DEFECTO;
   const v = valor.trim();
-  if (v === "/app") return DESTINO_POR_DEFECTO;
-  if (!v.startsWith("/app/")) return DESTINO_POR_DEFECTO;
+  if (v === baseApp) return DESTINO_POR_DEFECTO;
+  if (!v.startsWith(`${baseApp}/`)) return DESTINO_POR_DEFECTO;
   if (v.includes("\\") || v.includes("//") || /(^|\/)\.\.(\/|$)/.test(v)) return DESTINO_POR_DEFECTO;
   if (/[\u0000-\u001f\u007f]/.test(v)) return DESTINO_POR_DEFECTO;
   return v;

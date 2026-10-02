@@ -1,0 +1,30 @@
+# EDISYS · override para el EC2 de boticalima (convive con las demás instancias).
+# Uso en /home/ubuntu/edisys:
+#   docker compose -p edisys -f docker-compose.yml -f despliegue/docker-compose.boticalima.yml up -d --no-build
+#
+# Qué cambia frente al compose local:
+#  - No publica puertos en el host: todo entra por app_nginx a /edisys/ (red pjg_edge_net).
+#    En una máquina compartida, publicar PostgreSQL (4754) o Garage (4790) sería un agujero.
+#  - El borde se une a pjg_edge_net para que app_nginx lo resuelva como edisys_edge.
+name: edisys
+
+services:
+  postgres:
+    ports: []
+  s3:
+    ports: []
+  mailpit:
+    ports: []
+  api:
+    ports: []
+  login:
+    ports: []
+  edge:
+    ports: []
+    networks:
+      - default
+      - pjg_edge_net
+
+networks:
+  pjg_edge_net:
+    external: true

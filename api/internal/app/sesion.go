@@ -59,16 +59,15 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 	var hash *string
 	var activo bool
 	var err error
-	if strings.Contains(ident, "@") {
-		err = s.DB.QueryRow(ctx, `SELECT id, clave_hash, activo FROM usuario WHERE lower(correo)=lower($1)`, ident).Scan(&uid, &hash, &activo)
-	} else if m := reCodigoDNI.FindStringSubmatch(ident); m != nil {
-		err = s.DB.QueryRow(ctx, `SELECT us.id, us.clave_hash, us.activo FROM persona p
-			JOIN unidad_persona up ON up.persona_id = p.id AND up.hasta IS NULL
-			JOIN unidad u ON u.id = up.unidad_id
-			JOIN usuario us ON us.id = p.usuario_id
-			WHERE upper(u.codigo) = upper($1) AND p.dni_ruc = $2 LIMIT 1`, m[1], m[2]).Scan(&uid, &hash, &activo)
-	} else {
-		err = pgx.ErrNoRows
+	err = s.DB.QueryRow(ctx, `SELECT id, clave_hash, activo FROM usuario WHERE lower(correo)=lower($1)`, ident).Scan(&uid, &hash, &activo)
+	if errors.Is(err, pgx.ErrNoRows) {
+		if m := reCodigoDNI.FindStringSubmatch(ident); m != nil {
+			err = s.DB.QueryRow(ctx, `SELECT us.id, us.clave_hash, us.activo FROM persona p
+				JOIN unidad_persona up ON up.persona_id = p.id AND up.hasta IS NULL
+				JOIN unidad u ON u.id = up.unidad_id
+				JOIN usuario us ON us.id = p.usuario_id
+				WHERE upper(u.codigo) = upper($1) AND p.dni_ruc = $2 LIMIT 1`, m[1], m[2]).Scan(&uid, &hash, &activo)
+		}
 	}
 	if err != nil || hash == nil || !auth.ClaveCorrecta(*hash, in.Clave) {
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
@@ -118,13 +117,13 @@ func (s *Server) emitirSesion(ctx context.Context, w http.ResponseWriter, uid in
 func (s *Server) ponerCookies(w http.ResponseWriter, jwt, rt string) {
 	http.SetCookie(w, &http.Cookie{Name: auth.CookieAcceso, Value: jwt, Path: "/", HttpOnly: true, Secure: s.Cfg.CookieSecure,
 		SameSite: http.SameSiteLaxMode, MaxAge: int(auth.DuracionJWT.Seconds())})
-	http.SetCookie(w, &http.Cookie{Name: auth.CookieRefresh, Value: rt, Path: "/api/v1/auth", HttpOnly: true, Secure: s.Cfg.CookieSecure,
+	http.SetCookie(w, &http.Cookie{Name: auth.CookieRefresh, Value: rt, Path: s.Cfg.PrefijoURL + "/api/v1/auth", HttpOnly: true, Secure: s.Cfg.CookieSecure,
 		SameSite: http.SameSiteStrictMode, MaxAge: int(auth.DuracionRT.Seconds())})
 }
 
 func (s *Server) borrarCookies(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{Name: auth.CookieAcceso, Value: "", Path: "/", HttpOnly: true, Secure: s.Cfg.CookieSecure, SameSite: http.SameSiteLaxMode, MaxAge: -1})
-	http.SetCookie(w, &http.Cookie{Name: auth.CookieRefresh, Value: "", Path: "/api/v1/auth", HttpOnly: true, Secure: s.Cfg.CookieSecure, SameSite: http.SameSiteStrictMode, MaxAge: -1})
+	http.SetCookie(w, &http.Cookie{Name: auth.CookieRefresh, Value: "", Path: s.Cfg.PrefijoURL + "/api/v1/auth", HttpOnly: true, Secure: s.Cfg.CookieSecure, SameSite: http.SameSiteStrictMode, MaxAge: -1})
 }
 
 // datosUsuario: id, nombre, correo, roles_por_edificio y destino según el rol.
