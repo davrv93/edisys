@@ -2,7 +2,7 @@ import { createContext, Fragment, useCallback, useContext, useEffect, useState }
 import { useSesion } from './Sesion.jsx';
 import { menuPara, gruposPara, NOMBRE_ROL } from '../lib/permisos.js';
 import { ruta } from '../lib/nav.jsx';
-import { BotonIcono, Icono, Isotipo, Logo, Modal, SelectorEdificio, Tooltip } from '../ui/index.js';
+import { BotonIcono, Icono, Isotipo, Logo, Modal, ModoDemo, SelectorEdificio, Tooltip } from '../ui/index.js';
 
 const ArmazonCtx = createContext({ setModoTarea: () => {} });
 const CLAVE_MENU = 'edisys.menu'; // 'abierto' | 'iconos' (elección del usuario en escritorio)
@@ -304,6 +304,8 @@ export default function Armazon({ pagina, children }) {
           </div>
         </div>
       </Modal>
+
+      <ModoDemo />
     </ArmazonCtx.Provider>
   );
 }
