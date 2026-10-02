@@ -27,6 +27,7 @@ const PANTALLAS = {
   informes: { permiso: 'balance.ver', C: lazy(() => import('../pantallas/17-informes/Informes.jsx')) },
   externos: { permiso: 'externos.ver', C: lazy(() => import('../pantallas/18-externos/Externos.jsx')) },
   vouchers: { permiso: ['pagos.registrar', 'pagos.informar'], C: lazy(() => import('../pantallas/19-vouchers/Vouchers.jsx')) },
+  cobranzas: { permiso: 'cobranzas.ver', C: lazy(() => import('../pantallas/20-cobranzas/Cobranzas.jsx')) },
   configuracion: { permiso: 'facturacion.configurar', C: lazy(() => import('../pantallas/configuracion/Configuracion.jsx')) },
 };
 

@@ -262,11 +262,20 @@ func (s *Server) rutasEdificio(r chi.Router) {
 	r.With(q("cuentas_bancarias.administrar")).Put("/cuentas-bancarias/{id}", s.editarCuentaBancaria)
 	r.Post("/unidades/{uid}/vouchers", s.registrarVoucher)
 
+	// A4 · cobranzas sin identificar y devoluciones
+	r.With(q("cobranzas.ver")).Get("/cobranzas-sin-identificar", s.listarCobranzas)
+	r.With(q("cobranzas.gestionar")).Post("/cobranzas-sin-identificar", s.crearCobranza)
+	r.With(q("cobranzas.gestionar")).Post("/cobranzas-sin-identificar/{id}/imputar", s.imputarCobranza)
+	r.With(q("cobranzas.gestionar")).Post("/cobranzas-sin-identificar/{id}/devolver", s.devolverCobranza)
+	r.With(q("cobranzas.ver")).Get("/devoluciones", s.listarDevoluciones)
+
 	// 05 · recibos y pagos
 	r.With(q("recibos.ver")).Get("/periodos", s.listarPeriodos)
 	r.With(q("periodos.administrar")).Post("/periodos", s.abrirPeriodo)
 	r.With(q("periodos.administrar")).Get("/periodos/{p}/presupuesto", s.verPresupuesto)
 	r.With(q("periodos.administrar")).Put("/periodos/{p}/presupuesto", s.guardarPresupuesto)
+	r.With(q("periodos.administrar")).Get("/periodos/{p}/presupuesto/plantilla.xlsx", s.plantillaPresupuesto)
+	r.With(q("periodos.administrar")).Post("/periodos/{p}/presupuesto/importar", s.importarPresupuesto)
 	r.With(q("recibos.emitir")).Post("/periodos/{p}/recibos/generar", s.generarRecibos)
 	r.With(q("recibos.emitir")).Post("/periodos/{p}/recibos/emitir", s.emitirRecibos)
 	r.With(q("recibos.ver")).Get("/recibos", s.listarRecibos)
@@ -418,6 +427,13 @@ func (s *Server) rutasModulosNuevos(r chi.Router) {
 	r.With(q("cuentas_bancarias.administrar")).Post("/cuentas-bancarias", s.crearCuentaBancaria)
 	r.With(q("cuentas_bancarias.administrar")).Put("/cuentas-bancarias/{id}", s.editarCuentaBancaria)
 	r.Post("/unidades/{uid}/vouchers", s.registrarVoucher)
+
+	// A4 · cobranzas sin identificar y devoluciones
+	r.With(q("cobranzas.ver")).Get("/cobranzas-sin-identificar", s.listarCobranzas)
+	r.With(q("cobranzas.gestionar")).Post("/cobranzas-sin-identificar", s.crearCobranza)
+	r.With(q("cobranzas.gestionar")).Post("/cobranzas-sin-identificar/{id}/imputar", s.imputarCobranza)
+	r.With(q("cobranzas.gestionar")).Post("/cobranzas-sin-identificar/{id}/devolver", s.devolverCobranza)
+	r.With(q("cobranzas.ver")).Get("/devoluciones", s.listarDevoluciones)
 
 	r.With(q("incidencias.ver")).Get("/mantenimiento/incidencias", s.listarIncidencias)
 	r.With(q("incidencias.ver")).Patch("/mantenimiento/incidencias/{tid}/estado", s.cambiarEstadoIncidencia)

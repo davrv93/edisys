@@ -26,6 +26,7 @@ export const PAGINAS = {
   informes: '/informes/',
   externos: '/externos/',
   vouchers: '/vouchers/',
+  cobranzas: '/cobranzas/',
   configuracion: '/configuracion/',
 };
 

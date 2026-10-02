@@ -88,12 +88,13 @@ export const ITEMS = {
   informes: { pagina: 'informes', etiqueta: 'Informes económicos', corta: 'Informes', icono: 'grafico', permiso: 'balance.ver' },
   externos: { pagina: 'externos', etiqueta: 'Recibos e ingresos externos', corta: 'Externos', icono: 'recibo', permiso: 'externos.ver' },
   vouchers: { pagina: 'vouchers', etiqueta: 'Vouchers y cuentas bancarias', corta: 'Vouchers', icono: 'recibo', permiso: ['pagos.registrar', 'pagos.informar'] },
+  cobranzas: { pagina: 'cobranzas', etiqueta: 'Cobranzas sin identificar', corta: 'Cobranzas', icono: 'entrante', permiso: 'cobranzas.ver' },
   roles: { pagina: 'roles', etiqueta: 'Roles y permisos', corta: 'Roles', icono: 'llave', permiso: 'roles.administrar' },
 };
 
 export const MENU_POR_ROL = {
   administrador: {
-    lateral: ['inicio', 'balance', 'conciliacion', 'proveedores', 'fondos', 'informes', 'externos', 'vouchers', 'recibos', 'unidades', 'reservas', 'medidores', 'mantenimiento', 'whatsapp', 'chatbot', 'motor', 'analitica', 'roles', 'configuracion'],
+    lateral: ['inicio', 'balance', 'conciliacion', 'proveedores', 'fondos', 'informes', 'externos', 'vouchers', 'cobranzas', 'recibos', 'unidades', 'reservas', 'medidores', 'mantenimiento', 'whatsapp', 'chatbot', 'motor', 'analitica', 'roles', 'configuracion'],
     movil: ['inicio', 'recibos', 'mantenimiento', 'whatsapp'],
   },
   junta: {
@@ -122,7 +123,7 @@ MENU_POR_ROL.superadmin = MENU_POR_ROL.administrador;
 /** Grupos del lateral: accesos comunes juntos y plegables. Todo ítem de ITEMS vive en un grupo. */
 export const GRUPOS = [
   { id: 'panel', etiqueta: 'Panel', items: ['inicio', 'portal'] },
-  { id: 'finanzas', etiqueta: 'Finanzas', items: ['balance', 'conciliacion', 'proveedores', 'fondos', 'informes', 'externos', 'vouchers', 'recibos', 'unidades', 'analitica'] },
+  { id: 'finanzas', etiqueta: 'Finanzas', items: ['balance', 'conciliacion', 'proveedores', 'fondos', 'informes', 'externos', 'vouchers', 'cobranzas', 'recibos', 'unidades', 'analitica'] },
   { id: 'operacion', etiqueta: 'Operación', items: ['reservas', 'reservar', 'medidores', 'mantenimiento', 'aprobaciones', 'trabajos', 'reportar'] },
   { id: 'comunicacion', etiqueta: 'Comunicación', items: ['whatsapp', 'chatbot', 'motor'] },
   { id: 'ajustes', etiqueta: 'Ajustes', items: ['roles', 'configuracion'] },
