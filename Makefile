@@ -36,6 +36,9 @@ seed:          ## Borra y vuelve a sembrar el Edificio Demo
 seed-demo:     ## Semilla con 2 lecturas de setiembre pendientes (para tomarlas en vivo)
 	$(COMPOSE) run --rm -e SEMBRAR=siempre -e SEMBRAR_PENDIENTES=2 migrate preparar
 
+demo-extra:    ## Datos de demostración para los módulos nuevos (idempotente; no borra nada)
+	$(COMPOSE) exec -T postgres psql -U edisys -d edisys -v ON_ERROR_STOP=1 < scripts/demo-extra.sql
+
 test-unit:     ## Pruebas puras (sin base)
 	cd api && go test ./internal/reparto/ ./internal/mantenimiento/ ./internal/chatbot/
 

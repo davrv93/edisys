@@ -145,9 +145,13 @@ export default function Vouchers() {
           <>
             <Seccion titulo="Buscar unidad">
               <div className="flex flex-wrap items-end gap-3">
-                <Campo etiqueta="Código de unidad" valor={codigo} onCambio={setCodigo} className="max-w-[180px]" />
+                <Campo etiqueta="Código de unidad" valor={codigo} onCambio={setCodigo} placeholder="ej. 402" className="max-w-[180px]" onKeyDown={(e) => { if (e.key === 'Enter') buscar(); }} />
                 <Boton cargando={buscando} onClick={buscar}>Buscar deuda</Boton>
-                {unidad && <span className="text-sm text-texto-apoyo">Dpto {unidad.codigo} · deuda {formatearSoles(cargos.reduce((s, c) => s + c.saldo_cts, 0))}</span>}
+                {unidad ? (
+                  <span className="text-sm text-texto-apoyo">Dpto {unidad.codigo} · deuda {formatearSoles(cargos.reduce((s, c) => s + c.saldo_cts, 0))}</span>
+                ) : (
+                  <span className="text-sm text-texto-apoyo">Escribe el código y pulsa Buscar (ej. 402).</span>
+                )}
               </div>
             </Seccion>
 
