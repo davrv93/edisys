@@ -31,6 +31,9 @@ const PANTALLAS = {
   documentos: { permiso: 'documentos.ver', C: lazy(() => import('../pantallas/21-documentos/Documentos.jsx')) },
   configuracion: { permiso: 'facturacion.configurar', C: lazy(() => import('../pantallas/configuracion/Configuracion.jsx')) },
 };
+// extras: J1/J2/I3 · encuestas; videollamadas y dominio propio (una pantalla con dos vistas)
+PANTALLAS.encuestas = { permiso: 'encuestas.ver', C: lazy(() => import('../pantallas/40-encuestas/Encuestas.jsx')) };
+PANTALLAS.videollamadas = { permiso: ['videollamadas.ver', 'dominios.administrar'], C: lazy(() => import('../pantallas/41-videollamadas/Videollamadas.jsx')) };
 
 function CargandoPantalla() {
   return (

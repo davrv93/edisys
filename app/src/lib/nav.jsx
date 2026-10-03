@@ -30,6 +30,9 @@ export const PAGINAS = {
   documentos: '/documentos/',
   configuracion: '/configuracion/',
 };
+// extras: J1/J2/I3
+PAGINAS.encuestas = '/encuestas/';
+PAGINAS.videollamadas = '/videollamadas/';
 
 function qs(query) {
   if (!query) return '';

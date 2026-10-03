@@ -82,6 +82,12 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 		P.Fallo(w, r, P.Err(http.StatusLocked, "CUENTA_BLOQUEADA", "Tu cuenta está desactivada. Escribe a la administración."))
 		return
 	}
+	// extras: I3 · en un dominio propio solo entran los usuarios de esa administradora.
+	if err := s.loginPermitidoEnHost(ctx, r, uid); err != nil {
+		s.limLogin.Fallo(claves...)
+		P.Fallo(w, r, err)
+		return
+	}
 	s.limLogin.Limpiar(claves...)
 	resp, err := s.emitirSesion(ctx, w, uid)
 	if err != nil {
