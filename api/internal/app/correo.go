@@ -121,7 +121,7 @@ func (s *Server) conteoCorreos(ctx context.Context, ids []int64) map[string]int 
 var plantillaCorreo = template.Must(template.New("correo").Parse(`<!doctype html><html lang="es"><body style="margin:0;background:#F1F5F9;font-family:Arial,Helvetica,sans-serif;color:#0F172A">
 <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px">
 <table width="560" cellpadding="0" cellspacing="0" style="background:#FFFFFF;border-radius:12px;overflow:hidden">
-<tr><td style="background:#155E75;color:#FFFFFF;padding:18px 24px"><strong style="font-size:20px">EDISYS</strong><br><span style="font-size:13px">{{.Edificio}}</span></td></tr>
+<tr><td style="background:{{.Color}};color:#FFFFFF;padding:18px 24px"><strong style="font-size:20px">{{.Marca}}</strong><br><span style="font-size:13px">{{.Edificio}}</span></td></tr>
 <tr><td style="padding:24px;font-size:15px;line-height:1.5">
 <p>Hola, {{.Nombre}}:</p>
 <p>{{.Intro}}</p>
@@ -129,7 +129,7 @@ var plantillaCorreo = template.Must(template.New("correo").Parse(`<!doctype html
 {{range .Filas}}<tr><td style="border-bottom:1px solid #E2E8F0">{{.Etiqueta}}</td><td align="right" style="border-bottom:1px solid #E2E8F0"><strong>{{.Valor}}</strong></td></tr>{{end}}
 </table>
 <p>{{.Cierre}}</p>
-<p style="color:#64748B;font-size:12px">Adjuntamos el PDF. Este correo lo envía EDISYS en nombre de la administración; no respondas a esta dirección.</p>
+<p style="color:#64748B;font-size:12px">Adjuntamos el PDF. Este correo lo envía {{.Marca}} en nombre de la administración; no respondas a esta dirección.</p>
 </td></tr></table></td></tr></table></body></html>`))
 
 type filaCorreo struct{ Etiqueta, Valor string }
@@ -137,9 +137,21 @@ type filaCorreo struct{ Etiqueta, Valor string }
 type datosCorreo struct {
 	Edificio, Nombre, Intro, Cierre string
 	Filas                           []filaCorreo
+	Marca                           string       // marca: I2 · nombre de la administradora (vacío = EDISYS)
+	Color                           template.CSS // marca: I2 · color de la cabecera, ya validado #RRGGBB
+}
+
+// conMarca pone el nombre y el color de la administradora del edificio en el correo (bloque I2).
+func (s *Server) conMarca(ctx context.Context, eid int64, d datosCorreo) datosCorreo {
+	m := s.MarcaDeEdificio(ctx, eid)
+	d.Marca, d.Color = m.Nombre, template.CSS(m.ColorPrimario)
+	return d
 }
 
 func armarCorreo(d datosCorreo) (html, texto string) {
+	if d.Marca == "" { // marca: I2
+		d.Marca, d.Color = marcaNombre, template.CSS(marcaPrimario)
+	}
 	var b bytes.Buffer
 	_ = plantillaCorreo.Execute(&b, d)
 	var t strings.Builder
@@ -147,7 +159,7 @@ func armarCorreo(d datosCorreo) (html, texto string) {
 	for _, f := range d.Filas {
 		t.WriteString("- " + f.Etiqueta + ": " + f.Valor + "\n")
 	}
-	t.WriteString("\n" + d.Cierre + "\n\nAdjuntamos el PDF. Este correo lo envía EDISYS en nombre de la administración.\n")
+	t.WriteString("\n" + d.Cierre + "\n\nAdjuntamos el PDF. Este correo lo envía " + d.Marca + " en nombre de la administración.\n")
 	return b.String(), t.String()
 }
 
@@ -212,8 +224,8 @@ func (s *Server) CorreoRecibos(ctx context.Context, e *Edificio, uid int64, peri
 		if yp, _ := rc["yape_numero"].(string); yp != "" && saldo > 0 {
 			cierre = "Paga por Yape al " + yp + " con el concepto «Dpto " + cod + " " + per + "» y sube tu voucher en " + s.Cfg.URLPublica + "/app/recibos/."
 		}
-		html, texto := armarCorreo(datosCorreo{Edificio: e.Nombre, Nombre: primerNombre(f["nombre"].(string)), Intro: "Te enviamos tu recibo de mantenimiento de " + P.NombrePeriodo(per) + " del Dpto " + cod + ".",
-			Filas: filasC, Cierre: cierre})
+		html, texto := armarCorreo(s.conMarca(ctx, e.ID, datosCorreo{Edificio: e.Nombre, Nombre: primerNombre(f["nombre"].(string)), Intro: "Te enviamos tu recibo de mantenimiento de " + P.NombrePeriodo(per) + " del Dpto " + cod + ".",
+			Filas: filasC, Cierre: cierre}))
 		unidad := f["unidad_id"].(int64)
 		id, err := s.encolarCorreo(ctx, s.DB, e.ID, &unidad, f["correo"].(string), f["nombre"].(string), "Tu recibo de "+P.NombrePeriodo(per)+" · Dpto "+cod,
 			html, texto, "recibo", val(rc["numero"]), []adjuntoCola{{"recibo-" + val(rc["numero"]) + ".pdf", "application/pdf", pdfB}}, &uid)
@@ -308,8 +320,8 @@ func (s *Server) enviarBalanceCorreo(w http.ResponseWriter, r *http.Request) {
 			adj = append(adj, adjuntoCola{"informe-junta-" + periodo + ".pdf", "application/pdf", informe})
 			intro += " Como miembro de la junta, también va el informe con los pendientes por criticidad y las aprobaciones del mes."
 		}
-		html, texto := armarCorreo(datosCorreo{Edificio: e.Nombre, Nombre: primerNombre(d.nombre), Intro: intro, Filas: filasC,
-			Cierre: "El detalle con cada sustento está en " + s.Cfg.URLPublica + "/app/balance/?periodo=" + periodo + "."})
+		html, texto := armarCorreo(s.conMarca(ctx, e.ID, datosCorreo{Edificio: e.Nombre, Nombre: primerNombre(d.nombre), Intro: intro, Filas: filasC,
+			Cierre: "El detalle con cada sustento está en " + s.Cfg.URLPublica + "/app/balance/?periodo=" + periodo + "."}))
 		id, err := s.encolarCorreo(ctx, s.DB, e.ID, d.unidad, d.correo, d.nombre, "Balance de "+P.NombrePeriodo(periodo)+" · "+e.Nombre, html, texto, "balance", periodo, adj, &uid)
 		if err != nil {
 			P.Fallo(w, r, err)

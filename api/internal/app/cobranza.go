@@ -14,7 +14,6 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"edisys/api/internal/db"
-	"edisys/api/internal/pdf"
 	P "edisys/api/internal/plataforma"
 	"edisys/api/internal/reparto"
 )
@@ -568,45 +567,13 @@ func (s *Server) pdfRecibo(w http.ResponseWriter, r *http.Request) {
 }
 
 // reciboPDF dibuja el recibo (cargado con reciboVisible) en una hoja A4.
+// marca: I1 · el dibujo vive en recibo_plantilla.go: color, logo y bloques según la plantilla del edificio.
 func (s *Server) reciboPDF(ctx context.Context, rc map[string]any, rid int64) ([]byte, error) {
-	lineas, err := db.Filas(ctx, s.DB, `SELECT descripcion, monto_cts FROM recibo_linea WHERE recibo_id=$1 ORDER BY orden, id`, rid)
-	if err != nil {
+	var eid int64
+	if err := s.DB.QueryRow(ctx, `SELECT edificio_id FROM recibo WHERE id=$1`, rid).Scan(&eid); err != nil {
 		return nil, err
 	}
-	d := pdf.Nuevo()
-	d.Rect(0, 770, 595, 72, 0.082, 0.369, 0.459)
-	d.Color(1, 1, 1)
-	d.Texto(40, 805, 22, true, "EDISYS")
-	d.Texto(40, 785, 11, false, fmt.Sprint(rc["edificio"], " · ", rc["direccion"]))
-	d.TextoDerecha(555, 805, 13, true, "Recibo de mantenimiento")
-	d.TextoDerecha(555, 785, 11, false, fmt.Sprint(val(rc["numero"]), "  ", val(rc["correlativo"])))
-	d.Color(0.06, 0.09, 0.16)
-	y := 730.0
-	d.Texto(40, y, 12, true, fmt.Sprint("Dpto ", rc["unidad"], " · ", rc["propietario"]))
-	d.Texto(40, y-18, 10, false, fmt.Sprint("Periodo: ", P.NombrePeriodo(rc["periodo"].(string)), "   Participación: ", strings.Replace(fmt.Sprintf("%.2f", rc["participacion_pct"]), ".", ",", 1), " %"))
-	d.Texto(40, y-34, 10, false, fmt.Sprint("Vence: ", val(rc["vence"]), "   Estado: ", rc["estado"]))
-	y -= 70
-	d.Texto(40, y, 10, true, "Concepto")
-	d.TextoDerecha(555, y, 10, true, "Importe")
-	d.Linea(40, y-6, 555, y-6)
-	y -= 24
-	for _, l := range lineas {
-		d.Texto(40, y, 10, false, l["descripcion"].(string))
-		d.TextoDerecha(555, y, 10, false, P.Soles(l["monto_cts"].(int64)))
-		y -= 18
-	}
-	d.Linea(40, y+6, 555, y+6)
-	y -= 14
-	d.Texto(40, y, 13, true, "Total")
-	d.TextoDerecha(555, y, 13, true, P.Soles(rc["total_cts"].(int64)))
-	y -= 20
-	d.Texto(40, y, 10, false, "Pagado: "+P.Soles(rc["pagado_cts"].(int64))+"    Saldo: "+P.Soles(rc["saldo_cts"].(int64)))
-	if yp, _ := rc["yape_numero"].(string); yp != "" {
-		y -= 30
-		d.Texto(40, y, 10, false, "Paga por Yape al "+yp+" con el concepto «Dpto "+rc["unidad"].(string)+" "+rc["periodo"].(string)+"» y sube tu voucher en la app.")
-	}
-	d.Texto(40, 40, 8, false, "Recibo interno de mantenimiento (no es comprobante SUNAT). Generado por EDISYS el "+time.Now().In(P.Lima).Format("02/01/2006 15:04")+".")
-	return d.Bytes(), nil
+	return s.reciboConPlantilla(ctx, eid, rc, rid, nil)
 }
 
 func val(v any) string {

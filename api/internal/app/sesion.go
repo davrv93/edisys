@@ -284,6 +284,7 @@ func (s *Server) yo(w http.ResponseWriter, r *http.Request) {
 		resp["unidades"] = unidades
 		resp["menu"], resp["pestanas_movil"] = menuPara(e)
 		resp["destino"] = destinoPorRol(e.ID, e.Rol)
+		resp["marca"] = s.marcaPublica(s.marcaCruda(ctx, e.ID)) // marca: I2 · tokens y logo de la administradora
 	}
 	P.JSON(w, http.StatusOK, resp)
 }

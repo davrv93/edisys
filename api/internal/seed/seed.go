@@ -147,6 +147,7 @@ func Sembrar(ctx context.Context, pool *pgxpool.Pool, alm archivo.Almacen, op Op
 	s.exec(`ALTER SEQUENCE recibo_correlativo_seq RESTART WITH 100`)
 
 	adm := s.id(`INSERT INTO administradora (nombre, ruc) VALUES ('Demo Administraciones SAC', '20600000001') RETURNING id`)
+	s.exec(`UPDATE administradora SET slug='demo' WHERE id=$1`, adm) // marca: I2 · /login/?marca=demo
 	s.eid = s.id(`INSERT INTO edificio (administradora_id, nombre, direccion, distrito, dia_corte, dias_vencimiento, dias_gracia, cobra_agua,
 		umbral_aprobacion_cts, modo_aprobacion, yape_numero, normas_texto)
 		VALUES ($1, 'Edificio Demo', 'Av. José Larco 1234', 'Miraflores, Lima', 1, 9, 15, true, 100000, 'mayoria', '987 654 321',
