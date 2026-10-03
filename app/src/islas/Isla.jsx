@@ -35,6 +35,10 @@ const PANTALLAS = {
   // recaudacion: A1, A2
   recaudadora: { permiso: 'recaudacion.ver', C: lazy(() => import('../pantallas/38-recaudadora/Recaudadora.jsx')) },
   'cobranza-masiva': { permiso: 'recaudacion.ver', C: lazy(() => import('../pantallas/39-cobranza-masiva/CobranzaMasiva.jsx')) },
+  // deuda: B3, D1, D2 y D3
+  'cuentas-cobrar': { permiso: ['morosidad.ver', 'recibos.ver'], C: lazy(() => import('../pantallas/22-cuentas-cobrar/CuentasCobrar.jsx')) },
+  acuerdos: { permiso: 'acuerdos.ver', C: lazy(() => import('../pantallas/23-acuerdos/Acuerdos.jsx')) },
+  morosos: { permiso: 'morosidad.ver', C: lazy(() => import('../pantallas/24-morosos/Morosos.jsx')) },
   configuracion: { permiso: 'facturacion.configurar', C: lazy(() => import('../pantallas/configuracion/Configuracion.jsx')) },
   // reservas: H1 · check-in QR del conserje · H2/H3 · configuración de áreas
   checkin: { permiso: 'reservas.checkin', C: lazy(() => import('../pantallas/35-reservas-avanzadas/Checkin.jsx')) },

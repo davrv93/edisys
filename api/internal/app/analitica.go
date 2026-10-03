@@ -143,6 +143,7 @@ func (s *Server) Tareas(ctx context.Context) {
 		} else if n > 0 {
 			slog.Info("retenciones liberadas", "cantidad", n)
 		}
+		s.tareaAvisosCobranza(ctx) // deuda: D2 · avisos de cobranza automáticos (una vez al día por aviso)
 		select {
 		case <-ctx.Done():
 			return

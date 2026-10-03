@@ -94,6 +94,11 @@ export const ITEMS = {
   // recaudacion: A1, A2
   recaudadora: { pagina: 'recaudadora', etiqueta: 'Recaudadora', corta: 'Recaudad.', icono: 'entrante', permiso: 'recaudacion.ver' },
   cobranzaMasiva: { pagina: 'cobranza-masiva', etiqueta: 'Cobranza masiva (CREP/CDPG)', corta: 'CREP', icono: 'conciliacion', permiso: 'recaudacion.ver' },
+  // deuda: B3, D1, D2 y D3
+  cuentasCobrar: { pagina: 'cuentas-cobrar', etiqueta: 'Cuentas por cobrar', corta: 'Por cobrar', icono: 'balance', permiso: 'morosidad.ver' },
+  estadoCuenta: { pagina: 'cuentas-cobrar', etiqueta: 'Estado de cuenta', corta: 'Mi cuenta', icono: 'recibo', permiso: 'recibos.ver' },
+  acuerdos: { pagina: 'acuerdos', etiqueta: 'Acuerdos de pago', corta: 'Acuerdos', icono: 'documento', permiso: 'acuerdos.ver' },
+  morosos: { pagina: 'morosos', etiqueta: 'Morosos, puntualidad y avisos', corta: 'Morosos', icono: 'moroso', permiso: 'morosidad.ver' },
   roles: { pagina: 'roles', etiqueta: 'Roles y permisos', corta: 'Roles', icono: 'llave', permiso: 'roles.administrar' },
   // marca: I1/I2/I5
   marca: { pagina: 'marca', etiqueta: 'Marca y recibo', corta: 'Marca', icono: 'recibo', permiso: ['marca.configurar', 'recibos.plantilla'] },
@@ -107,10 +112,15 @@ export const MENU_POR_ROL = {
   },
   junta: {
     lateral: ['inicio', 'balance', 'recibos', 'unidades', 'reservas', 'aprobaciones', 'analitica', 'proveedores', 'fondos', 'externos', 'ajustes'],
+    lateral: ['inicio', 'balance', 'conciliacion', 'proveedores', 'fondos', 'informes', 'externos', 'vouchers', 'cobranzas', 'recibos', 'cuentasCobrar', 'acuerdos', 'morosos', 'unidades', 'reservas', 'medidores', 'mantenimiento', 'documentos', 'whatsapp', 'chatbot', 'motor', 'analitica', 'roles', 'configuracion'],
+    movil: ['inicio', 'recibos', 'mantenimiento', 'whatsapp'],
+  },
+  junta: {
+    lateral: ['inicio', 'balance', 'recibos', 'unidades', 'reservas', 'aprobaciones', 'analitica', 'proveedores', 'fondos', 'externos', 'cuentasCobrar', 'acuerdos', 'morosos'],
     movil: ['inicio', 'balance', 'aprobaciones'],
   },
   propietario: {
-    lateral: ['portal', 'recibos', 'reservar', 'reportar', 'balance', 'documentos'],
+    lateral: ['portal', 'recibos', 'estadoCuenta', 'reservar', 'reportar', 'balance', 'documentos'],
     movil: ['portal', 'recibos', 'reservar', 'reportar'],
   },
   inquilino: {
@@ -131,7 +141,7 @@ MENU_POR_ROL.superadmin = MENU_POR_ROL.administrador;
 /** Grupos del lateral: accesos comunes juntos y plegables. Todo ítem de ITEMS vive en un grupo. */
 export const GRUPOS = [
   { id: 'panel', etiqueta: 'Panel', items: ['inicio', 'portal'] },
-  { id: 'finanzas', etiqueta: 'Finanzas', items: ['balance', 'conciliacion', 'proveedores', 'fondos', 'informes', 'externos', 'vouchers', 'cobranzas', 'recibos', 'unidades', 'analitica'] },
+  { id: 'finanzas', etiqueta: 'Finanzas', items: ['balance', 'conciliacion', 'proveedores', 'fondos', 'informes', 'externos', 'vouchers', 'cobranzas', 'recibos', 'cuentasCobrar', 'estadoCuenta', 'acuerdos', 'morosos', 'unidades', 'analitica'] },
   { id: 'operacion', etiqueta: 'Operación', items: ['reservas', 'reservar', 'medidores', 'mantenimiento', 'aprobaciones', 'trabajos', 'reportar'] },
   { id: 'comunicacion', etiqueta: 'Comunicación', items: ['whatsapp', 'chatbot', 'motor', 'documentos'] },
   { id: 'ajustes', etiqueta: 'Ajustes', items: ['roles', 'configuracion', 'marca', 'ajustes'] },

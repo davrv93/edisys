@@ -31,6 +31,10 @@ export const PAGINAS = {
   // recaudacion: A1, A2
   recaudadora: '/recaudadora/',
   'cobranza-masiva': '/cobranza-masiva/',
+  // deuda: B3, D1, D2 y D3
+  'cuentas-cobrar': '/cuentas-cobrar/',
+  acuerdos: '/acuerdos/',
+  morosos: '/morosos/',
   configuracion: '/configuracion/',
   // reservas: H1 / H3
   checkin: '/checkin/',
