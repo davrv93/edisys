@@ -29,6 +29,9 @@ const PANTALLAS = {
   vouchers: { permiso: ['pagos.registrar', 'pagos.informar'], C: lazy(() => import('../pantallas/19-vouchers/Vouchers.jsx')) },
   cobranzas: { permiso: 'cobranzas.ver', C: lazy(() => import('../pantallas/20-cobranzas/Cobranzas.jsx')) },
   documentos: { permiso: 'documentos.ver', C: lazy(() => import('../pantallas/21-documentos/Documentos.jsx')) },
+  // recaudacion: A1, A2
+  recaudadora: { permiso: 'recaudacion.ver', C: lazy(() => import('../pantallas/38-recaudadora/Recaudadora.jsx')) },
+  'cobranza-masiva': { permiso: 'recaudacion.ver', C: lazy(() => import('../pantallas/39-cobranza-masiva/CobranzaMasiva.jsx')) },
   configuracion: { permiso: 'facturacion.configurar', C: lazy(() => import('../pantallas/configuracion/Configuracion.jsx')) },
 };
 

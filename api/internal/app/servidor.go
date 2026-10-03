@@ -277,6 +277,9 @@ func (s *Server) rutasEdificio(r chi.Router) {
 	r.With(q("documentos.administrar")).Post("/documentos", s.crearDocumento)
 	r.With(q("documentos.administrar")).Post("/documentos/{id}/publicar", s.publicarDocumento)
 
+	// recaudacion: A1, A2 · recaudadora externa y CREP/CDPG por archivo
+	s.rutasRecaudacion(r)
+
 	// 05 · recibos y pagos
 	r.With(q("recibos.ver")).Get("/periodos", s.listarPeriodos)
 	r.With(q("periodos.administrar")).Post("/periodos", s.abrirPeriodo)
@@ -450,6 +453,9 @@ func (s *Server) rutasModulosNuevos(r chi.Router) {
 	r.With(q("documentos.ver")).Get("/documentos", s.listarDocumentos)
 	r.With(q("documentos.administrar")).Post("/documentos", s.crearDocumento)
 	r.With(q("documentos.administrar")).Post("/documentos/{id}/publicar", s.publicarDocumento)
+
+	// recaudacion: A1, A2 · recaudadora externa y CREP/CDPG por archivo
+	s.rutasRecaudacion(r)
 
 	r.With(q("incidencias.ver")).Get("/mantenimiento/incidencias", s.listarIncidencias)
 	r.With(q("incidencias.ver")).Patch("/mantenimiento/incidencias/{tid}/estado", s.cambiarEstadoIncidencia)

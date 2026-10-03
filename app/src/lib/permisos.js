@@ -90,6 +90,9 @@ export const ITEMS = {
   vouchers: { pagina: 'vouchers', etiqueta: 'Vouchers y cuentas bancarias', corta: 'Vouchers', icono: 'recibo', permiso: ['pagos.registrar', 'pagos.informar'] },
   cobranzas: { pagina: 'cobranzas', etiqueta: 'Cobranzas sin identificar', corta: 'Cobranzas', icono: 'entrante', permiso: 'cobranzas.ver' },
   documentos: { pagina: 'documentos', etiqueta: 'Documentos', corta: 'Documentos', icono: 'recibo', permiso: 'documentos.ver' },
+  // recaudacion: A1, A2
+  recaudadora: { pagina: 'recaudadora', etiqueta: 'Recaudadora', corta: 'Recaudad.', icono: 'entrante', permiso: 'recaudacion.ver' },
+  cobranzaMasiva: { pagina: 'cobranza-masiva', etiqueta: 'Cobranza masiva (CREP/CDPG)', corta: 'CREP', icono: 'conciliacion', permiso: 'recaudacion.ver' },
   roles: { pagina: 'roles', etiqueta: 'Roles y permisos', corta: 'Roles', icono: 'llave', permiso: 'roles.administrar' },
 };
 
@@ -129,6 +132,12 @@ export const GRUPOS = [
   { id: 'comunicacion', etiqueta: 'Comunicación', items: ['whatsapp', 'chatbot', 'motor', 'documentos'] },
   { id: 'ajustes', etiqueta: 'Ajustes', items: ['roles', 'configuracion'] },
 ];
+
+// recaudacion: A1, A2 — se insertan junto a «cobranzas» sin reescribir las listas de arriba.
+for (const ids of [MENU_POR_ROL.administrador.lateral, GRUPOS.find((g) => g.id === 'finanzas').items]) {
+  ids.splice(ids.indexOf('cobranzas') + 1, 0, 'recaudadora', 'cobranzaMasiva');
+}
+MENU_POR_ROL.junta.lateral.push('recaudadora');
 
 /** Ítems ya filtrados por rol, repartidos en sus grupos (solo grupos con algo visible). */
 export function gruposPara(items) {
