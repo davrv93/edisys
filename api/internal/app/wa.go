@@ -475,6 +475,7 @@ func (s *Server) procesoBandeja(ctx context.Context) {
 		case <-t.C:
 			s.despacharPendientes(ctx)
 			s.despacharCorreos(ctx)
+			s.despacharTelegram(ctx) // comunicacion: E4
 		}
 	}
 }

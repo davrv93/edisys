@@ -277,6 +277,36 @@ func (s *Server) rutasEdificio(r chi.Router) {
 	r.With(q("documentos.administrar")).Post("/documentos", s.crearDocumento)
 	r.With(q("documentos.administrar")).Post("/documentos/{id}/publicar", s.publicarDocumento)
 
+	// comunicacion: E2 · anuncios con canales y evidencia de envío
+	r.With(q("anuncios.ver")).Get("/anuncios", s.listarAnuncios)
+	r.With(q("anuncios.administrar")).Post("/anuncios", s.crearAnuncio)
+	r.With(q("anuncios.administrar")).Put("/anuncios/{id}", s.editarAnuncio)
+	r.With(q("anuncios.administrar")).Delete("/anuncios/{id}", s.borrarAnuncio)
+	r.With(q("anuncios.administrar")).Post("/anuncios/{id}/publicar", s.publicarAnuncio)
+	r.With(q("anuncios.administrar")).Post("/anuncios/{id}/archivar", s.archivarAnuncio)
+	r.With(q("anuncios.administrar")).Get("/anuncios/{id}/envios", s.enviosAnuncio)
+	// comunicacion: E3 · bandeja de correos (el listado es /correo/mensajes)
+	r.With(q("recibos.emitir")).Get("/correo/mensajes/{id}", s.verCorreo)
+	r.With(q("recibos.emitir")).Get("/correo/mensajes/{id}/adjuntos/{aid}", s.descargarAdjuntoCorreo)
+	r.With(q("recibos.emitir")).Post("/correo/mensajes/{id}/reintentar", s.reintentarCorreo)
+	// comunicacion: E4 · Telegram
+	r.With(q("telegram.configurar")).Get("/telegram/estado", s.estadoTelegram)
+	r.With(q("telegram.configurar")).Post("/telegram/verificar", s.verificarTelegram)
+	r.With(q("telegram.configurar")).Get("/telegram/destinos", s.listarDestinosTelegram)
+	r.With(q("telegram.configurar")).Post("/telegram/destinos", s.crearDestinoTelegram)
+	r.With(q("telegram.configurar")).Put("/telegram/destinos/{id}", s.activarDestinoTelegram)
+	r.With(q("telegram.configurar")).Delete("/telegram/destinos/{id}", s.borrarDestinoTelegram)
+	r.With(q("telegram.configurar")).Post("/telegram/enviar", s.enviarTelegram)
+	r.With(q("telegram.configurar")).Get("/telegram/mensajes", s.listarTelegram)
+	r.With(q("telegram.configurar")).Post("/telegram/mensajes/{id}/reintentar", s.reintentarTelegram)
+	// comunicacion: E5 · preguntas frecuentes, academia y beneficios
+	for ruta, t := range map[string]tipoContenido{"/faq": contenidoFAQ, "/academia": contenidoAcademia, "/beneficios": contenidoBeneficio} {
+		r.With(q("contenido.ver")).Get(ruta, s.listarContenido(t))
+		r.With(q("contenido.administrar")).Post(ruta, s.crearContenido(t))
+		r.With(q("contenido.administrar")).Put(ruta+"/{id}", s.editarContenido(t))
+		r.With(q("contenido.administrar")).Delete(ruta+"/{id}", s.borrarContenido(t))
+	}
+
 	// 05 · recibos y pagos
 	r.With(q("recibos.ver")).Get("/periodos", s.listarPeriodos)
 	r.With(q("periodos.administrar")).Post("/periodos", s.abrirPeriodo)
@@ -450,6 +480,36 @@ func (s *Server) rutasModulosNuevos(r chi.Router) {
 	r.With(q("documentos.ver")).Get("/documentos", s.listarDocumentos)
 	r.With(q("documentos.administrar")).Post("/documentos", s.crearDocumento)
 	r.With(q("documentos.administrar")).Post("/documentos/{id}/publicar", s.publicarDocumento)
+
+	// comunicacion: E2 · anuncios con canales y evidencia de envío
+	r.With(q("anuncios.ver")).Get("/anuncios", s.listarAnuncios)
+	r.With(q("anuncios.administrar")).Post("/anuncios", s.crearAnuncio)
+	r.With(q("anuncios.administrar")).Put("/anuncios/{id}", s.editarAnuncio)
+	r.With(q("anuncios.administrar")).Delete("/anuncios/{id}", s.borrarAnuncio)
+	r.With(q("anuncios.administrar")).Post("/anuncios/{id}/publicar", s.publicarAnuncio)
+	r.With(q("anuncios.administrar")).Post("/anuncios/{id}/archivar", s.archivarAnuncio)
+	r.With(q("anuncios.administrar")).Get("/anuncios/{id}/envios", s.enviosAnuncio)
+	// comunicacion: E3 · bandeja de correos (el listado es /correo/mensajes)
+	r.With(q("recibos.emitir")).Get("/correo/mensajes/{id}", s.verCorreo)
+	r.With(q("recibos.emitir")).Get("/correo/mensajes/{id}/adjuntos/{aid}", s.descargarAdjuntoCorreo)
+	r.With(q("recibos.emitir")).Post("/correo/mensajes/{id}/reintentar", s.reintentarCorreo)
+	// comunicacion: E4 · Telegram
+	r.With(q("telegram.configurar")).Get("/telegram/estado", s.estadoTelegram)
+	r.With(q("telegram.configurar")).Post("/telegram/verificar", s.verificarTelegram)
+	r.With(q("telegram.configurar")).Get("/telegram/destinos", s.listarDestinosTelegram)
+	r.With(q("telegram.configurar")).Post("/telegram/destinos", s.crearDestinoTelegram)
+	r.With(q("telegram.configurar")).Put("/telegram/destinos/{id}", s.activarDestinoTelegram)
+	r.With(q("telegram.configurar")).Delete("/telegram/destinos/{id}", s.borrarDestinoTelegram)
+	r.With(q("telegram.configurar")).Post("/telegram/enviar", s.enviarTelegram)
+	r.With(q("telegram.configurar")).Get("/telegram/mensajes", s.listarTelegram)
+	r.With(q("telegram.configurar")).Post("/telegram/mensajes/{id}/reintentar", s.reintentarTelegram)
+	// comunicacion: E5 · preguntas frecuentes, academia y beneficios
+	for ruta, t := range map[string]tipoContenido{"/faq": contenidoFAQ, "/academia": contenidoAcademia, "/beneficios": contenidoBeneficio} {
+		r.With(q("contenido.ver")).Get(ruta, s.listarContenido(t))
+		r.With(q("contenido.administrar")).Post(ruta, s.crearContenido(t))
+		r.With(q("contenido.administrar")).Put(ruta+"/{id}", s.editarContenido(t))
+		r.With(q("contenido.administrar")).Delete(ruta+"/{id}", s.borrarContenido(t))
+	}
 
 	r.With(q("incidencias.ver")).Get("/mantenimiento/incidencias", s.listarIncidencias)
 	r.With(q("incidencias.ver")).Patch("/mantenimiento/incidencias/{tid}/estado", s.cambiarEstadoIncidencia)

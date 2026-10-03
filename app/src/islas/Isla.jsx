@@ -29,6 +29,10 @@ const PANTALLAS = {
   vouchers: { permiso: ['pagos.registrar', 'pagos.informar'], C: lazy(() => import('../pantallas/19-vouchers/Vouchers.jsx')) },
   cobranzas: { permiso: 'cobranzas.ver', C: lazy(() => import('../pantallas/20-cobranzas/Cobranzas.jsx')) },
   documentos: { permiso: 'documentos.ver', C: lazy(() => import('../pantallas/21-documentos/Documentos.jsx')) },
+  // comunicacion: E2–E5
+  anuncios: { permiso: 'anuncios.ver', C: lazy(() => import('../pantallas/25-anuncios/Anuncios.jsx')) },
+  bandeja: { permiso: ['recibos.emitir', 'telegram.configurar'], C: lazy(() => import('../pantallas/26-bandeja/Bandeja.jsx')) },
+  ayuda: { permiso: 'contenido.ver', C: lazy(() => import('../pantallas/27-ayuda/Ayuda.jsx')) },
   configuracion: { permiso: 'facturacion.configurar', C: lazy(() => import('../pantallas/configuracion/Configuracion.jsx')) },
 };
 

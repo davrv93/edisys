@@ -28,6 +28,10 @@ export const PAGINAS = {
   vouchers: '/vouchers/',
   cobranzas: '/cobranzas/',
   documentos: '/documentos/',
+  // comunicacion: E2–E5
+  anuncios: '/anuncios/',
+  bandeja: '/bandeja/',
+  ayuda: '/ayuda/',
   configuracion: '/configuracion/',
 };
 

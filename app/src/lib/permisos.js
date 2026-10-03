@@ -90,24 +90,28 @@ export const ITEMS = {
   vouchers: { pagina: 'vouchers', etiqueta: 'Vouchers y cuentas bancarias', corta: 'Vouchers', icono: 'recibo', permiso: ['pagos.registrar', 'pagos.informar'] },
   cobranzas: { pagina: 'cobranzas', etiqueta: 'Cobranzas sin identificar', corta: 'Cobranzas', icono: 'entrante', permiso: 'cobranzas.ver' },
   documentos: { pagina: 'documentos', etiqueta: 'Documentos', corta: 'Documentos', icono: 'recibo', permiso: 'documentos.ver' },
+  // comunicacion: E2–E5
+  anuncios: { pagina: 'anuncios', etiqueta: 'Anuncios', corta: 'Anuncios', icono: 'mensaje', permiso: 'anuncios.ver' },
+  bandeja: { pagina: 'bandeja', etiqueta: 'Bandeja de salida', corta: 'Bandeja', icono: 'bandeja', permiso: ['recibos.emitir', 'telegram.configurar'] },
+  ayuda: { pagina: 'ayuda', etiqueta: 'Ayuda y beneficios', corta: 'Ayuda', icono: 'info', permiso: 'contenido.ver' },
   roles: { pagina: 'roles', etiqueta: 'Roles y permisos', corta: 'Roles', icono: 'llave', permiso: 'roles.administrar' },
 };
 
 export const MENU_POR_ROL = {
   administrador: {
-    lateral: ['inicio', 'balance', 'conciliacion', 'proveedores', 'fondos', 'informes', 'externos', 'vouchers', 'cobranzas', 'recibos', 'unidades', 'reservas', 'medidores', 'mantenimiento', 'documentos', 'whatsapp', 'chatbot', 'motor', 'analitica', 'roles', 'configuracion'],
+    lateral: ['inicio', 'balance', 'conciliacion', 'proveedores', 'fondos', 'informes', 'externos', 'vouchers', 'cobranzas', 'recibos', 'unidades', 'reservas', 'medidores', 'mantenimiento', 'documentos', 'whatsapp', 'chatbot', 'motor', 'analitica', 'roles', 'configuracion', 'anuncios', 'bandeja', 'ayuda'], // comunicacion: E2–E5
     movil: ['inicio', 'recibos', 'mantenimiento', 'whatsapp'],
   },
   junta: {
-    lateral: ['inicio', 'balance', 'recibos', 'unidades', 'reservas', 'aprobaciones', 'analitica', 'proveedores', 'fondos', 'externos'],
+    lateral: ['inicio', 'balance', 'recibos', 'unidades', 'reservas', 'aprobaciones', 'analitica', 'proveedores', 'fondos', 'externos', 'anuncios', 'ayuda'], // comunicacion: E2, E5
     movil: ['inicio', 'balance', 'aprobaciones'],
   },
   propietario: {
-    lateral: ['portal', 'recibos', 'reservar', 'reportar', 'balance', 'documentos'],
+    lateral: ['portal', 'recibos', 'reservar', 'reportar', 'balance', 'documentos', 'anuncios', 'ayuda'], // comunicacion: E2, E5
     movil: ['portal', 'recibos', 'reservar', 'reportar'],
   },
   inquilino: {
-    lateral: ['portal', 'reservar', 'reportar', 'documentos'],
+    lateral: ['portal', 'reservar', 'reportar', 'documentos', 'anuncios', 'ayuda'], // comunicacion: E2, E5
     movil: ['portal', 'reservar', 'reportar'],
   },
   operario: {
@@ -126,7 +130,7 @@ export const GRUPOS = [
   { id: 'panel', etiqueta: 'Panel', items: ['inicio', 'portal'] },
   { id: 'finanzas', etiqueta: 'Finanzas', items: ['balance', 'conciliacion', 'proveedores', 'fondos', 'informes', 'externos', 'vouchers', 'cobranzas', 'recibos', 'unidades', 'analitica'] },
   { id: 'operacion', etiqueta: 'Operación', items: ['reservas', 'reservar', 'medidores', 'mantenimiento', 'aprobaciones', 'trabajos', 'reportar'] },
-  { id: 'comunicacion', etiqueta: 'Comunicación', items: ['whatsapp', 'chatbot', 'motor', 'documentos'] },
+  { id: 'comunicacion', etiqueta: 'Comunicación', items: ['whatsapp', 'chatbot', 'motor', 'documentos', 'anuncios', 'bandeja', 'ayuda'] }, // comunicacion: E2–E5
   { id: 'ajustes', etiqueta: 'Ajustes', items: ['roles', 'configuracion'] },
 ];
 
