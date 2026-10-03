@@ -30,7 +30,7 @@ export default function Encabezado({ titulo, subtitulo, ayuda, acciones, secunda
           {menu && <span className="lg:hidden">{menu}</span>}
         </div>
         {(acciones || menuEscritorio) && (
-          <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-0.5 lg:mx-0 lg:shrink-0 lg:overflow-visible lg:px-0 lg:pb-0">
+          <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-0.5 lg:mx-0 lg:shrink-0 lg:overflow-visible lg:px-0 lg:pb-0" data-tour="acciones">
             {acciones}
             {menuEscritorio && <span className="hidden lg:inline-flex">{menuEscritorio}</span>}
           </div>
@@ -56,7 +56,7 @@ export function CabeceraTarea({ titulo, subtitulo, volver }) {
 
 /** Contenedor de contenido con ancho máximo de 1280 px. Sus hijos entran escalonados (30 ms, máx. 6). */
 export function Contenido({ children, className = '' }) {
-  return <div className={`escalonado mx-auto flex w-full max-w-contenido flex-col gap-4 p-4 lg:gap-5 lg:p-6 ${className}`}>{children}</div>;
+  return <div data-tour="contenido" className={`escalonado mx-auto flex w-full max-w-contenido flex-col gap-4 p-4 lg:gap-5 lg:p-6 ${className}`}>{children}</div>;
 }
 
 /** Sección con título y enlace opcional. Separación con borde y espacio, sin sombra. */

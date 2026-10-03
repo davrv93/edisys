@@ -151,11 +151,11 @@ export default function Armazon({ pagina, children }) {
             <BotonIcono etiqueta="Abrir el menú completo" icono="desplegar" variante="oscuro" lado="derecha" onClick={alternarLateral} />
           </span>
           <div className={L.abierto}>
-            <div className="w-full">
+            <div className="w-full" data-tour="edificio">
               <SelectorEdificio edificios={s.edificios} actual={s.edificio.id} onCambio={s.cambiarEdificio} />
             </div>
           </div>
-          <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto" aria-label="Menú principal">
+          <nav data-tour="menu" className="flex flex-1 flex-col gap-0.5 overflow-y-auto" aria-label="Menú principal">
             {/* Abierto: grupos plegables con los accesos comunes juntos */}
             <div className={`${L.abierto} flex-col gap-4`}>
               {grupos.map((g) => {
