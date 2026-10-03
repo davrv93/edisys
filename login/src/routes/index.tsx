@@ -16,6 +16,7 @@ import {
   validar,
   type ErrorLogin,
 } from "~/lib/login";
+import { CLAVE_SLUG, colorValido, cssDeTokens, rutaMarca, slugDe, type MarcaPublica } from "~/lib/marca"; // marca: I2
 
 const CLAVE_RECORDAR = "edisys.login.correo";
 
@@ -140,6 +141,37 @@ export default component$(() => {
   const restanteMin = useSignal(0);
   const correoRef = useSignal<HTMLInputElement>();
   const claveRef = useSignal<HTMLInputElement>();
+  // marca: I2 · nombre, lema, logo y fondo de la administradora (null = EDISYS).
+  const marca = useSignal<MarcaPublica | null>(null);
+
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(async () => {
+    let guardado: string | null = null;
+    try {
+      guardado = localStorage.getItem(CLAVE_SLUG);
+    } catch {
+      /* almacenamiento bloqueado */
+    }
+    const slug = slugDe(new URL(window.location.href), guardado);
+    if (!slug) return;
+    try {
+      const res = await fetch(rutaMarca(slug), { headers: { Accept: "application/json" } });
+      if (!res.ok) return;
+      const m = (await res.json()) as MarcaPublica;
+      if (!m.personalizada) return;
+      const css = cssDeTokens(m.tokens);
+      if (css) {
+        const el = document.createElement("style");
+        el.id = "edisys-marca";
+        el.textContent = css;
+        document.head.appendChild(el);
+      }
+      marca.value = m;
+      document.title = `Ingresar · ${m.nombre}`;
+    } catch {
+      /* sin red: el login sigue con EDISYS */
+    }
+  });
 
   // Correo recordado en este dispositivo (nunca la clave).
   // eslint-disable-next-line qwik/no-use-visible-task
@@ -242,7 +274,10 @@ export default component$(() => {
   const campoMal = "border-alerta focus:border-alerta focus:ring-alerta";
 
   return (
-    <div class="relative flex min-h-screen items-center justify-center overflow-hidden bg-tinta px-4 py-6 font-sans">
+    <div
+      class="relative flex min-h-screen items-center justify-center overflow-hidden bg-tinta px-4 py-6 font-sans"
+      style={colorValido(marca.value?.color_fondo_login) ? { backgroundColor: marca.value!.color_fondo_login } : undefined}
+    >
       <div aria-hidden="true" class="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-acento-oscuro opacity-10 blur-3xl" />
       <div aria-hidden="true" class="pointer-events-none absolute -bottom-32 -right-16 h-80 w-80 rounded-full bg-acento opacity-20 blur-3xl" />
       <Particulas cantidad={30} />
@@ -260,19 +295,31 @@ export default component$(() => {
           <input type="hidden" name="next" value={destino} />
 
           <div class="flex flex-col items-center gap-3 text-center">
-            <a href="/" class="flex items-center gap-2.5 rounded-lg" aria-label="EDISYS, ir a la página principal">
-              <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true">
-                <rect width="32" height="32" rx="8" class="fill-acento" />
-                <path
-                  d="M8 24h16M10.5 19h11M13 14h6M16 9v0.01"
-                  stroke="#FFFFFF"
-                  stroke-width="2.4"
-                  stroke-linecap="round"
-                  fill="none"
-                />
-              </svg>
-              <span class="text-xl font-semibold tracking-[0.08em] text-tinta">EDISYS</span>
-            </a>
+            {marca.value ? (
+              // marca: I2 · logo o nombre de la administradora
+              <div class="flex flex-col items-center gap-1.5">
+                {marca.value.logo_url ? (
+                  <img src={marca.value.logo_url} alt={marca.value.nombre} width={160} height={48} class="max-h-12 w-auto max-w-[200px] object-contain" />
+                ) : (
+                  <span class="text-xl font-semibold tracking-tight text-tinta">{marca.value.nombre}</span>
+                )}
+                {marca.value.lema && <span class="text-xs text-texto-apoyo">{marca.value.lema}</span>}
+              </div>
+            ) : (
+              <a href="/" class="flex items-center gap-2.5 rounded-lg" aria-label="EDISYS, ir a la página principal">
+                <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true">
+                  <rect width="32" height="32" rx="8" class="fill-acento" />
+                  <path
+                    d="M8 24h16M10.5 19h11M13 14h6M16 9v0.01"
+                    stroke="#FFFFFF"
+                    stroke-width="2.4"
+                    stroke-linecap="round"
+                    fill="none"
+                  />
+                </svg>
+                <span class="text-xl font-semibold tracking-[0.08em] text-tinta">EDISYS</span>
+              </a>
+            )}
             <h1 class="text-sm font-normal text-texto-suave">Accede a tu edificio</h1>
           </div>
 

@@ -29,6 +29,8 @@ export const PAGINAS = {
   cobranzas: '/cobranzas/',
   documentos: '/documentos/',
   configuracion: '/configuracion/',
+  marca: '/marca/', // marca: I1/I2
+  ajustes: '/ajustes/', // marca: I5
 };
 
 function qs(query) {
