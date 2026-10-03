@@ -130,6 +130,17 @@ export const GRUPOS = [
   { id: 'ajustes', etiqueta: 'Ajustes', items: ['roles', 'configuracion'] },
 ];
 
+// reservas: H1 · check-in QR del conserje · H3 · configuración de áreas comunes.
+// Se añaden en bloque propio (sin tocar las listas de arriba) para no chocar con otros módulos.
+ITEMS.checkin = { pagina: 'checkin', etiqueta: 'Ingreso con QR', corta: 'Ingreso', icono: 'camara', permiso: 'reservas.checkin' };
+ITEMS.areascomunes = { pagina: 'areascomunes', etiqueta: 'Áreas comunes', corta: 'Áreas', icono: 'engranaje', permiso: 'areas.administrar' };
+MENU_POR_ROL.administrador.lateral.splice(MENU_POR_ROL.administrador.lateral.indexOf('reservas') + 1, 0, 'checkin', 'areascomunes');
+MENU_POR_ROL.operario.lateral.push('checkin'); // en el celular sale en «Más»: la barra móvil del operario queda igual
+GRUPOS.find((g) => g.id === 'operacion').items.splice(1, 0, 'checkin', 'areascomunes');
+for (const rol of ['superadmin', 'administrador', 'operario']) {
+  if (!PERMISOS_POR_ROL[rol].includes('reservas.checkin')) PERMISOS_POR_ROL[rol].push('reservas.checkin');
+}
+
 /** Ítems ya filtrados por rol, repartidos en sus grupos (solo grupos con algo visible). */
 export function gruposPara(items) {
   const porId = new Map(items.map((i) => [i.id, i]));

@@ -30,6 +30,9 @@ const PANTALLAS = {
   cobranzas: { permiso: 'cobranzas.ver', C: lazy(() => import('../pantallas/20-cobranzas/Cobranzas.jsx')) },
   documentos: { permiso: 'documentos.ver', C: lazy(() => import('../pantallas/21-documentos/Documentos.jsx')) },
   configuracion: { permiso: 'facturacion.configurar', C: lazy(() => import('../pantallas/configuracion/Configuracion.jsx')) },
+  // reservas: H1 · check-in QR del conserje · H2/H3 · configuración de áreas
+  checkin: { permiso: 'reservas.checkin', C: lazy(() => import('../pantallas/35-reservas-avanzadas/Checkin.jsx')) },
+  areascomunes: { permiso: 'areas.administrar', C: lazy(() => import('../pantallas/35-reservas-avanzadas/ConfigAreas.jsx')) },
 };
 
 function CargandoPantalla() {

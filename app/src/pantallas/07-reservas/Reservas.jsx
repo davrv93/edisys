@@ -9,6 +9,7 @@ import { veCalendarioReservas } from '../../lib/permisos.js';
 import Encabezado, { Contenido } from '../../layout/Encabezado.jsx';
 import { Boton, Calendario, LeyendaCalendario, ErrorCarga, Esqueleto, Icono, Insignia, Modal, Vacio, useDialog, useToast, BotonIcono } from '../../ui/index.js';
 import NuevaReserva from './NuevaReserva.jsx';
+import EntradaQR from '../35-reservas-avanzadas/EntradaQR.jsx';
 import { nombreUnidad } from '../../lib/unidad.js';
 
 /** Cómo se cobra una reserva, con la forma del API (modo_cobro) o la del mock (medio). */
@@ -40,6 +41,7 @@ function CalendarioAdmin() {
   const [diaMovil, setDiaMovil] = useState(dias.includes(hoy) ? hoy : lunes);
   const [evento, setEvento] = useState(null);
   const [trabajando, setTrabajando] = useState(false);
+  const [qr, setQr] = useState(null); // H1: entrada QR de la reserva abierta
 
   const areas = useCarga(() => api.get(`/edificios/${eid}/areas`), [eid]);
   const reservas = useCarga(() => api.get(`/edificios/${eid}/reservas`, { desde: dias[0], hasta: dias[6] }), [eid, lunes]);
@@ -108,6 +110,16 @@ function CalendarioAdmin() {
         </span>
         <BotonIcono variante="secundario" icono="der" etiqueta="Semana siguiente" onClick={() => semana(1)} />
       </div>
+      <Guarda permiso="reservas.checkin">
+        <Boton variante="secundario" icono="camara" href={ruta('checkin')}>
+          Ingreso con QR
+        </Boton>
+      </Guarda>
+      <Guarda permiso="areas.administrar">
+        <Boton variante="secundario" icono="engranaje" href={ruta('areascomunes')}>
+          Configurar áreas
+        </Boton>
+      </Guarda>
       <Guarda permiso="reservas.administrar">
         <Boton icono="mas_signo" href={ruta('reservas', { nueva: 1 })}>
           Nueva reserva
@@ -182,7 +194,19 @@ function CalendarioAdmin() {
                     </span>
                   ) : null}
                   <span className="text-texto-suave">Cobro: {area0.cobro || (areas.datos?.modo_cobro === 'pago_inmediato' ? 'pago inmediato con voucher' : areas.datos?.modo_cobro === 'cargo_recibo' ? 'cargo al recibo' : '—')}</span>
-                  <span className="text-texto-suave">Unidades morosas: no pueden reservar</span>
+                  {area0.garantia_cts || area0.limpieza_cts ? (
+                    <span className="text-texto-suave">
+                      Garantía {formatearSoles(area0.garantia_cts || 0)} · Limpieza {formatearSoles(area0.limpieza_cts || 0)}
+                    </span>
+                  ) : null}
+                  {area0.anticipacion_min_dias || area0.separacion_dias ? (
+                    <span className="text-texto-suave">
+                      {[area0.anticipacion_min_dias ? `Mínimo ${area0.anticipacion_min_dias} días antes` : null, area0.separacion_dias ? `${area0.separacion_dias} días entre reservas` : null].filter(Boolean).join(' · ')}
+                    </span>
+                  ) : null}
+                  <span className="text-texto-suave">
+                    Unidades morosas: {area0.permite_parciales || area0.permite_financiados ? 'solo con las excepciones configuradas' : 'no pueden reservar'} · al ingresar se valida otra vez
+                  </span>
                 </section>
               )}
             </aside>
@@ -199,6 +223,11 @@ function CalendarioAdmin() {
           s.tiene('reservas.administrar') &&
           evento.estado !== 'bloqueo' && (
             <>
+              {evento.estado === 'confirmada' && (
+                <Boton variante="secundario" icono="ver" onClick={() => setQr({ id: evento.id, codigo: evento.codigo })}>
+                  Entrada QR
+                </Boton>
+              )}
               {evento.estado === 'confirmada' && (
                 <Boton variante="secundario" onClick={() => cambiarEstado('no_show', 'Marcar no se presentó')} disabled={trabajando}>
                   No se presentó
@@ -231,10 +260,33 @@ function CalendarioAdmin() {
             <dt className="text-texto-apoyo">Cobro</dt>
             <dd>
               {formatearSoles(evento.total_cts)} · {evento.medio}
+              {evento.garantia_cts || evento.limpieza_cts ? (
+                <span className="block text-xs text-texto-apoyo">
+                  incluye garantía {formatearSoles(evento.garantia_cts || 0)} y limpieza {formatearSoles(evento.limpieza_cts || 0)}
+                </span>
+              ) : null}
+            </dd>
+            {evento.titulo ? (
+              <>
+                <dt className="text-texto-apoyo">Evento</dt>
+                <dd>
+                  {evento.titulo}
+                  {evento.asistentes ? ` · ${evento.asistentes} personas` : ''}
+                </dd>
+              </>
+            ) : null}
+            <dt className="text-texto-apoyo">Ingreso</dt>
+            <dd>
+              {evento.checkin_valido === true
+                ? `Ingresó a las ${formatearHora(evento.checkin_en)}`
+                : evento.checkin_valido === false
+                  ? `Rechazado: ${evento.checkin_motivo || '—'}`
+                  : 'Sin registrar'}
             </dd>
           </dl>
         )}
       </Modal>
+      <EntradaQR eid={eid} reserva={qr} onCerrar={() => setQr(null)} />
     </>
   );
 }

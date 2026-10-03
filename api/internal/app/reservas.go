@@ -18,11 +18,15 @@ import (
 
 // Franja configurada de un área (hora de Lima).
 type Franja struct {
-	Inicio string `json:"inicio"`
-	Fin    string `json:"fin"`
+	Inicio    string `json:"inicio"`
+	Fin       string `json:"fin"`
+	TarifaCts *int64 `json:"tarifa_cts,omitempty"` // H3: tarifa propia de la franja; si falta, la del área
 }
 
 const sqlArea = `SELECT a.id, a.nombre, a.slug, a.tarifa_cts, a.franjas, a.aforo, a.incluye, a.normas, a.anticipacion_max_dias, a.activo,
+	a.anticipacion_min_dias, a.separacion_dias, a.garantia_cts, a.limpieza_cts, a.permite_parciales, a.deuda_tolerada_cts, a.permite_financiados,
+	a.descripcion, a.horarios, a.reglamento_archivo_id, a.cupo_mensual_unidad, a.checkin_tolerancia_min,
+	COALESCE((SELECT json_agg(json_build_object('id', f.id, 'archivo_id', f.archivo_id) ORDER BY f.orden, f.id) FROM area_foto f WHERE f.area_id=a.id), '[]') AS fotos,
 	COALESCE((SELECT json_agg(json_build_object('id', r.id, 'nombre', r.nombre, 'activo', r.activo) ORDER BY r.id) FROM recurso r WHERE r.area_id=a.id), '[]') AS recursos
 	FROM area a`
 
@@ -32,6 +36,7 @@ func (s *Server) listarAreas(w http.ResponseWriter, r *http.Request) {
 		P.Fallo(w, r, err)
 		return
 	}
+	s.decorarAreas(filas...)
 	var modo string
 	_ = s.DB.QueryRow(r.Context(), `SELECT modo_cobro_reservas FROM edificio WHERE id=$1`, edf(r).ID).Scan(&modo)
 	P.JSON(w, http.StatusOK, map[string]any{"datos": filas, "modo_cobro": modo})
@@ -48,6 +53,7 @@ func (s *Server) verArea(w http.ResponseWriter, r *http.Request) {
 		P.Fallo(w, r, P.NoEncontrado("el área"))
 		return
 	}
+	s.decorarAreas(f)
 	P.JSON(w, http.StatusOK, f)
 }
 
@@ -61,6 +67,7 @@ type areaIn struct {
 	AnticipacionMaxDias *int     `json:"anticipacion_max_dias"`
 	Activo              *bool    `json:"activo"`
 	Recursos            []string `json:"recursos"`
+	configAreaIn                 // H2/H3
 }
 
 func validarFranjas(fs []Franja) error {
@@ -85,6 +92,10 @@ func (s *Server) crearArea(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := validarFranjas(in.Franjas); err != nil {
+		P.Fallo(w, r, err)
+		return
+	}
+	if err := in.configAreaIn.validar(); err != nil {
 		P.Fallo(w, r, err)
 		return
 	}
@@ -116,11 +127,16 @@ func (s *Server) crearArea(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	if err := guardarConfigArea(ctx, tx, aid, e.ID, in.configAreaIn); err != nil {
+		P.Fallo(w, r, err)
+		return
+	}
 	if err := tx.Commit(ctx); err != nil {
 		P.Fallo(w, r, err)
 		return
 	}
 	f, _ := db.Fila(ctx, s.DB, sqlArea+` WHERE a.id=$1`, aid)
+	s.decorarAreas(f)
 	P.JSON(w, http.StatusCreated, f)
 }
 
@@ -136,6 +152,10 @@ func (s *Server) editarArea(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := validarFranjas(in.Franjas); err != nil {
+		P.Fallo(w, r, err)
+		return
+	}
+	if err := in.configAreaIn.validar(); err != nil {
 		P.Fallo(w, r, err)
 		return
 	}
@@ -159,6 +179,10 @@ func (s *Server) editarArea(w http.ResponseWriter, r *http.Request) {
 		P.Fallo(w, r, P.NoEncontrado("el área"))
 		return
 	}
+	if err := guardarConfigArea(ctx, s.DB, aid, edf(r).ID, in.configAreaIn); err != nil {
+		P.Fallo(w, r, err)
+		return
+	}
 	for _, rc := range in.Recursos {
 		_, _ = s.DB.Exec(ctx, `INSERT INTO recurso (area_id, nombre) SELECT $1, $2 WHERE NOT EXISTS (SELECT 1 FROM recurso WHERE area_id=$1 AND nombre=$2)`, aid, rc)
 	}
@@ -172,6 +196,7 @@ type recursoInfo struct {
 	Franjas            []Franja
 	AnticipacionMax    int
 	Normas             string
+	Cfg                areaConfig // H2/H3
 }
 
 func (s *Server) recurso(ctx context.Context, q db.Q, eid, rid int64) (*recursoInfo, error) {
@@ -187,6 +212,9 @@ func (s *Server) recurso(ctx context.Context, q db.Q, eid, rid int64) (*recursoI
 		return nil, P.Err(http.StatusUnprocessableEntity, "AREA_INACTIVA", "Esa área no está disponible.")
 	}
 	_ = json.Unmarshal(fr, &ri.Franjas)
+	if ri.Cfg, err = s.configArea(ctx, q, ri.AreaID); err != nil {
+		return nil, err
+	}
 	return ri, nil
 }
 
@@ -249,7 +277,7 @@ func (s *Server) calcularDisponibilidad(ctx context.Context, eid int64, recurso,
 		args = append(args, area)
 		cond += " AND (a.id::text=$2 OR a.slug=$2)"
 	}
-	filas, err := s.DB.Query(ctx, `SELECT r.id, r.nombre, a.id, a.nombre, a.franjas, a.tarifa_cts FROM recurso r JOIN area a ON a.id=r.area_id WHERE `+cond+` ORDER BY a.id, r.id`, args...)
+	filas, err := s.DB.Query(ctx, `SELECT r.id, r.nombre, a.id, a.nombre, a.franjas, a.tarifa_cts, a.horarios FROM recurso r JOIN area a ON a.id=r.area_id WHERE `+cond+` ORDER BY a.id, r.id`, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -257,16 +285,18 @@ func (s *Server) calcularDisponibilidad(ctx context.Context, eid int64, recurso,
 		id, areaID, tarifa int64
 		nombre, area       string
 		franjas            []Franja
+		horarios           map[string][]Franja
 	}
 	var recs []rec
 	for filas.Next() {
 		var x rec
-		var fr []byte
-		if err := filas.Scan(&x.id, &x.nombre, &x.areaID, &x.area, &fr, &x.tarifa); err != nil {
+		var fr, hs []byte
+		if err := filas.Scan(&x.id, &x.nombre, &x.areaID, &x.area, &fr, &x.tarifa, &hs); err != nil {
 			filas.Close()
 			return nil, err
 		}
 		_ = json.Unmarshal(fr, &x.franjas)
+		_ = json.Unmarshal(hs, &x.horarios)
 		recs = append(recs, x)
 	}
 	filas.Close()
@@ -297,7 +327,12 @@ func (s *Server) calcularDisponibilidad(ctx context.Context, eid int64, recurso,
 	out := []map[string]any{}
 	for d := desde; !d.After(hasta); d = d.AddDate(0, 0, 1) {
 		for _, x := range recs {
-			for _, f := range franjasDelDia(d, x.franjas) {
+			for _, fd := range franjasParaDia(d, x.franjas, x.horarios) {
+				f := [2]time.Time{fd.Ini, fd.Fin}
+				tarifa := x.tarifa
+				if fd.TarifaCts != nil {
+					tarifa = *fd.TarifaCts
+				}
 				estado := "libre"
 				codigo := ""
 				if f[1].Before(ahora) {
@@ -312,7 +347,7 @@ func (s *Server) calcularDisponibilidad(ctx context.Context, eid int64, recurso,
 						codigo = o.codigo
 					}
 				}
-				m := map[string]any{"recurso_id": x.id, "recurso": x.nombre, "area_id": x.areaID, "area": x.area, "tarifa_cts": x.tarifa,
+				m := map[string]any{"recurso_id": x.id, "recurso": x.nombre, "area_id": x.areaID, "area": x.area, "tarifa_cts": tarifa,
 					"inicio": f[0].UTC(), "fin": f[1].UTC(), "fecha": d.Format("2006-01-02"),
 					"hora_inicio": f[0].Format("15:04"), "hora_fin": f[1].Format("15:04"), "estado": estado}
 				if verCodigo && codigo != "" {
@@ -354,7 +389,8 @@ func (s *Server) listarReservas(w http.ResponseWriter, r *http.Request) {
 	}
 	filas, err := db.Filas(r.Context(), s.DB, `SELECT rv.id, rv.codigo, rv.estado, rv.inicio, rv.fin, rv.total_cts, rv.modo_cobro, rv.vence_retencion,
 			rv.recurso_id, rc.nombre AS recurso, ar.id AS area_id, ar.nombre AS area, u.id AS unidad_id, u.codigo AS unidad,
-			rv.codigo_operacion, rv.voucher_id, rv.pago_validado, rv.forzado_motivo, rv.motivo
+			rv.codigo_operacion, rv.voucher_id, rv.pago_validado, rv.forzado_motivo, rv.motivo,
+			rv.garantia_cts, rv.limpieza_cts, rv.titulo, rv.asistentes, rv.checkin_en, rv.checkin_valido, rv.checkin_motivo
 		FROM reserva rv JOIN recurso rc ON rc.id=rv.recurso_id JOIN area ar ON ar.id=rc.area_id JOIN unidad u ON u.id=rv.unidad_id
 		WHERE `+strings.Join(cond, " AND ")+` ORDER BY rv.inicio DESC LIMIT 500`, args...)
 	if err != nil {
@@ -379,12 +415,18 @@ func (s *Server) crearReserva(w http.ResponseWriter, r *http.Request) {
 		Fin          string `json:"fin"`
 		AceptaNormas bool   `json:"acepta_normas"`
 		ForzarMotivo string `json:"forzar_motivo"`
+		Titulo       string `json:"titulo"`     // H3
+		Asistentes   *int   `json:"asistentes"` // H3
 	}
 	if err := P.Leer(r, &in); err != nil {
 		P.Fallo(w, r, err)
 		return
 	}
-	res, err := s.CrearReserva(r.Context(), edf(r), ses(r).UsuarioID, in.RecursoID, in.UnidadID, in.Inicio, in.Fin, in.AceptaNormas, in.ForzarMotivo)
+	if in.Asistentes != nil && *in.Asistentes <= 0 {
+		in.Asistentes = nil
+	}
+	res, err := s.crearReservaCon(r.Context(), edf(r), ses(r).UsuarioID, in.RecursoID, in.UnidadID, in.Inicio, in.Fin, in.AceptaNormas, in.ForzarMotivo,
+		extraReserva{Titulo: strings.TrimSpace(in.Titulo), Asistentes: in.Asistentes})
 	if err != nil {
 		P.Fallo(w, r, err)
 		return
@@ -395,8 +437,18 @@ func (s *Server) crearReserva(w http.ResponseWriter, r *http.Request) {
 	P.JSON(w, http.StatusCreated, res)
 }
 
+// extraReserva: datos del evento que pide la configuración completa (H3).
+type extraReserva struct {
+	Titulo     string
+	Asistentes *int
+}
+
 // CrearReserva aplica las reglas de 07; la base impide igual la doble reserva y el moroso.
 func (s *Server) CrearReserva(ctx context.Context, e *Edificio, usuarioID, recursoID, unidadID int64, inicioTxt, finTxt string, acepta bool, forzar string) (map[string]any, error) {
+	return s.crearReservaCon(ctx, e, usuarioID, recursoID, unidadID, inicioTxt, finTxt, acepta, forzar, extraReserva{})
+}
+
+func (s *Server) crearReservaCon(ctx context.Context, e *Edificio, usuarioID, recursoID, unidadID int64, inicioTxt, finTxt string, acepta bool, forzar string, extra extraReserva) (map[string]any, error) {
 	ri, err := s.recurso(ctx, s.DB, e.ID, recursoID)
 	if err != nil {
 		return nil, err
@@ -434,9 +486,13 @@ func (s *Server) CrearReserva(ctx context.Context, e *Edificio, usuarioID, recur
 		return nil, P.Validacion("Inicio y fin inválidos (usa ISO 8601, p. ej. 2026-10-03T12:00:00-05:00).").Campo("inicio", "Fecha y hora.")
 	}
 	enFranja := false
-	for _, f := range franjasDelDia(inicio.In(P.Lima), ri.Franjas) {
-		if f[0].Equal(inicio) && f[1].Equal(fin) {
+	tarifa := ri.Tarifa
+	for _, f := range franjasParaDia(inicio.In(P.Lima), ri.Franjas, ri.Cfg.Horarios) {
+		if f.Ini.Equal(inicio) && f.Fin.Equal(fin) {
 			enFranja = true
+			if f.TarifaCts != nil {
+				tarifa = *f.TarifaCts
+			}
 		}
 	}
 	if !enFranja {
@@ -449,12 +505,15 @@ func (s *Server) CrearReserva(ctx context.Context, e *Edificio, usuarioID, recur
 	if inicio.After(ahora.AddDate(0, 0, ri.AnticipacionMax)) {
 		return nil, P.Err(http.StatusUnprocessableEntity, "FUERA_DE_PLAZO", fmt.Sprintf("Solo se reserva con hasta %d días de anticipación.", ri.AnticipacionMax))
 	}
+	if err := s.validarRestricciones(ctx, ri, unidadID, inicio, extra.Asistentes); err != nil {
+		return nil, err
+	}
 	if forzar == "" {
 		var deuda int64
 		if err := s.DB.QueryRow(ctx, `SELECT deuda_vencida_cts($1)`, unidadID).Scan(&deuda); err != nil {
 			return nil, err
 		}
-		if deuda > 0 {
+		if deuda > 0 && !s.unidadHabilitada(ctx, s.DB, unidadID, ri.AreaID) { // H2: parciales y financiados pasan
 			meses, _ := s.deudaPorUnidad(ctx, e.ID, []int64{unidadID})
 			var detalle any = []any{}
 			if len(meses) > 0 {
@@ -468,9 +527,11 @@ func (s *Server) CrearReserva(ctx context.Context, e *Edificio, usuarioID, recur
 	if err := s.DB.QueryRow(ctx, `SELECT modo_cobro_reservas FROM edificio WHERE id=$1`, e.ID).Scan(&modo); err != nil {
 		return nil, err
 	}
+	// H2: la garantía y la limpieza se cobran junto con la tarifa (total_cts las incluye; el desglose queda en la reserva).
+	total := tarifa + ri.Cfg.Garantia + ri.Cfg.Limpieza
 	estado := "confirmada"
 	var vence *time.Time
-	if modo == "pago_inmediato" && ri.Tarifa > 0 {
+	if modo == "pago_inmediato" && total > 0 {
 		estado = "pendiente_pago"
 		v := ahora.Add(15 * time.Minute)
 		vence = &v
@@ -483,10 +544,11 @@ func (s *Server) CrearReserva(ctx context.Context, e *Edificio, usuarioID, recur
 	if usuarioID > 0 {
 		usuario = &usuarioID
 	}
-	res, err := db.Fila(ctx, s.DB, `INSERT INTO reserva (edificio_id, recurso_id, unidad_id, usuario_id, codigo, inicio, fin, estado, total_cts, modo_cobro, acepta_normas, vence_retencion, forzado_motivo)
-		VALUES ($1,$2,$3,$4,'R-' || lpad(nextval('reserva_codigo_seq')::text, 4, '0'),$5,$6,$7,$8,$9,true,$10,$11)
-		RETURNING id, codigo, estado, total_cts, modo_cobro, vence_retencion, inicio, fin, unidad_id, recurso_id`,
-		e.ID, recursoID, unidadID, usuario, inicio, fin, estado, ri.Tarifa, modo, vence, forz)
+	res, err := db.Fila(ctx, s.DB, `INSERT INTO reserva (edificio_id, recurso_id, unidad_id, usuario_id, codigo, inicio, fin, estado, total_cts, modo_cobro, acepta_normas, vence_retencion, forzado_motivo,
+			garantia_cts, limpieza_cts, titulo, asistentes)
+		VALUES ($1,$2,$3,$4,'R-' || lpad(nextval('reserva_codigo_seq')::text, 4, '0'),$5,$6,$7,$8,$9,true,$10,$11,$12,$13,$14,$15)
+		RETURNING id, codigo, estado, total_cts, garantia_cts, limpieza_cts, titulo, asistentes, modo_cobro, vence_retencion, inicio, fin, unidad_id, recurso_id`,
+		e.ID, recursoID, unidadID, usuario, inicio, fin, estado, total, modo, vence, forz, ri.Cfg.Garantia, ri.Cfg.Limpieza, extra.Titulo, extra.Asistentes)
 	if err != nil {
 		return nil, P.Traducir(err)
 	}
