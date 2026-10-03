@@ -99,6 +99,10 @@ export const ITEMS = {
   estadoCuenta: { pagina: 'cuentas-cobrar', etiqueta: 'Estado de cuenta', corta: 'Mi cuenta', icono: 'recibo', permiso: 'recibos.ver' },
   acuerdos: { pagina: 'acuerdos', etiqueta: 'Acuerdos de pago', corta: 'Acuerdos', icono: 'documento', permiso: 'acuerdos.ver' },
   morosos: { pagina: 'morosos', etiqueta: 'Morosos, puntualidad y avisos', corta: 'Morosos', icono: 'moroso', permiso: 'morosidad.ver' },
+  // comunicacion: E2–E5
+  anuncios: { pagina: 'anuncios', etiqueta: 'Anuncios', corta: 'Anuncios', icono: 'mensaje', permiso: 'anuncios.ver' },
+  bandeja: { pagina: 'bandeja', etiqueta: 'Bandeja de salida', corta: 'Bandeja', icono: 'bandeja', permiso: ['recibos.emitir', 'telegram.configurar'] },
+  ayuda: { pagina: 'ayuda', etiqueta: 'Ayuda y beneficios', corta: 'Ayuda', icono: 'info', permiso: 'contenido.ver' },
   roles: { pagina: 'roles', etiqueta: 'Roles y permisos', corta: 'Roles', icono: 'llave', permiso: 'roles.administrar' },
   // marca: I1/I2/I5
   marca: { pagina: 'marca', etiqueta: 'Marca y recibo', corta: 'Marca', icono: 'recibo', permiso: ['marca.configurar', 'recibos.plantilla'] },
@@ -121,10 +125,19 @@ export const MENU_POR_ROL = {
   },
   propietario: {
     lateral: ['portal', 'recibos', 'estadoCuenta', 'reservar', 'reportar', 'balance', 'documentos'],
+    lateral: ['inicio', 'balance', 'conciliacion', 'proveedores', 'fondos', 'informes', 'externos', 'vouchers', 'cobranzas', 'recibos', 'unidades', 'reservas', 'medidores', 'mantenimiento', 'documentos', 'whatsapp', 'chatbot', 'motor', 'analitica', 'roles', 'configuracion', 'anuncios', 'bandeja', 'ayuda'], // comunicacion: E2–E5
+    movil: ['inicio', 'recibos', 'mantenimiento', 'whatsapp'],
+  },
+  junta: {
+    lateral: ['inicio', 'balance', 'recibos', 'unidades', 'reservas', 'aprobaciones', 'analitica', 'proveedores', 'fondos', 'externos', 'anuncios', 'ayuda'], // comunicacion: E2, E5
+    movil: ['inicio', 'balance', 'aprobaciones'],
+  },
+  propietario: {
+    lateral: ['portal', 'recibos', 'reservar', 'reportar', 'balance', 'documentos', 'anuncios', 'ayuda'], // comunicacion: E2, E5
     movil: ['portal', 'recibos', 'reservar', 'reportar'],
   },
   inquilino: {
-    lateral: ['portal', 'reservar', 'reportar', 'documentos'],
+    lateral: ['portal', 'reservar', 'reportar', 'documentos', 'anuncios', 'ayuda'], // comunicacion: E2, E5
     movil: ['portal', 'reservar', 'reportar'],
   },
   operario: {
@@ -145,6 +158,8 @@ export const GRUPOS = [
   { id: 'operacion', etiqueta: 'Operación', items: ['reservas', 'reservar', 'medidores', 'mantenimiento', 'aprobaciones', 'trabajos', 'reportar'] },
   { id: 'comunicacion', etiqueta: 'Comunicación', items: ['whatsapp', 'chatbot', 'motor', 'documentos'] },
   { id: 'ajustes', etiqueta: 'Ajustes', items: ['roles', 'configuracion', 'marca', 'ajustes'] },
+  { id: 'comunicacion', etiqueta: 'Comunicación', items: ['whatsapp', 'chatbot', 'motor', 'documentos', 'anuncios', 'bandeja', 'ayuda'] }, // comunicacion: E2–E5
+  { id: 'ajustes', etiqueta: 'Ajustes', items: ['roles', 'configuracion'] },
 ];
 
 // extras: J1/J2/I3 · encuestas (todos los roles del edificio), videollamadas (junta y administración)

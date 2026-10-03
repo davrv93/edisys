@@ -35,6 +35,10 @@ export const PAGINAS = {
   'cuentas-cobrar': '/cuentas-cobrar/',
   acuerdos: '/acuerdos/',
   morosos: '/morosos/',
+  // comunicacion: E2–E5
+  anuncios: '/anuncios/',
+  bandeja: '/bandeja/',
+  ayuda: '/ayuda/',
   configuracion: '/configuracion/',
   // reservas: H1 / H3
   checkin: '/checkin/',

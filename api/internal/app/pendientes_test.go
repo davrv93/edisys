@@ -593,7 +593,8 @@ func TestCorreoRecibosYBalanceSimulado(t *testing.T) {
 		t.Errorf("la junta recibe balance + informe: %d adjuntos", adjJunta)
 	}
 	_, l := e.pedir("GET", "/api/v1/edificios/1/correo/mensajes?origen=balance", tok, nil)
-	if num(l["total"]) != 53 || l["modo"] != "simulado" {
+	// comunicacion: E3 · el total respeta el filtro (antes contaba toda la bandeja: 53).
+	if num(l["total"]) != 29 || l["modo"] != "simulado" {
 		t.Errorf("bandeja de correo: %v %v", l["total"], l["modo"])
 	}
 	// El propietario no puede enviar.

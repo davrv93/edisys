@@ -9,6 +9,7 @@ import { Boton, ErrorCarga, Esqueleto, Icono, Insignia } from '../../ui/index.js
 import { nombreUnidad } from '../../lib/unidad.js';
 import { useState } from 'react';
 import EntradaQR from '../35-reservas-avanzadas/EntradaQR.jsx'; // reservas: H1
+import ComunicadosPortal from '../25-anuncios/ComunicadosPortal.jsx'; // comunicacion: E2, E5
 
 const PASOS = ['reportado', 'validado', 'presupuestado', 'aprobado', 'en_ejecucion', 'terminado'];
 const TEXTO_PASO = {
@@ -240,6 +241,7 @@ export default function Portal() {
             <span className="text-xs text-texto-apoyo">Pronto</span>
           )}
         </section>
+        <ComunicadosPortal eid={eid} /> {/* comunicacion: E2, E5 */}
         {r && <p className="text-center text-xs text-texto-apoyo">Último recibo: {r.numero} · emitido {formatearFecha(r.emitido)}</p>}
       </div>
       <EntradaQR eid={eid} reserva={qr} onCerrar={() => setQr(null)} />

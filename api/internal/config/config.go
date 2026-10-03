@@ -51,6 +51,11 @@ type Config struct {
 	LLMModelo         string // p. ej. gemini-2.5-flash-lite (mayor cuota free)
 	LLMModeloRespaldo string // p. ej. gemini-3.1-flash-lite (el de PjgFactSalud) o un Gemma
 	LLMTimeoutSeg     int
+	// comunicacion: E4 · Telegram. TELEGRAM_MODO=simulado (por defecto) no envía nada;
+	// «bot» con TELEGRAM_BOT_TOKEN envía por la Bot API. El token nunca se registra ni se devuelve.
+	TelegramModo  string
+	TelegramToken string
+	TelegramURL   string // vacío = https://api.telegram.org (las pruebas lo cambian)
 }
 
 func env(k, def string) string {
@@ -119,5 +124,9 @@ func Cargar() Config {
 		LLMModelo:         env("LLM_MODELO", "gemini-2.5-flash-lite"),
 		LLMModeloRespaldo: env("LLM_MODELO_FALLBACK", "gemini-3.1-flash-lite"),
 		LLMTimeoutSeg:     envInt("LLM_TIMEOUT_SEG", 8),
+		// comunicacion: E4 · Telegram
+		TelegramModo:  env("TELEGRAM_MODO", "simulado"),
+		TelegramToken: env("TELEGRAM_BOT_TOKEN", ""),
+		TelegramURL:   strings.TrimRight(env("TELEGRAM_API_URL", ""), "/"),
 	}
 }

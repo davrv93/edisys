@@ -335,23 +335,30 @@ func (s *Server) enviarBalanceCorreo(w http.ResponseWriter, r *http.Request) {
 		"errores": c["error"], "pendientes": c["pendiente"], "mensaje_ids": ids, "modo": s.Cfg.CorreoModo})
 }
 
-// listarCorreos: GET /correo/mensajes?estado=&origen=&pagina=
+// listarCorreos: GET /correo/mensajes?estado=&origen=&q=&pagina=
+// comunicacion: E3 · el total respeta los filtros y trae los conteos por estado para la bandeja.
 func (s *Server) listarCorreos(w http.ResponseWriter, r *http.Request) {
 	e := edf(r)
 	q := r.URL.Query()
 	pagina, por := paginacion(r)
+	buscar := strings.TrimSpace(q.Get("q"))
+	const where = `m.edificio_id=$1 AND ($2='' OR m.estado=$2) AND ($3='' OR m.origen=$3)
+		AND ($4='' OR m.para ILIKE '%'||$4||'%' OR m.nombre ILIKE '%'||$4||'%' OR m.asunto ILIKE '%'||$4||'%' OR u.codigo ILIKE '%'||$4||'%')`
 	filas, err := db.Filas(r.Context(), s.DB, `SELECT m.id, m.para, m.nombre, m.asunto, m.estado, m.origen, m.referencia, m.intentos, m.error, m.creado_en, m.procesado_en,
 			u.codigo AS unidad, (SELECT count(*) FROM correo_adjunto a WHERE a.mensaje_id=m.id) AS adjuntos
 		FROM correo_mensaje m LEFT JOIN unidad u ON u.id=m.unidad_id
-		WHERE m.edificio_id=$1 AND ($2='' OR m.estado=$2) AND ($3='' OR m.origen=$3) ORDER BY m.id DESC LIMIT $4 OFFSET $5`,
-		e.ID, q.Get("estado"), q.Get("origen"), por, (pagina-1)*por)
+		WHERE `+where+` ORDER BY m.id DESC LIMIT $5 OFFSET $6`,
+		e.ID, q.Get("estado"), q.Get("origen"), buscar, por, (pagina-1)*por)
 	if err != nil {
 		P.Fallo(w, r, err)
 		return
 	}
 	var total int64
-	_ = s.DB.QueryRow(r.Context(), `SELECT count(*) FROM correo_mensaje WHERE edificio_id=$1`, e.ID).Scan(&total)
+	_ = s.DB.QueryRow(r.Context(), `SELECT count(*) FROM correo_mensaje m LEFT JOIN unidad u ON u.id=m.unidad_id WHERE `+where,
+		e.ID, q.Get("estado"), q.Get("origen"), buscar).Scan(&total)
+	conteos, _ := db.Filas(r.Context(), s.DB, `SELECT estado, count(*) AS cantidad FROM correo_mensaje WHERE edificio_id=$1 GROUP BY estado ORDER BY estado`, e.ID)
 	resp := paginado(filas, total, pagina)
 	resp["modo"] = s.Cfg.CorreoModo
+	resp["conteos"] = conteos
 	P.JSON(w, http.StatusOK, resp)
 }
