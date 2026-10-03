@@ -322,6 +322,8 @@ func (s *Server) rutasEdificio(r chi.Router) {
 	r.With(q("configuracion.editar")).Put("/configuracion/activo", s.cambiarActivoEdificio)
 	r.With(q("configuracion.ver")).Get("/configuracion/asistentes", s.asistenteConfiguracion)
 	r.With(q("configuracion.ver")).Get("/configuracion/cambios", s.registroCambios)
+	// recaudacion: A1, A2 · recaudadora externa y CREP/CDPG por archivo
+	s.rutasRecaudacion(r)
 
 	// 05 · recibos y pagos
 	r.With(q("recibos.ver")).Get("/periodos", s.listarPeriodos)
@@ -536,6 +538,8 @@ func (s *Server) rutasModulosNuevos(r chi.Router) {
 	r.With(q("configuracion.editar")).Put("/configuracion/activo", s.cambiarActivoEdificio)
 	r.With(q("configuracion.ver")).Get("/configuracion/asistentes", s.asistenteConfiguracion)
 	r.With(q("configuracion.ver")).Get("/configuracion/cambios", s.registroCambios)
+	// recaudacion: A1, A2 · recaudadora externa y CREP/CDPG por archivo
+	s.rutasRecaudacion(r)
 
 	r.With(q("incidencias.ver")).Get("/mantenimiento/incidencias", s.listarIncidencias)
 	r.With(q("incidencias.ver")).Patch("/mantenimiento/incidencias/{tid}/estado", s.cambiarEstadoIncidencia)

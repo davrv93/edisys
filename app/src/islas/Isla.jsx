@@ -32,6 +32,9 @@ const PANTALLAS = {
   // marca: I1/I2/I5 · marca blanca y plantilla de recibo; configuración del edificio
   marca: { permiso: ['marca.configurar', 'recibos.plantilla'], C: lazy(() => import('../pantallas/36-marca/Marca.jsx')) },
   ajustes: { permiso: 'configuracion.ver', C: lazy(() => import('../pantallas/37-ajustes/Ajustes.jsx')) },
+  // recaudacion: A1, A2
+  recaudadora: { permiso: 'recaudacion.ver', C: lazy(() => import('../pantallas/38-recaudadora/Recaudadora.jsx')) },
+  'cobranza-masiva': { permiso: 'recaudacion.ver', C: lazy(() => import('../pantallas/39-cobranza-masiva/CobranzaMasiva.jsx')) },
   configuracion: { permiso: 'facturacion.configurar', C: lazy(() => import('../pantallas/configuracion/Configuracion.jsx')) },
   // reservas: H1 · check-in QR del conserje · H2/H3 · configuración de áreas
   checkin: { permiso: 'reservas.checkin', C: lazy(() => import('../pantallas/35-reservas-avanzadas/Checkin.jsx')) },

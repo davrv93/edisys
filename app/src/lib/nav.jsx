@@ -28,6 +28,9 @@ export const PAGINAS = {
   vouchers: '/vouchers/',
   cobranzas: '/cobranzas/',
   documentos: '/documentos/',
+  // recaudacion: A1, A2
+  recaudadora: '/recaudadora/',
+  'cobranza-masiva': '/cobranza-masiva/',
   configuracion: '/configuracion/',
   // reservas: H1 / H3
   checkin: '/checkin/',
