@@ -28,6 +28,10 @@ export const PAGINAS = {
   vouchers: '/vouchers/',
   cobranzas: '/cobranzas/',
   documentos: '/documentos/',
+  // deuda: B3, D1, D2 y D3
+  'cuentas-cobrar': '/cuentas-cobrar/',
+  acuerdos: '/acuerdos/',
+  morosos: '/morosos/',
   configuracion: '/configuracion/',
 };
 
