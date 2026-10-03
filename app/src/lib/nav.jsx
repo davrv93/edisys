@@ -29,6 +29,9 @@ export const PAGINAS = {
   cobranzas: '/cobranzas/',
   documentos: '/documentos/',
   configuracion: '/configuracion/',
+  // reservas: H1 / H3
+  checkin: '/checkin/',
+  areascomunes: '/areas-comunes/',
 };
 // extras: J1/J2/I3
 PAGINAS.encuestas = '/encuestas/';

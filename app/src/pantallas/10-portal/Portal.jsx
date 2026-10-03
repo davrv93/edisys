@@ -7,6 +7,8 @@ import { useEid, useSesion, Guarda } from '../../layout/Sesion.jsx';
 import { useModoTarea } from '../../layout/Armazon.jsx';
 import { Boton, ErrorCarga, Esqueleto, Icono, Insignia } from '../../ui/index.js';
 import { nombreUnidad } from '../../lib/unidad.js';
+import { useState } from 'react';
+import EntradaQR from '../35-reservas-avanzadas/EntradaQR.jsx'; // reservas: H1
 
 const PASOS = ['reportado', 'validado', 'presupuestado', 'aprobado', 'en_ejecucion', 'terminado'];
 const TEXTO_PASO = {
@@ -34,6 +36,7 @@ export default function Portal() {
   const k = d?.kpis_edificio;
   const reservaPendiente = d?.proximas_reservas?.find((x) => x.estado === 'pendiente_pago');
   const verRecibos = s.tiene(['recibos.ver', 'portal.ver']) && s.rol !== 'inquilino';
+  const [qr, setQr] = useState(null); // reservas: H1 · entrada QR
 
   let estadoCuenta;
   if (!d) estadoCuenta = null;
@@ -194,7 +197,14 @@ export default function Portal() {
                 <span>
                   <b>{x.codigo}</b> · {x.recurso} · {etiquetaDia(diaLima(x.inicio))} {formatearHora(x.inicio)}
                 </span>
-                <Insignia estado={x.estado} />
+                <span className="flex items-center gap-2">
+                  {x.estado === 'confirmada' && (
+                    <button type="button" onClick={() => setQr({ id: x.id, codigo: x.codigo })} className="text-sm font-semibold text-acento hover:text-acento-hover">
+                      Entrada QR
+                    </button>
+                  )}
+                  <Insignia estado={x.estado} />
+                </span>
               </div>
             ))}
           </section>
@@ -232,6 +242,7 @@ export default function Portal() {
         </section>
         {r && <p className="text-center text-xs text-texto-apoyo">Último recibo: {r.numero} · emitido {formatearFecha(r.emitido)}</p>}
       </div>
+      <EntradaQR eid={eid} reserva={qr} onCerrar={() => setQr(null)} />
     </div>
   );
 }

@@ -299,6 +299,14 @@ func (s *Server) rutasEdificio(r chi.Router) {
 	r.With(q("dominios.administrar")).Post("/dominios", s.crearDominio)
 	r.With(q("dominios.administrar")).Patch("/dominios/{id}", s.cambiarDominio)
 	r.With(q("dominios.administrar")).Delete("/dominios/{id}", s.borrarDominio)
+	// reservas: H1 · check-in con QR (conserje) · H3 · fotos y reglamento del área
+	r.With(q("reservas.ver")).Get("/reservas/{rid}/qr", s.qrReserva)
+	r.With(q("reservas.checkin")).Get("/checkin", s.verCheckin)
+	r.With(q("reservas.checkin")).Post("/checkin", s.registrarCheckin)
+	r.With(q("reservas.checkin")).Get("/checkin/hoy", s.checkinHoy)
+	r.With(q("areas.administrar")).Post("/areas/{aid}/fotos", s.subirFotosArea)
+	r.With(q("areas.administrar")).Delete("/areas/{aid}/fotos/{fid}", s.borrarFotoArea)
+	r.With(q("areas.administrar")).Post("/areas/{aid}/reglamento", s.subirReglamentoArea)
 
 	// 05 · recibos y pagos
 	r.With(q("recibos.ver")).Get("/periodos", s.listarPeriodos)
@@ -493,6 +501,14 @@ func (s *Server) rutasModulosNuevos(r chi.Router) {
 	r.With(q("dominios.administrar")).Post("/dominios", s.crearDominio)
 	r.With(q("dominios.administrar")).Patch("/dominios/{id}", s.cambiarDominio)
 	r.With(q("dominios.administrar")).Delete("/dominios/{id}", s.borrarDominio)
+	// reservas: H1 · check-in con QR (conserje) · H3 · fotos y reglamento del área
+	r.With(q("reservas.ver")).Get("/reservas/{rid}/qr", s.qrReserva)
+	r.With(q("reservas.checkin")).Get("/checkin", s.verCheckin)
+	r.With(q("reservas.checkin")).Post("/checkin", s.registrarCheckin)
+	r.With(q("reservas.checkin")).Get("/checkin/hoy", s.checkinHoy)
+	r.With(q("areas.administrar")).Post("/areas/{aid}/fotos", s.subirFotosArea)
+	r.With(q("areas.administrar")).Delete("/areas/{aid}/fotos/{fid}", s.borrarFotoArea)
+	r.With(q("areas.administrar")).Post("/areas/{aid}/reglamento", s.subirReglamentoArea)
 
 	r.With(q("incidencias.ver")).Get("/mantenimiento/incidencias", s.listarIncidencias)
 	r.With(q("incidencias.ver")).Patch("/mantenimiento/incidencias/{tid}/estado", s.cambiarEstadoIncidencia)

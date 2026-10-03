@@ -8,6 +8,7 @@ import { useEid, useSesion } from '../../layout/Sesion.jsx';
 import { useModoTarea } from '../../layout/Armazon.jsx';
 import { CabeceraTarea } from '../../layout/Encabezado.jsx';
 import { Boton, Campo, ErrorCarga, Esqueleto, Icono, SubirArchivo, Vacio, useDialog } from '../../ui/index.js';
+import EntradaQR from '../35-reservas-avanzadas/EntradaQR.jsx';
 
 const DIAS_VISIBLES = 14;
 
@@ -37,6 +38,8 @@ export default function NuevaReserva() {
   const [enviando, setEnviando] = useState(false);
   const [creada, setCreada] = useState(null);
   const [moroso, setMoroso] = useState(null);
+  const [titulo, setTitulo] = useState(''); // H3: datos del evento
+  const [asistentes, setAsistentes] = useState('');
 
   useEffect(() => {
     if (!listaAreas.length || areaId) return;
@@ -72,7 +75,10 @@ export default function NuevaReserva() {
   useEffect(() => setFranja(null), [dia, areaId, recursoId]);
 
   const nombreRecurso = recursoId === 'cualquiera' ? area?.nombre : recursos.find((r) => r.id === recursoId)?.nombre;
-  const tarifa = area?.tarifa_cts || 0;
+  // H2/H3: la franja puede tener tarifa propia; la garantía y la limpieza del área se suman al total.
+  const tarifa = (franja?.tarifa_cts ?? area?.tarifa_cts) || 0;
+  const extras = (area?.garantia_cts || 0) + (area?.limpieza_cts || 0);
+  const total = tarifa + extras;
   // El modo de cobro lo fija el edificio (modo_cobro); si el API no lo dice, la persona elige.
   const modoEdificio = areas.datos?.modo_cobro || null;
   const medioEfectivo = modoEdificio === 'pago_inmediato' ? 'yape' : modoEdificio === 'cargo_recibo' ? 'recibo' : medio;
@@ -89,7 +95,9 @@ export default function NuevaReserva() {
         inicio: franja.inicio,
         fin: franja.fin,
         acepta_normas: true,
-        medio: tarifa ? medioEfectivo : 'recibo',
+        medio: total ? medioEfectivo : 'recibo',
+        titulo: titulo.trim() || undefined,
+        asistentes: Number(asistentes) > 0 ? Number(asistentes) : undefined,
       });
       setCreada({ ...r, franja, recurso: nombreRecurso });
     } catch (err) {
@@ -180,6 +188,24 @@ export default function NuevaReserva() {
               )}
             </section>
 
+            {area && (area.descripcion || area.fotos?.length > 0 || area.reglamento_url) && (
+              <section className="flex flex-col gap-2">
+                {area.fotos?.length > 0 && (
+                  <div className="carrusel -mx-4 gap-2 px-4 pb-1">
+                    {area.fotos.map((f) => (
+                      <img key={f.id} src={f.url} alt={`Foto de ${area.nombre}`} loading="lazy" className="h-32 w-48 shrink-0 rounded-tarjeta border border-borde object-cover" />
+                    ))}
+                  </div>
+                )}
+                {area.descripcion && <p className="text-sm text-texto-suave">{area.descripcion}</p>}
+                {area.reglamento_url && (
+                  <a href={area.reglamento_url} target="_blank" rel="noreferrer" className="text-sm text-acento hover:text-acento-hover">
+                    Leer el reglamento del área
+                  </a>
+                )}
+              </section>
+            )}
+
             <section className="flex flex-col gap-2">
               <span className="text-sm font-semibold">Día</span>
               <div className="carrusel -mx-4 gap-2 px-4 pb-1">
@@ -240,12 +266,24 @@ export default function NuevaReserva() {
               )}
             </section>
 
-            {tarifa > 0 && modoEdificio && (
+            <section className="grid grid-cols-[1fr_110px] gap-3">
+              <Campo etiqueta="Evento (opcional)" valor={titulo} onCambio={setTitulo} placeholder="Parrillada de amigos" maxLength={80} />
+              <Campo etiqueta="Personas" tipo="numero" valor={asistentes} onCambio={setAsistentes} placeholder={area?.aforo ? `máx. ${area.aforo}` : ''} />
+            </section>
+            {extras > 0 && (
+              <p className="rounded-tarjeta border border-borde bg-superficie p-4 text-sm text-texto-suave">
+                Tarifa {formatearSoles(tarifa)}
+                {area.garantia_cts ? ` + garantía ${formatearSoles(area.garantia_cts)}` : ''}
+                {area.limpieza_cts ? ` + limpieza ${formatearSoles(area.limpieza_cts)}` : ''} = <b className="text-tinta">{formatearSoles(total)}</b>
+              </p>
+            )}
+
+            {total > 0 && modoEdificio && (
               <p className="rounded-tarjeta border border-borde bg-superficie p-4 text-sm text-texto-suave">
                 {modoEdificio === 'pago_inmediato' ? 'Se paga al reservar con Yape: guardamos tu turno 15 minutos mientras subes el voucher.' : `Se carga a tu recibo de ${mesRecibo}.`}
               </p>
             )}
-            {tarifa > 0 && !modoEdificio && (
+            {total > 0 && !modoEdificio && (
               <section className="flex flex-col gap-2">
                 <span className="text-sm font-semibold">Forma de pago</span>
                 <OpcionPago valor="yape" medio={medio} setMedio={setMedio} titulo="Yape" detalle="QR y código de operación · guardamos tu turno 15 min" />
@@ -266,12 +304,12 @@ export default function NuevaReserva() {
             <div className="mx-auto flex max-w-xl flex-col gap-2">
               <div className="flex items-baseline justify-between">
                 <span className="text-sm text-texto-suave">{franja ? `${etiquetaDia(dia)} · ${franja.desde}–${franja.hasta}` : 'Elige un turno'}</span>
-                <span className="font-titulo text-2xl font-semibold tabular-nums">{tarifa ? formatearSoles(tarifa) : 'Sin costo'}</span>
+                <span className="font-titulo text-2xl font-semibold tabular-nums">{total ? formatearSoles(total) : 'Sin costo'}</span>
               </div>
               <Boton tamano="lg" bloque disabled={!franja || !acepta || (esAdmin && !unidadId)} cargando={enviando} onClick={reservar}>
-                {!tarifa ? 'Reservar' : medioEfectivo === 'yape' ? 'Pagar con Yape' : `Reservar con cargo al recibo`}
+                {!total ? 'Reservar' : medioEfectivo === 'yape' ? 'Pagar con Yape' : `Reservar con cargo al recibo`}
               </Boton>
-              {tarifa > 0 && medioEfectivo === 'yape' && <span className="text-center text-xs text-texto-apoyo">Guardamos tu turno 15 minutos mientras pagas.</span>}
+              {total > 0 && medioEfectivo === 'yape' && <span className="text-center text-xs text-texto-apoyo">Guardamos tu turno 15 minutos mientras pagas.</span>}
             </div>
           </footer>
         </>
@@ -309,6 +347,7 @@ function Creada({ creada, eid, volver, subtitulo, dialog, dialogEl }) {
   const [progreso, setProgreso] = useState(null);
   const [enviado, setEnviado] = useState(false);
   const [ahora, setAhora] = useState(Date.now());
+  const [qr, setQr] = useState(null); // H1: entrada QR
   const pendiente = creada.estado === 'pendiente_pago' && !enviado;
   useEffect(() => {
     if (!pendiente) return undefined;
@@ -361,10 +400,16 @@ function Creada({ creada, eid, volver, subtitulo, dialog, dialogEl }) {
             </Boton>
           </div>
         )}
+        {creada.estado === 'confirmada' && (
+          <Boton variante="secundario" icono="ver" bloque onClick={() => setQr({ id: creada.id, codigo: creada.codigo })}>
+            Ver mi entrada QR
+          </Boton>
+        )}
         <Boton variante="secundario" href={volver} bloque>
           Listo
         </Boton>
       </div>
+      <EntradaQR eid={eid} reserva={qr} onCerrar={() => setQr(null)} />
     </div>
   );
 }
