@@ -410,11 +410,11 @@ func (s *Server) movimientoManual(w http.ResponseWriter, r *http.Request) {
 func (s *Server) transferenciaFondos(w http.ResponseWriter, r *http.Request) {
 	e := edf(r)
 	var in struct {
-		OrigenID   int64  `json:"origen_id"`
-		DestinoID  int64  `json:"destino_id"`
-		MontoCts   int64  `json:"monto_cts"`
-		Fecha      string `json:"fecha"`
-		Motivo     string `json:"motivo"`
+		OrigenID  int64  `json:"origen_id"`
+		DestinoID int64  `json:"destino_id"`
+		MontoCts  int64  `json:"monto_cts"`
+		Fecha     string `json:"fecha"`
+		Motivo    string `json:"motivo"`
 	}
 	if err := P.Leer(r, &in); err != nil {
 		P.Fallo(w, r, err)

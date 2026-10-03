@@ -105,11 +105,11 @@ func (s *Server) imputarCobranza(w http.ResponseWriter, r *http.Request) {
 	}
 	defer tx.Rollback(ctx)
 	var c struct {
-		Monto   int64
-		Medio   string
-		Codigo  string
-		Fecha   time.Time
-		Estado  string
+		Monto  int64
+		Medio  string
+		Codigo string
+		Fecha  time.Time
+		Estado string
 	}
 	if err := tx.QueryRow(ctx, `SELECT monto_cts, medio, codigo_operacion, fecha, estado FROM cobranza_sin_identificar WHERE id=$1 AND edificio_id=$2 FOR UPDATE`, id, e.ID).
 		Scan(&c.Monto, &c.Medio, &c.Codigo, &c.Fecha, &c.Estado); err != nil {

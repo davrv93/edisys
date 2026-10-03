@@ -72,7 +72,7 @@ func (s *Server) verConfigFacturacion(w http.ResponseWriter, r *http.Request) {
 		"serie_boleta": c.SerieBoleta, "serie_factura": c.SerieFactura, "modo": c.Modo, "ose_url": c.OSEURL, "ose_usuario": c.OSEUsuario,
 		"tiene_ose_clave": c.OSEClave != "", "tiene_certificado": c.CertArchivo != nil, "certificado_vence": vence, "afectacion": c.Afectacion,
 		"tiene_beta_servidor": s.Cfg.SUNATBetaUsuario != "" && s.Cfg.SUNATBetaClave != "",
-		"modos": []string{"off", "simulado", "beta", "produccion"}, "produccion_habilitada": false,
+		"modos":               []string{"off", "simulado", "beta", "produccion"}, "produccion_habilitada": false,
 		"aviso": "Producción está deshabilitada en esta entrega. «Simulado» no envía nada a SUNAT; «beta» usa el entorno de pruebas y necesita usuario, clave y certificado (los del edificio, o los de prueba del servidor)."})
 }
 

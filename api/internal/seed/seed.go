@@ -36,7 +36,7 @@ type Opciones struct {
 }
 
 // Periodos sembrados.
-var Periodos = []string{"2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10"}
+var Periodos = []string{"2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09"}
 
 var propietarios = map[string]string{
 	"101": "Juan Pérez Rojas", "102": "Rosa Díaz Quispe", "103": "Carlos Mendoza Silva", "104": "Lucía Torres Vega",
@@ -57,12 +57,11 @@ var tardios = map[string]map[string]bool{
 	"2026-06": {"104": true},
 	"2026-07": {"402": true, "104": true},
 	"2026-08": {"402": true, "503": true},
-	"2026-10": {"104": true},
 }
 
-var factorConsumo = map[string]float64{"2026-04": 1.08, "2026-05": 1.03, "2026-06": 0.96, "2026-07": 0.92, "2026-08": 0.97, "2026-10": 1.02}
+var factorConsumo = map[string]float64{"2026-04": 1.08, "2026-05": 1.03, "2026-06": 0.96, "2026-07": 0.92, "2026-08": 0.97}
 
-var presupuestoMes = map[string]int64{"2026-04": 1620000, "2026-05": 1620000, "2026-06": 1650000, "2026-07": 1650000, "2026-08": 1680000, "2026-09": 1680000, "2026-10": 1680000}
+var presupuestoMes = map[string]int64{"2026-04": 1620000, "2026-05": 1620000, "2026-06": 1650000, "2026-07": 1650000, "2026-08": 1680000, "2026-09": 1680000}
 
 // Presupuesto por rubro de setiembre (suma 16.800); los meses anteriores se escalan.
 var presupuestoRubros = []struct {
@@ -497,7 +496,7 @@ func Sembrar(ctx context.Context, pool *pgxpool.Pool, alm archivo.Almacen, op Op
 			monto                 int64
 			doc                   string // pdf | foto | "" (sin sustento) | sedapal
 		}
-		luz := map[string]int64{"2026-04": 101500, "2026-05": 99000, "2026-06": 95500, "2026-07": 94000, "2026-08": 96500, "2026-09": 98000, "2026-10": 97500}[per]
+		luz := map[string]int64{"2026-04": 101500, "2026-05": 99000, "2026-06": 95500, "2026-07": 94000, "2026-08": 96500, "2026-09": 98000}[per]
 		egs := []egreso{
 			{"administracion", "conserjeria", "Conserjería " + P.NombreMes(ini.Month()), 630000, "pdf"},
 			{"administracion", "limpieza", "Limpieza " + P.NombreMes(ini.Month()), 280000, "foto"},

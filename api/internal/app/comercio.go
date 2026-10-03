@@ -32,6 +32,7 @@ func (s *Server) listarProductos(w http.ResponseWriter, r *http.Request) {
 
 	var cond []string
 	args := []any{e.ID}
+	cond = append(cond, "p.edificio_id = $1")
 	if activos {
 		cond = append(cond, "p.activo")
 	}
@@ -418,7 +419,8 @@ func (s *Server) crearCliente(w http.ResponseWriter, r *http.Request) {
 	}
 	if tipo == "" && doc != "" {
 		// El documento manda: RUC es factura, DNI es boleta (misma regla que el comprobante).
-		_, tipo = sunat.ClienteDe(doc, nombre)
+		cli, _ := sunat.ClienteDe(doc, nombre)
+		tipo = cli.TipoDoc
 	}
 	ctx := r.Context()
 	var cid int64

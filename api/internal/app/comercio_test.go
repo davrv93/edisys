@@ -89,7 +89,7 @@ func TestComercioCatalogo(t *testing.T) {
 		t.Fatalf("desactivar: %d %v", st, d)
 	}
 	st, d = e.pedir("GET", "/api/v1/edificios/1/productos", tok, nil)
-	if num(d["total"]) != 18 {
+	if num(d["total"]) != 19 {
 		t.Fatalf("el producto desactivado no debe contar en el catálogo: %d", num(d["total"]))
 	}
 	st, d = e.pedir("GET", "/api/v1/edificios/1/productos?todos=1", tok, nil)
@@ -113,7 +113,7 @@ func TestComercioCatalogo(t *testing.T) {
 		t.Fatalf("categoría repetida: %d %v", st, d)
 	}
 	st, d = e.pedir("GET", "/api/v1/edificios/1/categorias", tok, nil)
-	if st != 200 || num(d["datos"].([]any)[0].(map[string]any)["productos"]) != 5 {
+	if st != 200 || num(d["datos"].([]any)[0].(map[string]any)["productos"]) != 4 {
 		t.Fatalf("listar categorías: %d %v", st, d)
 	}
 	st, d = e.pedir("DELETE", "/api/v1/edificios/1/categorias/"+strconv.FormatInt(cid, 10), tok, nil)
@@ -188,11 +188,14 @@ func TestComercioClientes(t *testing.T) {
 	}
 
 	// Un cliente de otro edificio no se toca: el TenantMiddleware resuelve el edificio, no el id.
-	var otro int64
-	if err := e.pool.QueryRow(context.Background(), `INSERT INTO edificio (administradora_id, nombre) SELECT id, 'Otro' FROM administradora LIMIT 1 RETURNING id`).Scan(&otro); err != nil {
+	var otroEdificio, clienteAjeno int64
+	if err := e.pool.QueryRow(context.Background(), `INSERT INTO edificio (administradora_id, nombre) SELECT id, 'Otro' FROM administradora LIMIT 1 RETURNING id`).Scan(&otroEdificio); err != nil {
 		t.Fatal(err)
 	}
-	st, _ = e.pedir("PUT", "/api/v1/edificios/1/clientes/"+strconv.FormatInt(otro, 10), tok, map[string]any{"telefono": "1"})
+	if err := e.pool.QueryRow(context.Background(), `INSERT INTO cliente (edificio_id, nombre) VALUES ($1, 'Cliente ajeno') RETURNING id`, otroEdificio).Scan(&clienteAjeno); err != nil {
+		t.Fatal(err)
+	}
+	st, _ = e.pedir("PUT", "/api/v1/edificios/1/clientes/"+strconv.FormatInt(clienteAjeno, 10), tok, map[string]any{"telefono": "1"})
 	if st == 200 {
 		t.Fatalf("no se debe editar un cliente de otro edificio: %d", st)
 	}
