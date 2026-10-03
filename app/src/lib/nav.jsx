@@ -28,6 +28,10 @@ export const PAGINAS = {
   vouchers: '/vouchers/',
   cobranzas: '/cobranzas/',
   documentos: '/documentos/',
+  // personal: F1–F3
+  personal: '/personal/',
+  asistencia: '/asistencia/',
+  almacen: '/almacen/',
   configuracion: '/configuracion/',
 };
 

@@ -29,6 +29,10 @@ const PANTALLAS = {
   vouchers: { permiso: ['pagos.registrar', 'pagos.informar'], C: lazy(() => import('../pantallas/19-vouchers/Vouchers.jsx')) },
   cobranzas: { permiso: 'cobranzas.ver', C: lazy(() => import('../pantallas/20-cobranzas/Cobranzas.jsx')) },
   documentos: { permiso: 'documentos.ver', C: lazy(() => import('../pantallas/21-documentos/Documentos.jsx')) },
+  // personal: F1–F3 · colaboradores, asistencia con foto y almacén
+  personal: { permiso: 'personal.ver', C: lazy(() => import('../pantallas/28-personal/Personal.jsx')) },
+  asistencia: { permiso: ['asistencia.marcar', 'asistencia.ver'], C: lazy(() => import('../pantallas/29-asistencia/Asistencia.jsx')) },
+  almacen: { permiso: 'almacen.ver', C: lazy(() => import('../pantallas/30-almacen/Almacen.jsx')) },
   configuracion: { permiso: 'facturacion.configurar', C: lazy(() => import('../pantallas/configuracion/Configuracion.jsx')) },
 };
 

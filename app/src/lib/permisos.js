@@ -90,6 +90,10 @@ export const ITEMS = {
   vouchers: { pagina: 'vouchers', etiqueta: 'Vouchers y cuentas bancarias', corta: 'Vouchers', icono: 'recibo', permiso: ['pagos.registrar', 'pagos.informar'] },
   cobranzas: { pagina: 'cobranzas', etiqueta: 'Cobranzas sin identificar', corta: 'Cobranzas', icono: 'entrante', permiso: 'cobranzas.ver' },
   documentos: { pagina: 'documentos', etiqueta: 'Documentos', corta: 'Documentos', icono: 'recibo', permiso: 'documentos.ver' },
+  // personal: F1–F3 · colaboradores, asistencia con foto y almacén
+  personal: { pagina: 'personal', etiqueta: 'Colaboradores', corta: 'Personal', icono: 'usuario', permiso: 'personal.ver' },
+  asistencia: { pagina: 'asistencia', etiqueta: 'Asistencia y turnos', corta: 'Asistencia', icono: 'reloj', permiso: ['asistencia.marcar', 'asistencia.ver'] },
+  almacen: { pagina: 'almacen', etiqueta: 'Almacén', corta: 'Almacén', icono: 'bandeja', permiso: 'almacen.ver' },
   roles: { pagina: 'roles', etiqueta: 'Roles y permisos', corta: 'Roles', icono: 'llave', permiso: 'roles.administrar' },
 };
 
@@ -120,6 +124,12 @@ export const MENU_POR_ROL = {
   },
 };
 MENU_POR_ROL.superadmin = MENU_POR_ROL.administrador;
+// personal: F1–F3 (al final del lateral; la barra móvil no cambia)
+MENU_POR_ROL.administrador.lateral.push('personal', 'asistencia', 'almacen');
+MENU_POR_ROL.junta.lateral.push('personal', 'asistencia', 'almacen');
+MENU_POR_ROL.propietario.lateral.push('personal');
+MENU_POR_ROL.operario.lateral.push('asistencia', 'almacen');
+MENU_POR_ROL.tecnico.lateral.push('asistencia');
 
 /** Grupos del lateral: accesos comunes juntos y plegables. Todo ítem de ITEMS vive en un grupo. */
 export const GRUPOS = [
@@ -127,6 +137,7 @@ export const GRUPOS = [
   { id: 'finanzas', etiqueta: 'Finanzas', items: ['balance', 'conciliacion', 'proveedores', 'fondos', 'informes', 'externos', 'vouchers', 'cobranzas', 'recibos', 'unidades', 'analitica'] },
   { id: 'operacion', etiqueta: 'Operación', items: ['reservas', 'reservar', 'medidores', 'mantenimiento', 'aprobaciones', 'trabajos', 'reportar'] },
   { id: 'comunicacion', etiqueta: 'Comunicación', items: ['whatsapp', 'chatbot', 'motor', 'documentos'] },
+  { id: 'equipo', etiqueta: 'Personal', items: ['personal', 'asistencia', 'almacen'] }, // personal: F1–F3
   { id: 'ajustes', etiqueta: 'Ajustes', items: ['roles', 'configuracion'] },
 ];
 
