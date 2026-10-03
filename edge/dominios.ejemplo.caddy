@@ -1,0 +1,64 @@
+# EDISYS · borde con dominios propios (bloque I3). EJEMPLO: no lo carga el Dockerfile ni el compose.
+#
+# Cómo se usa (en el servidor, no en local):
+#   1. La administradora registra su dominio en la app (Videollamadas → Dominio propio) o por
+#      POST /api/v1/edificios/{eid}/dominios {"host": "intranet.suadministradora.pe"}.
+#   2. Ella (no EDISYS) crea en su DNS un registro A (o CNAME) hacia la IP del servidor.
+#   3. Se fusiona este archivo con edge/Caddyfile: las opciones globales van DENTRO del bloque
+#      global existente (Caddy solo admite uno, y debe ser el primero) y el bloque «https://» se
+#      añade al final. Con eso, el primer visitante de un dominio registrado dispara la emisión del
+#      certificado (TLS bajo demanda) y los siguientes lo reutilizan.
+#
+# Seguridad: Caddy pregunta al API antes de emitir. /publico/dominio-permitido responde 200 solo si
+# el host está registrado y activo; para cualquier otro devuelve 404 y Caddy NO pide certificado.
+# Sin ese «ask», cualquiera que apunte un dominio a la IP agotaría el cupo de Let's Encrypt.
+#
+# El API resuelve la administradora por el Host (reverse_proxy conserva Host y añade X-Forwarded-Host),
+# y en un dominio propio solo deja iniciar sesión a usuarios de esa administradora.
+
+{
+	# --- fusionar dentro del bloque global de edge/Caddyfile ---
+	# (allí hoy hay «auto_https off» para local: en el servidor con dominios propios se quita esa línea)
+	on_demand_tls {
+		ask http://{$API_UPSTREAM:api:8080}/api/v1/publico/dominio-permitido
+	}
+}
+
+# Cualquier host por HTTPS, con certificado bajo demanda solo para los registrados.
+https:// {
+	tls {
+		on_demand
+	}
+	encode zstd gzip
+
+	handle /api/* {
+		reverse_proxy {$API_UPSTREAM:api:8080} {
+			header_up X-Forwarded-For {remote_host}
+		}
+	}
+
+	handle /login* {
+		reverse_proxy {$LOGIN_UPSTREAM:login:3000}
+	}
+
+	handle /app* {
+		root * /srv
+		@inmutable path /app/_astro/*
+		header @inmutable Cache-Control "public, max-age=31536000, immutable"
+		header /app/sw.js Cache-Control "no-cache"
+		try_files {path} {path}/index.html /app/index.html
+		file_server
+	}
+
+	handle {
+		redir * /app/ 302
+	}
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options DENY
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+}

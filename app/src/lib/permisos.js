@@ -130,6 +130,16 @@ export const GRUPOS = [
   { id: 'ajustes', etiqueta: 'Ajustes', items: ['roles', 'configuracion'] },
 ];
 
+// extras: J1/J2/I3 · encuestas (todos los roles del edificio), videollamadas (junta y administración)
+// y dominio propio (vive como segunda vista de videollamadas, solo administración).
+ITEMS.encuestas = { pagina: 'encuestas', etiqueta: 'Encuestas', corta: 'Encuestas', icono: 'votos', permiso: 'encuestas.ver' };
+ITEMS.videollamadas = { pagina: 'videollamadas', etiqueta: 'Videollamadas', corta: 'Reuniones', icono: 'junta', permiso: ['videollamadas.ver', 'dominios.administrar'] };
+MENU_POR_ROL.administrador.lateral.push('encuestas', 'videollamadas'); // superadmin comparte este objeto
+MENU_POR_ROL.junta.lateral.push('encuestas', 'videollamadas');
+MENU_POR_ROL.propietario.lateral.push('encuestas');
+MENU_POR_ROL.inquilino.lateral.push('encuestas');
+GRUPOS.find((g) => g.id === 'comunicacion').items.push('encuestas', 'videollamadas');
+
 /** Ítems ya filtrados por rol, repartidos en sus grupos (solo grupos con algo visible). */
 export function gruposPara(items) {
   const porId = new Map(items.map((i) => [i.id, i]));

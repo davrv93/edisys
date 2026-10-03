@@ -154,6 +154,9 @@ func (s *Server) Rutas() http.Handler {
 		r.Post("/publico/contacto", s.contacto)
 		r.Get("/archivos/{id}", s.servirArchivo)
 		r.Post("/whatsapp/webhook", s.webhookWhatsApp)
+		// extras: I3 · dominio propio (público: lo consultan el login y el «ask» de Caddy)
+		r.Get("/publico/dominio", s.dominioPublico)
+		r.Get("/publico/dominio-permitido", s.dominioPermitido)
 
 		r.Group(func(r chi.Router) {
 			r.Use(s.autenticar, s.csrf, s.auditar)
@@ -276,6 +279,26 @@ func (s *Server) rutasEdificio(r chi.Router) {
 	r.With(q("documentos.ver")).Get("/documentos", s.listarDocumentos)
 	r.With(q("documentos.administrar")).Post("/documentos", s.crearDocumento)
 	r.With(q("documentos.administrar")).Post("/documentos/{id}/publicar", s.publicarDocumento)
+
+	// extras: J1/J2/I3 · encuestas, videollamadas y dominio propio
+	r.With(q("encuestas.ver")).Get("/encuestas", s.listarEncuestas)
+	r.With(q("encuestas.administrar")).Post("/encuestas", s.crearEncuesta)
+	r.With(q("encuestas.ver")).Get("/encuestas/{id}", s.verEncuesta)
+	r.With(q("encuestas.administrar")).Put("/encuestas/{id}", s.editarEncuesta)
+	r.With(q("encuestas.administrar")).Delete("/encuestas/{id}", s.borrarEncuesta)
+	r.With(q("encuestas.administrar")).Post("/encuestas/{id}/abrir", s.abrirEncuesta)
+	r.With(q("encuestas.administrar")).Post("/encuestas/{id}/cerrar", s.cerrarEncuesta)
+	r.With(q("encuestas.responder")).Post("/encuestas/{id}/respuestas", s.responderEncuesta)
+	r.With(q("encuestas.ver")).Get("/encuestas/{id}/resultados", s.resultadosEncuesta) // antes del cierre exige encuestas.resultados (se valida dentro)
+	r.With(q("videollamadas.ver")).Get("/videollamadas", s.listarVideollamadas)
+	r.With(q("videollamadas.ver")).Get("/videollamadas/config", s.configVideollamadas)
+	r.With(q("videollamadas.administrar")).Post("/videollamadas", s.crearVideollamada)
+	r.With(q("videollamadas.administrar")).Post("/videollamadas/{id}/cancelar", s.cancelarVideollamada)
+	r.With(q("videollamadas.administrar")).Put("/videollamadas/{id}/grabacion", s.grabacionVideollamada)
+	r.With(q("dominios.administrar")).Get("/dominios", s.listarDominios)
+	r.With(q("dominios.administrar")).Post("/dominios", s.crearDominio)
+	r.With(q("dominios.administrar")).Patch("/dominios/{id}", s.cambiarDominio)
+	r.With(q("dominios.administrar")).Delete("/dominios/{id}", s.borrarDominio)
 
 	// 05 · recibos y pagos
 	r.With(q("recibos.ver")).Get("/periodos", s.listarPeriodos)
@@ -450,6 +473,26 @@ func (s *Server) rutasModulosNuevos(r chi.Router) {
 	r.With(q("documentos.ver")).Get("/documentos", s.listarDocumentos)
 	r.With(q("documentos.administrar")).Post("/documentos", s.crearDocumento)
 	r.With(q("documentos.administrar")).Post("/documentos/{id}/publicar", s.publicarDocumento)
+
+	// extras: J1/J2/I3 · encuestas, videollamadas y dominio propio
+	r.With(q("encuestas.ver")).Get("/encuestas", s.listarEncuestas)
+	r.With(q("encuestas.administrar")).Post("/encuestas", s.crearEncuesta)
+	r.With(q("encuestas.ver")).Get("/encuestas/{id}", s.verEncuesta)
+	r.With(q("encuestas.administrar")).Put("/encuestas/{id}", s.editarEncuesta)
+	r.With(q("encuestas.administrar")).Delete("/encuestas/{id}", s.borrarEncuesta)
+	r.With(q("encuestas.administrar")).Post("/encuestas/{id}/abrir", s.abrirEncuesta)
+	r.With(q("encuestas.administrar")).Post("/encuestas/{id}/cerrar", s.cerrarEncuesta)
+	r.With(q("encuestas.responder")).Post("/encuestas/{id}/respuestas", s.responderEncuesta)
+	r.With(q("encuestas.ver")).Get("/encuestas/{id}/resultados", s.resultadosEncuesta) // antes del cierre exige encuestas.resultados (se valida dentro)
+	r.With(q("videollamadas.ver")).Get("/videollamadas", s.listarVideollamadas)
+	r.With(q("videollamadas.ver")).Get("/videollamadas/config", s.configVideollamadas)
+	r.With(q("videollamadas.administrar")).Post("/videollamadas", s.crearVideollamada)
+	r.With(q("videollamadas.administrar")).Post("/videollamadas/{id}/cancelar", s.cancelarVideollamada)
+	r.With(q("videollamadas.administrar")).Put("/videollamadas/{id}/grabacion", s.grabacionVideollamada)
+	r.With(q("dominios.administrar")).Get("/dominios", s.listarDominios)
+	r.With(q("dominios.administrar")).Post("/dominios", s.crearDominio)
+	r.With(q("dominios.administrar")).Patch("/dominios/{id}", s.cambiarDominio)
+	r.With(q("dominios.administrar")).Delete("/dominios/{id}", s.borrarDominio)
 
 	r.With(q("incidencias.ver")).Get("/mantenimiento/incidencias", s.listarIncidencias)
 	r.With(q("incidencias.ver")).Patch("/mantenimiento/incidencias/{tid}/estado", s.cambiarEstadoIncidencia)

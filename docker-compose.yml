@@ -45,6 +45,8 @@ x-api-env: &api-env
   SUNAT_BETA_URL: ${SUNAT_BETA_URL:-}
   SUNAT_BETA_USUARIO: ${SUNAT_BETA_USUARIO:-}
   SUNAT_BETA_CLAVE: ${SUNAT_BETA_CLAVE:-}
+  # extras: J2 · servidor Jitsi de las videollamadas (vacío = https://meet.jit.si). Solo arma enlaces.
+  JITSI_BASE_URL: ${JITSI_BASE_URL:-}
 
 services:
   postgres:

@@ -4,6 +4,8 @@ import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import tailwind from '@astrojs/tailwind';
 import AstroPWA from '@vite-pwa/astro';
+// extras: I4 · app propia (marca del build; sin variables EDISYS_APP_* sale EDISYS tal cual)
+import { leerMarcaApp, manifiestoPWA } from './src/lib/appPropia.js';
 
 const EDGE = process.env.EDISYS_EDGE || 'http://localhost:4700';
 
@@ -11,6 +13,11 @@ const EDGE = process.env.EDISYS_EDGE || 'http://localhost:4700';
 // Debe coincidir con el que use el borde (edge) y el login.
 const PREFIJO = process.env.EDISYS_PREFIJO || '';
 const BASE_APP = `${PREFIJO}/app`;
+
+// extras: I4 · marca, carpeta de estáticos (iconos) y salida, que scripts/app-propia.mjs cambia por cliente.
+const MARCA = leerMarcaApp(process.env);
+const PUBLIC_DIR = process.env.EDISYS_PUBLIC_DIR || './public';
+const OUT_DIR = process.env.EDISYS_OUT_DIR || './dist';
 
 /** El muestrario de componentes (/app/ui) solo existe en desarrollo (§2.2). */
 const muestrario = {
@@ -27,7 +34,8 @@ export default defineConfig({
   trailingSlash: 'ignore',
   output: 'static',
   build: { format: 'directory', assets: '_astro' },
-  outDir: './dist',
+  outDir: OUT_DIR, // extras: I4
+  publicDir: PUBLIC_DIR, // extras: I4
   integrations: [
     react(),
     tailwind({ applyBaseStyles: false }),
@@ -39,23 +47,7 @@ export default defineConfig({
       injectRegister: false,
       manifestFilename: 'manifest.webmanifest',
       includeAssets: ['favicon.svg', 'icon-192.png', 'icon-512.png'],
-      manifest: {
-        name: 'EDISYS',
-        short_name: 'EDISYS',
-        description: 'Administración de edificios: cuotas, recibos, balance, reservas y mantenimiento.',
-        lang: 'es-PE',
-        id: `${BASE_APP}/`,
-        start_url: `${BASE_APP}/`,
-        scope: `${BASE_APP}/`,
-        display: 'standalone',
-        background_color: '#F8FAFC',
-        theme_color: '#0F172A',
-        icons: [
-          { src: `${BASE_APP}/icon-192.png`, sizes: '192x192', type: 'image/png' },
-          { src: `${BASE_APP}/icon-512.png`, sizes: '512x512', type: 'image/png' },
-          { src: `${BASE_APP}/icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
-        ],
-      },
+      manifest: manifiestoPWA(MARCA, `${BASE_APP}/`), // extras: I4
       workbox: {
         // Solo estáticos: las respuestas del API NUNCA se cachean (un saldo viejo es peor que un error).
         globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
