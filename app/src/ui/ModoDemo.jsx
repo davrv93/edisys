@@ -144,17 +144,25 @@ export default function ModoDemo() {
   const actual = estado.paso + 1;
   const total = PASOS_DEMO.length;
 
-  // Posición del globito: debajo del objetivo si cabe; si no, encima; centrado si no hay objetivo.
+  // Posición del globito: si el objetivo es bajo, debajo (o encima); si es alto o ancho
+  // (menú lateral, contenido), se ancla al lado con hueco o, si no, centrado. Nunca fuera de pantalla.
+  const ALTO_BAL = 200;
+  const centroX = Math.max(12, (window.innerWidth - BAL) / 2);
+  const topMax = Math.max(12, window.innerHeight - ALTO_BAL - 12);
   let bal;
-  if (rect) {
+  if (rect && rect.height <= window.innerHeight * 0.55 && rect.width <= window.innerWidth * 0.9) {
     const below = rect.top + rect.height + 12;
-    const colocArriba = below + 190 > window.innerHeight && rect.top > 200;
-    const top = colocArriba ? Math.max(12, rect.top - 12 - 168) : below;
+    const colocArriba = below + ALTO_BAL > window.innerHeight && rect.top > ALTO_BAL;
+    const top = Math.max(12, Math.min(colocArriba ? rect.top - 12 - ALTO_BAL : below, topMax));
     let left = rect.left + rect.width / 2 - BAL / 2;
     left = Math.max(12, Math.min(left, window.innerWidth - BAL - 12));
     bal = { top, left };
+  } else if (rect) {
+    const huecoDerecha = window.innerWidth - (rect.left + rect.width) >= BAL + 24;
+    const left = huecoDerecha ? rect.left + rect.width + 12 : centroX;
+    bal = { top: Math.max(12, Math.min(window.innerHeight / 2 - ALTO_BAL / 2, topMax)), left };
   } else {
-    bal = { top: window.innerHeight / 2 - 90, left: Math.max(12, (window.innerWidth - BAL) / 2) };
+    bal = { top: Math.max(12, window.innerHeight / 2 - ALTO_BAL / 2), left: centroX };
   }
 
   return (
