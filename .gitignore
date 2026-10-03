@@ -3,3 +3,6 @@ dist/
 .env
 *.log
 .astro/
+
+# extras: I4 · builds de app propia (scripts/app-propia.mjs)
+build-apps/
