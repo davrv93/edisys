@@ -355,6 +355,8 @@ func (s *Server) rutasEdificio(r chi.Router) {
 		r.With(q("contenido.administrar")).Put(ruta+"/{id}", s.editarContenido(t))
 		r.With(q("contenido.administrar")).Delete(ruta+"/{id}", s.borrarContenido(t))
 	}
+	// personal: F1–F3 · colaboradores, asistencia con foto y almacén (rutas en personal_colaboradores.go)
+	s.rutasPersonal(r)
 
 	// 05 · recibos y pagos
 	r.With(q("recibos.ver")).Get("/periodos", s.listarPeriodos)
@@ -602,6 +604,8 @@ func (s *Server) rutasModulosNuevos(r chi.Router) {
 		r.With(q("contenido.administrar")).Put(ruta+"/{id}", s.editarContenido(t))
 		r.With(q("contenido.administrar")).Delete(ruta+"/{id}", s.borrarContenido(t))
 	}
+	// personal: F1–F3 · colaboradores, asistencia con foto y almacén (rutas en personal_colaboradores.go)
+	s.rutasPersonal(r)
 
 	r.With(q("incidencias.ver")).Get("/mantenimiento/incidencias", s.listarIncidencias)
 	r.With(q("incidencias.ver")).Patch("/mantenimiento/incidencias/{tid}/estado", s.cambiarEstadoIncidencia)

@@ -682,6 +682,9 @@ func Sembrar(ctx context.Context, pool *pgxpool.Pool, alm archivo.Almacen, op Op
 		return nil, err
 	}
 
+	// personal: F1–F3 · colaboradores, turnos, asistencia de ejemplo y mínimos del almacén
+	s.personal()
+
 	// --- Conciliación: extracto de setiembre del BCP ya cargado (2 movimientos sin pareja a propósito).
 	adminID := s.usuarios["admin@demo.pe"]
 	if _, err := conciliacion.CargarDemo(ctx, tx, s.eid, "2026-09", 3412000, &adminID); err != nil {

@@ -39,6 +39,10 @@ export const PAGINAS = {
   anuncios: '/anuncios/',
   bandeja: '/bandeja/',
   ayuda: '/ayuda/',
+  // personal: F1–F3
+  personal: '/personal/',
+  asistencia: '/asistencia/',
+  almacen: '/almacen/',
   configuracion: '/configuracion/',
   // reservas: H1 / H3
   checkin: '/checkin/',

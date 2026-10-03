@@ -103,6 +103,10 @@ export const ITEMS = {
   anuncios: { pagina: 'anuncios', etiqueta: 'Anuncios', corta: 'Anuncios', icono: 'mensaje', permiso: 'anuncios.ver' },
   bandeja: { pagina: 'bandeja', etiqueta: 'Bandeja de salida', corta: 'Bandeja', icono: 'bandeja', permiso: ['recibos.emitir', 'telegram.configurar'] },
   ayuda: { pagina: 'ayuda', etiqueta: 'Ayuda y beneficios', corta: 'Ayuda', icono: 'info', permiso: 'contenido.ver' },
+  // personal: F1–F3 · colaboradores, asistencia con foto y almacén
+  personal: { pagina: 'personal', etiqueta: 'Colaboradores', corta: 'Personal', icono: 'usuario', permiso: 'personal.ver' },
+  asistencia: { pagina: 'asistencia', etiqueta: 'Asistencia y turnos', corta: 'Asistencia', icono: 'reloj', permiso: ['asistencia.marcar', 'asistencia.ver'] },
+  almacen: { pagina: 'almacen', etiqueta: 'Almacén', corta: 'Almacén', icono: 'bandeja', permiso: 'almacen.ver' },
   roles: { pagina: 'roles', etiqueta: 'Roles y permisos', corta: 'Roles', icono: 'llave', permiso: 'roles.administrar' },
   // marca: I1/I2/I5
   marca: { pagina: 'marca', etiqueta: 'Marca y recibo', corta: 'Marca', icono: 'recibo', permiso: ['marca.configurar', 'recibos.plantilla'] },
@@ -150,6 +154,12 @@ export const MENU_POR_ROL = {
   },
 };
 MENU_POR_ROL.superadmin = MENU_POR_ROL.administrador;
+// personal: F1–F3 (al final del lateral; la barra móvil no cambia)
+MENU_POR_ROL.administrador.lateral.push('personal', 'asistencia', 'almacen');
+MENU_POR_ROL.junta.lateral.push('personal', 'asistencia', 'almacen');
+MENU_POR_ROL.propietario.lateral.push('personal');
+MENU_POR_ROL.operario.lateral.push('asistencia', 'almacen');
+MENU_POR_ROL.tecnico.lateral.push('asistencia');
 
 /** Grupos del lateral: accesos comunes juntos y plegables. Todo ítem de ITEMS vive en un grupo. */
 export const GRUPOS = [
@@ -159,6 +169,7 @@ export const GRUPOS = [
   { id: 'comunicacion', etiqueta: 'Comunicación', items: ['whatsapp', 'chatbot', 'motor', 'documentos'] },
   { id: 'ajustes', etiqueta: 'Ajustes', items: ['roles', 'configuracion', 'marca', 'ajustes'] },
   { id: 'comunicacion', etiqueta: 'Comunicación', items: ['whatsapp', 'chatbot', 'motor', 'documentos', 'anuncios', 'bandeja', 'ayuda'] }, // comunicacion: E2–E5
+  { id: 'equipo', etiqueta: 'Personal', items: ['personal', 'asistencia', 'almacen'] }, // personal: F1–F3
   { id: 'ajustes', etiqueta: 'Ajustes', items: ['roles', 'configuracion'] },
 ];
 

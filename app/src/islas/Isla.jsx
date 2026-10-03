@@ -43,6 +43,10 @@ const PANTALLAS = {
   anuncios: { permiso: 'anuncios.ver', C: lazy(() => import('../pantallas/25-anuncios/Anuncios.jsx')) },
   bandeja: { permiso: ['recibos.emitir', 'telegram.configurar'], C: lazy(() => import('../pantallas/26-bandeja/Bandeja.jsx')) },
   ayuda: { permiso: 'contenido.ver', C: lazy(() => import('../pantallas/27-ayuda/Ayuda.jsx')) },
+  // personal: F1–F3 · colaboradores, asistencia con foto y almacén
+  personal: { permiso: 'personal.ver', C: lazy(() => import('../pantallas/28-personal/Personal.jsx')) },
+  asistencia: { permiso: ['asistencia.marcar', 'asistencia.ver'], C: lazy(() => import('../pantallas/29-asistencia/Asistencia.jsx')) },
+  almacen: { permiso: 'almacen.ver', C: lazy(() => import('../pantallas/30-almacen/Almacen.jsx')) },
   configuracion: { permiso: 'facturacion.configurar', C: lazy(() => import('../pantallas/configuracion/Configuracion.jsx')) },
   // reservas: H1 · check-in QR del conserje · H2/H3 · configuración de áreas
   checkin: { permiso: 'reservas.checkin', C: lazy(() => import('../pantallas/35-reservas-avanzadas/Checkin.jsx')) },
