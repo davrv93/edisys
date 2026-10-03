@@ -14,6 +14,8 @@ import { useSesion, Guarda } from '../../layout/Sesion.jsx';
 import Encabezado, { Contenido } from '../../layout/Encabezado.jsx';
 import { Boton, Campo, Chip, Desplegable, ErrorCarga, Esqueleto, Icono, Insignia, MenuAcciones, Modal, PuntoEstado, Vacio, infoEstado, TONO_PUNTO, useDialog, useToast } from '../../ui/index.js';
 import ConfigurarTablero from './ConfigurarTablero.jsx';
+import { TONO_TEXTO } from '../../ui/estados.js'; // operacion: G2
+import { infoSemaforo, restanteSLA } from '../../lib/operacion.js'; // operacion: G2
 
 const TEXTO_CRIT = { critica: 'Crítico', media: 'Medio', baja: 'Bajo' };
 
@@ -235,6 +237,13 @@ export default function Tablero({ sinMarco = false }) {
             {inc.criticidad ? <PuntoEstado estado={inc.criticidad} texto={<span className="sr-only">{TEXTO_CRIT[inc.criticidad]}</span>} className="-mr-1" /> : null}
             <span className="font-semibold text-texto-suave">{inc.codigo}</span>
             {tono === 'alerta' && <span className="font-semibold text-alerta">· Crítico</span>}
+            {/* operacion: G2 · semáforo del SLA (solo tickets abiertos) */}
+            {inc.semaforo && inc.semaforo !== 'cerrado' && (
+              <span title={restanteSLA(inc.sla_restante_min)} className={`ml-1 inline-flex items-center gap-1 ${TONO_TEXTO[infoSemaforo(inc.semaforo).tono]}`}>
+                <span className={`h-1.5 w-1.5 rounded-chip ${TONO_PUNTO[infoSemaforo(inc.semaforo).tono]}`} aria-hidden="true" />
+                {infoSemaforo(inc.semaforo).texto}
+              </span>
+            )}
           </span>
           <span className="flex items-center">
             {acc.length > 0 && <Icono nombre="arrastrar" tam={14} className="hidden text-texto-apoyo lg:block" />}

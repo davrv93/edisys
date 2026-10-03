@@ -30,6 +30,11 @@ const PANTALLAS = {
   cobranzas: { permiso: 'cobranzas.ver', C: lazy(() => import('../pantallas/20-cobranzas/Cobranzas.jsx')) },
   documentos: { permiso: 'documentos.ver', C: lazy(() => import('../pantallas/21-documentos/Documentos.jsx')) },
   configuracion: { permiso: 'facturacion.configurar', C: lazy(() => import('../pantallas/configuracion/Configuracion.jsx')) },
+  // operacion: G1–G5 · ocurrencias y tickets, visitas QR, parking y paquetes
+  ocurrencias: { permiso: ['ocurrencias.ver', 'incidencias.ver'], C: lazy(() => import('../pantallas/31-ocurrencias/Ocurrencias.jsx')) },
+  visitas: { permiso: 'visitas.ver', C: lazy(() => import('../pantallas/32-visitas/Visitas.jsx')) },
+  parking: { permiso: 'parking.ver', C: lazy(() => import('../pantallas/33-parking/Parking.jsx')) },
+  paquetes: { permiso: 'paquetes.ver', C: lazy(() => import('../pantallas/34-paquetes/Paquetes.jsx')) },
 };
 
 function CargandoPantalla() {

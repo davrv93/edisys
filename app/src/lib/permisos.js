@@ -130,6 +130,27 @@ export const GRUPOS = [
   { id: 'ajustes', etiqueta: 'Ajustes', items: ['roles', 'configuracion'] },
 ];
 
+// operacion: G1–G5 · ocurrencias y tickets, visitas QR, parking y paquetes. Bloque propio que solo
+// añade (no reordena lo de arriba): ítems, su lugar en el menú de cada rol y el grupo «Operación».
+Object.assign(ITEMS, {
+  ocurrencias: { pagina: 'ocurrencias', etiqueta: 'Ocurrencias y tickets', corta: 'Ocurrenc.', icono: 'documento', permiso: ['ocurrencias.ver', 'incidencias.ver'] },
+  visitas: { pagina: 'visitas', etiqueta: 'Visitas y QR', corta: 'Visitas', icono: 'usuario', permiso: 'visitas.ver' },
+  parking: { pagina: 'parking', etiqueta: 'Parking', corta: 'Parking', icono: 'temporizador', permiso: 'parking.ver' },
+  paquetes: { pagina: 'paquetes', etiqueta: 'Paquetes', corta: 'Paquetes', icono: 'bandeja', permiso: 'paquetes.ver' },
+});
+MENU_POR_ROL.administrador.lateral.push('ocurrencias', 'visitas', 'parking', 'paquetes');
+MENU_POR_ROL.junta.lateral.push('ocurrencias', 'visitas', 'parking');
+MENU_POR_ROL.propietario.lateral.push('visitas', 'paquetes');
+MENU_POR_ROL.inquilino.lateral.push('visitas', 'paquetes');
+MENU_POR_ROL.operario.lateral.push('visitas', 'paquetes', 'parking', 'ocurrencias');
+GRUPOS.find((g) => g.id === 'operacion').items.push('ocurrencias', 'visitas', 'parking', 'paquetes');
+PERMISOS_POR_ROL.superadmin.push('ocurrencias.ver', 'ocurrencias.registrar', 'tickets.configurar', 'visitas.ver', 'visitas.autorizar', 'visitas.validar', 'parking.ver', 'parking.operar', 'parking.administrar', 'paquetes.ver', 'paquetes.registrar');
+PERMISOS_POR_ROL.administrador.push('ocurrencias.ver', 'ocurrencias.registrar', 'tickets.configurar', 'visitas.ver', 'visitas.autorizar', 'visitas.validar', 'parking.ver', 'parking.operar', 'parking.administrar', 'paquetes.ver', 'paquetes.registrar');
+PERMISOS_POR_ROL.junta.push('ocurrencias.ver', 'visitas.ver', 'parking.ver');
+PERMISOS_POR_ROL.operario.push('ocurrencias.ver', 'ocurrencias.registrar', 'visitas.ver', 'visitas.autorizar', 'visitas.validar', 'parking.ver', 'parking.operar', 'paquetes.ver', 'paquetes.registrar');
+PERMISOS_POR_ROL.propietario.push('visitas.ver', 'visitas.autorizar', 'paquetes.ver');
+PERMISOS_POR_ROL.inquilino.push('visitas.ver', 'visitas.autorizar', 'paquetes.ver');
+
 /** Ítems ya filtrados por rol, repartidos en sus grupos (solo grupos con algo visible). */
 export function gruposPara(items) {
   const porId = new Map(items.map((i) => [i.id, i]));

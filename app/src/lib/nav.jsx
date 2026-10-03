@@ -29,6 +29,11 @@ export const PAGINAS = {
   cobranzas: '/cobranzas/',
   documentos: '/documentos/',
   configuracion: '/configuracion/',
+  // operacion: G1–G5
+  ocurrencias: '/ocurrencias/',
+  visitas: '/visitas/',
+  parking: '/parking/',
+  paquetes: '/paquetes/',
 };
 
 function qs(query) {
