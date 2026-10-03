@@ -157,6 +157,7 @@ func (s *Server) Rutas() http.Handler {
 		// extras: I3 · dominio propio (público: lo consultan el login y el «ask» de Caddy)
 		r.Get("/publico/dominio", s.dominioPublico)
 		r.Get("/publico/dominio-permitido", s.dominioPermitido)
+		r.Get("/publico/marca/{slug}", s.marcaPorSlug) // marca: I2 · el login se pinta con la marca antes de la sesión
 
 		r.Group(func(r chi.Router) {
 			r.Use(s.autenticar, s.csrf, s.auditar)
@@ -167,11 +168,13 @@ func (s *Server) Rutas() http.Handler {
 			// Módulos nuevos con el edificio por defecto del usuario (o ?edificio_id=).
 			r.Group(func(r chi.Router) {
 				r.Use(s.conEdificio)
+				r.Use(s.exigirEdificioActivo) // marca: I5 · desactivado = solo lectura
 				s.rutasModulosNuevos(r)
 			})
 
 			r.Route("/edificios/{eid}", func(r chi.Router) {
 				r.Use(s.conEdificio)
+				r.Use(s.exigirEdificioActivo) // marca: I5 · desactivado = solo lectura
 				s.rutasEdificio(r)
 				s.rutasModulosNuevos(r)
 			})
@@ -307,6 +310,18 @@ func (s *Server) rutasEdificio(r chi.Router) {
 	r.With(q("areas.administrar")).Post("/areas/{aid}/fotos", s.subirFotosArea)
 	r.With(q("areas.administrar")).Delete("/areas/{aid}/fotos/{fid}", s.borrarFotoArea)
 	r.With(q("areas.administrar")).Post("/areas/{aid}/reglamento", s.subirReglamentoArea)
+	// marca: I1/I2/I5 · plantilla de recibo, marca blanca y configuración del edificio
+	r.With(q("recibos.plantilla")).Get("/plantilla-recibo", s.verPlantillaRecibo)
+	r.With(q("recibos.plantilla")).Put("/plantilla-recibo", s.guardarPlantillaRecibo)
+	r.With(q("recibos.plantilla")).Post("/plantilla-recibo/vista-previa", s.vistaPreviaRecibo)
+	r.With(q("marca.configurar")).Get("/marca", s.verMarca)
+	r.With(q("marca.configurar")).Put("/marca", s.guardarMarca)
+	r.With(q("marca.configurar")).Post("/marca/logo", s.subirLogo)
+	r.With(q("marca.configurar")).Delete("/marca/logo", s.quitarLogo)
+	r.With(q("configuracion.ver")).Get("/configuracion/estado", s.verEstadoEdificio)
+	r.With(q("configuracion.editar")).Put("/configuracion/activo", s.cambiarActivoEdificio)
+	r.With(q("configuracion.ver")).Get("/configuracion/asistentes", s.asistenteConfiguracion)
+	r.With(q("configuracion.ver")).Get("/configuracion/cambios", s.registroCambios)
 
 	// 05 · recibos y pagos
 	r.With(q("recibos.ver")).Get("/periodos", s.listarPeriodos)
@@ -509,6 +524,18 @@ func (s *Server) rutasModulosNuevos(r chi.Router) {
 	r.With(q("areas.administrar")).Post("/areas/{aid}/fotos", s.subirFotosArea)
 	r.With(q("areas.administrar")).Delete("/areas/{aid}/fotos/{fid}", s.borrarFotoArea)
 	r.With(q("areas.administrar")).Post("/areas/{aid}/reglamento", s.subirReglamentoArea)
+	// marca: I1/I2/I5 · plantilla de recibo, marca blanca y configuración del edificio
+	r.With(q("recibos.plantilla")).Get("/plantilla-recibo", s.verPlantillaRecibo)
+	r.With(q("recibos.plantilla")).Put("/plantilla-recibo", s.guardarPlantillaRecibo)
+	r.With(q("recibos.plantilla")).Post("/plantilla-recibo/vista-previa", s.vistaPreviaRecibo)
+	r.With(q("marca.configurar")).Get("/marca", s.verMarca)
+	r.With(q("marca.configurar")).Put("/marca", s.guardarMarca)
+	r.With(q("marca.configurar")).Post("/marca/logo", s.subirLogo)
+	r.With(q("marca.configurar")).Delete("/marca/logo", s.quitarLogo)
+	r.With(q("configuracion.ver")).Get("/configuracion/estado", s.verEstadoEdificio)
+	r.With(q("configuracion.editar")).Put("/configuracion/activo", s.cambiarActivoEdificio)
+	r.With(q("configuracion.ver")).Get("/configuracion/asistentes", s.asistenteConfiguracion)
+	r.With(q("configuracion.ver")).Get("/configuracion/cambios", s.registroCambios)
 
 	r.With(q("incidencias.ver")).Get("/mantenimiento/incidencias", s.listarIncidencias)
 	r.With(q("incidencias.ver")).Patch("/mantenimiento/incidencias/{tid}/estado", s.cambiarEstadoIncidencia)

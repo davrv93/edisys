@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { api, irAlLogin } from '../lib/api.js';
 import { normalizarYo, tienePermiso } from '../lib/sesion.js';
+import { aplicarMarca } from '../lib/marca.js'; // marca: I2
 import { CargandoApp, ErrorCarga, SinPermiso } from '../ui/index.js';
 
 const Ctx = createContext(null);
@@ -41,6 +42,11 @@ export function SesionProvider({ children }) {
     cargar();
   }, [cargar]);
   // cargar depende de eid: cambiar de edificio vuelve a pedir /yo con sus permisos.
+
+  // marca: I2 · colores y logo de la administradora del edificio activo.
+  useEffect(() => {
+    if (crudo) aplicarMarca(crudo.marca);
+  }, [crudo]);
 
   const sesion = useMemo(() => (crudo ? normalizarYo(crudo, eid) : null), [crudo, eid]);
 

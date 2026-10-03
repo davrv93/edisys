@@ -10,8 +10,9 @@ import (
 
 // Doc es un documento de una o más páginas A4 (595 × 842 pt).
 type Doc struct {
-	paginas []*bytes.Buffer
-	actual  *bytes.Buffer
+	paginas  []*bytes.Buffer
+	actual   *bytes.Buffer
+	imagenes []imagenPDF // marca: I1 · logos y fotos incrustados (imagen.go)
 }
 
 // Nuevo crea un documento con una página.
@@ -74,9 +75,13 @@ func (d *Doc) Bytes() []byte {
 	obj(fmt.Sprintf("<< /Type /Pages /Kids [%s] /Count %d >>", strings.Join(kids, " "), n))
 	obj("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>")
 	obj("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>")
+	xobj := d.recursosImagen(5 + 2*n) // marca: I1 · las imágenes van después de las páginas
 	for i, p := range d.paginas {
-		obj(fmt.Sprintf("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents %d 0 R >>", 6+2*i))
+		obj(fmt.Sprintf("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >>%s >> /Contents %d 0 R >>", xobj, 6+2*i))
 		obj(fmt.Sprintf("<< /Length %d >>\nstream\n%sendstream", p.Len(), p.String()))
+	}
+	for _, im := range d.imagenes { // marca: I1
+		obj(im.objeto())
 	}
 	xref := out.Len()
 	fmt.Fprintf(&out, "xref\n0 %d\n0000000000 65535 f \n", len(offs)+1)

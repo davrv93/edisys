@@ -32,6 +32,8 @@ export const PAGINAS = {
   // reservas: H1 / H3
   checkin: '/checkin/',
   areascomunes: '/areas-comunes/',
+  marca: '/marca/', // marca: I1/I2
+  ajustes: '/ajustes/', // marca: I5
 };
 // extras: J1/J2/I3
 PAGINAS.encuestas = '/encuestas/';
