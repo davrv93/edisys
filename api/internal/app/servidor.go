@@ -357,6 +357,8 @@ func (s *Server) rutasEdificio(r chi.Router) {
 	}
 	// personal: F1–F3 · colaboradores, asistencia con foto y almacén (rutas en personal_colaboradores.go)
 	s.rutasPersonal(r)
+	// operacion: G1–G5 · ocurrencias, tickets SLA, visitas QR, parking y paquetes (rutas en operacion.go)
+	s.rutasOperacion(r)
 
 	// 05 · recibos y pagos
 	r.With(q("recibos.ver")).Get("/periodos", s.listarPeriodos)
@@ -606,6 +608,8 @@ func (s *Server) rutasModulosNuevos(r chi.Router) {
 	}
 	// personal: F1–F3 · colaboradores, asistencia con foto y almacén (rutas en personal_colaboradores.go)
 	s.rutasPersonal(r)
+	// operacion: G1–G5 · ocurrencias, tickets SLA, visitas QR, parking y paquetes (rutas en operacion.go)
+	s.rutasOperacion(r)
 
 	r.With(q("incidencias.ver")).Get("/mantenimiento/incidencias", s.listarIncidencias)
 	r.With(q("incidencias.ver")).Patch("/mantenimiento/incidencias/{tid}/estado", s.cambiarEstadoIncidencia)

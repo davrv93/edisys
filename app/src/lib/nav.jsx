@@ -49,6 +49,11 @@ export const PAGINAS = {
   areascomunes: '/areas-comunes/',
   marca: '/marca/', // marca: I1/I2
   ajustes: '/ajustes/', // marca: I5
+  // operacion: G1–G5
+  ocurrencias: '/ocurrencias/',
+  visitas: '/visitas/',
+  parking: '/parking/',
+  paquetes: '/paquetes/',
 };
 // extras: J1/J2/I3
 PAGINAS.encuestas = '/encuestas/';

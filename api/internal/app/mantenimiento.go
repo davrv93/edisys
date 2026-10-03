@@ -25,7 +25,8 @@ const sqlIncidencia = `SELECT i.id, i.codigo, i.titulo, i.descripcion, i.ubicaci
 	(SELECT count(*) FROM voto v WHERE v.incidencia_id=i.id AND v.voto='aprueba') AS votos_a_favor,
 	(SELECT count(*) FROM voto v WHERE v.incidencia_id=i.id AND v.voto='rechaza') AS votos_en_contra,
 	(SELECT count(*) FROM incidencia_evidencia ev WHERE ev.incidencia_id=i.id) AS evidencias,
-	(SELECT ev.archivo_id FROM incidencia_evidencia ev WHERE ev.incidencia_id=i.id AND ev.tipo='reporte' ORDER BY ev.id LIMIT 1) AS foto_id
+	(SELECT ev.archivo_id FROM incidencia_evidencia ev WHERE ev.incidencia_id=i.id AND ev.tipo='reporte' ORDER BY ev.id LIMIT 1) AS foto_id,
+	i.sla_objetivo, i.sla_vencimiento -- operacion: G2 (SLA del ticket)
 	FROM incidencia i LEFT JOIN unidad u ON u.id=i.unidad_id LEFT JOIN usuario rp ON rp.id=i.reportado_por LEFT JOIN usuario rs ON rs.id=i.responsable_id`
 
 // listarIncidencias: GET /mantenimiento/incidencias (y /edificios/{eid}/incidencias, /trabajos)
@@ -68,6 +69,7 @@ func decorarIncidencia(s *Server, f map[string]any, umbral int64, modo string, m
 	_, nec := M.Votacion(modo, miembros, 0, 0, "")
 	f["votos_necesarios"] = nec
 	f["transiciones"] = M.Transiciones[f["estado"].(string)]
+	decorarSLA(f, time.Now()) // operacion: G2 (semáforo en el kanban)
 }
 
 // tablero: GET /trabajos?estado=&criticidad=&mes= (mismo listado con conteos por estado).
@@ -203,6 +205,7 @@ func (s *Server) crearIncidencia(ctx context.Context, tx pgx.Tx, eid int64, uid 
 		id, uid, "Reportado desde "+origen); err != nil {
 		return 0, "", err
 	}
+	s.respuestaAutomaticaTicket(ctx, tx, eid, id, origen) // operacion: G2 (acuse al solicitante)
 	return id, codigo, nil
 }
 

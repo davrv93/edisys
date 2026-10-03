@@ -51,6 +51,11 @@ const PANTALLAS = {
   // reservas: H1 · check-in QR del conserje · H2/H3 · configuración de áreas
   checkin: { permiso: 'reservas.checkin', C: lazy(() => import('../pantallas/35-reservas-avanzadas/Checkin.jsx')) },
   areascomunes: { permiso: 'areas.administrar', C: lazy(() => import('../pantallas/35-reservas-avanzadas/ConfigAreas.jsx')) },
+  // operacion: G1–G5 · ocurrencias y tickets, visitas QR, parking y paquetes
+  ocurrencias: { permiso: ['ocurrencias.ver', 'incidencias.ver'], C: lazy(() => import('../pantallas/31-ocurrencias/Ocurrencias.jsx')) },
+  visitas: { permiso: 'visitas.ver', C: lazy(() => import('../pantallas/32-visitas/Visitas.jsx')) },
+  parking: { permiso: 'parking.ver', C: lazy(() => import('../pantallas/33-parking/Parking.jsx')) },
+  paquetes: { permiso: 'paquetes.ver', C: lazy(() => import('../pantallas/34-paquetes/Paquetes.jsx')) },
 };
 // extras: J1/J2/I3 · encuestas; videollamadas y dominio propio (una pantalla con dos vistas)
 PANTALLAS.encuestas = { permiso: 'encuestas.ver', C: lazy(() => import('../pantallas/40-encuestas/Encuestas.jsx')) };

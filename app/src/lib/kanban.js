@@ -236,5 +236,9 @@ export function normalizarIncidencia(r) {
     transiciones: Array.isArray(r.transiciones) ? r.transiciones : null,
     motivo: r.motivo || '',
     avance_pct: r.avance_pct ?? null,
+    // operacion: G2 · semáforo del SLA que calcula el API
+    semaforo: r.semaforo || null,
+    sla_cumplido: r.sla_cumplido ?? null,
+    sla_restante_min: r.sla_restante_min ?? null,
   };
 }
